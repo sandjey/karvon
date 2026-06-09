@@ -10,6 +10,10 @@ git pull --ff-only origin master
 echo "[karvon] Building and restarting containers..."
 COMPOSE="docker compose"
 command -v docker-compose &>/dev/null && COMPOSE="docker-compose"
+
+# Remove stopped karvon containers to avoid docker-compose 1.29.2 ContainerConfig bug
+docker rm $(docker ps -aq --filter "status=exited" --filter "name=karvon") 2>/dev/null || true
+
 $COMPOSE pull 2>/dev/null || true
 $COMPOSE up -d --build
 
