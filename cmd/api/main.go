@@ -60,7 +60,7 @@ func main() {
 	jwtMgr := jwtpkg.NewManager(cfg.JWTSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
 
 	var tgNotifier notifier.Notifier
-	if cfg.TelegramGatewayToken != "" {
+	if cfg.TelegramGatewayToken != "" || cfg.TelegramGatewayBypass {
 		tgNotifier = notifier.NewTelegramGateway(
 			cfg.TelegramGatewayBaseURL,
 			cfg.TelegramGatewayToken,
