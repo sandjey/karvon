@@ -17,6 +17,23 @@ services:
       timeout: 5s
       retries: 5
 
+  whatsapp:
+    image: node:20-alpine
+    container_name: karvon_whatsapp
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./services/whatsapp:/app
+      - whatsapp_auth:/app/auth_info
+      - whatsapp_modules:/app/node_modules
+    command: sh -c "apk add --no-cache git python3 make g++ && npm install && node index.js"
+    ports:
+      - "3210:3210"
+    environment:
+      WHATSAPP_SERVICE_PORT: 3210
+      WHATSAPP_SERVICE_TOKEN: ${WHATSAPP_OTP_TOKEN:-}
+      WHATSAPP_AUTH_DIR: ./auth_info
+
   app:
     build: .
     container_name: karvon_app
@@ -32,3 +49,5 @@ services:
 
 volumes:
   postgres_data:
+  whatsapp_auth:
+  whatsapp_modules:
