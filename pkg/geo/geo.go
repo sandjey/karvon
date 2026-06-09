@@ -57,6 +57,30 @@ func init() {
 	loadAdmin1()
 	loadCountries()
 	loadCities()
+	loadCountryCoords()
+}
+
+// loadCountryCoords sets Lat/Lng on each Country using the most-populous city
+// in that country (countryInfo.txt has no coordinates).
+func loadCountryCoords() {
+	maxPop := make(map[string]int)
+	coords := make(map[string][2]float64)
+	for _, city := range Cities {
+		if city.Population > maxPop[city.CountryCode] {
+			maxPop[city.CountryCode] = city.Population
+			coords[city.CountryCode] = [2]float64{city.Lat, city.Lng}
+		}
+	}
+	for i := range Countries {
+		if c, ok := coords[Countries[i].Code]; ok {
+			Countries[i].Lat = c[0]
+			Countries[i].Lng = c[1]
+		}
+	}
+	// rebuild countryByCode with updated coords
+	for _, c := range Countries {
+		countryByCode[c.Code] = c
+	}
 }
 
 func loadAdmin1() {
