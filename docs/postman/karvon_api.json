@@ -387,7 +387,7 @@
     },
     {
       "name": "Companies",
-      "description": "Управление юридическими лицами. Один пользователь → несколько компаний.\n\nСтатусы: `pending` → `approved` / `rejected` / `docs_requested`\n\n**Бизнес-правила:**\n- ИНН уникален среди одобренных компаний\n- `pending` — нельзя редактировать\n- `docs_requested` — можно обновить документы (inn_doc_url, reg_doc_url), статус автоматически вернётся в pending",
+      "description": "Управление юридическими лицами. Один пользователь → несколько компаний.\n\nСтатусы: `pending` → `approved` / `rejected` / `docs_requested`\n\n**Поля формы верификации:** country, org_type (ooo/ao/ip/ltd/gmbh/co_ltd), name, inn (ИНН/БИН/VAT/USCC), phone, email, city, region (необяз.), street, postal_code (необяз.), reg_doc_url.\n\n**Бизнес-правила:**\n- ИНН уникален среди одобренных компаний\n- `pending` — нельзя редактировать\n- `docs_requested` — можно обновить свидетельство (reg_doc_url), статус автоматически вернётся в pending",
       "item": [
         {
           "name": "POST /companies — Добавить компанию",
@@ -418,29 +418,29 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"ООО Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"region\": \"Ташкент\",\n  \"phone\": \"+998331108810\",\n  \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\"\n}",
+              "raw": "{\n  \"country\": \"UZ\",\n  \"org_type\": \"ooo\",\n  \"name\": \"Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 15, офис 3\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Добавить компанию. Статус автоматически = `pending`.\n\n`inn_doc_url` и `reg_doc_url` — URL-ы из `POST /upload`.\n\n`region`, `phone`, `inn_doc_url`, `reg_doc_url` — опциональны."
+            "description": "Добавить компанию (отправить на проверку). Статус автоматически = `pending`.\n\n`reg_doc_url` — URL свидетельства из `POST /upload`.\n\n**Обязательны:** country, org_type, name, inn, phone, email, city, street, reg_doc_url.\n**Опциональны:** region, postal_code.\n\n`org_type`: ooo / ao / ip / ltd / gmbh / co_ltd."
           },
           "response": [
             {
               "name": "201 — ru",
               "status": "Created", "code": 201,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Компания отправлена на проверку\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"ООО Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"region\": \"Ташкент\",\n    \"phone\": \"+998331108810\",\n    \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Компания отправлена на проверку\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
             },
             {
               "name": "201 — uz",
               "status": "Created", "code": 201,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Kompaniya tekshiruvga yuborildi\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"ООО Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"region\": \"Ташкент\",\n    \"phone\": \"+998331108810\",\n    \"inn_doc_url\": null,\n    \"reg_doc_url\": null,\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Kompaniya tekshiruvga yuborildi\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
             },
             {
               "name": "201 — en",
               "status": "Created", "code": 201,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Company submitted for verification\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"ООО Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"region\": \"Ташкент\",\n    \"phone\": \"+998331108810\",\n    \"inn_doc_url\": null,\n    \"reg_doc_url\": null,\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Company submitted for verification\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
             },
             {
               "name": "409 — ИНН уже существует (ru)",
@@ -469,7 +469,7 @@
               "name": "200 OK",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"name\": \"ООО Карвон Логистика\",\n      \"inn\": \"123456789\",\n      \"region\": \"Ташкент\",\n      \"phone\": \"+998331108810\",\n      \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"status\": \"pending\",\n      \"rejection_reason\": null,\n      \"verified_at\": null,\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"updated_at\": \"2026-06-09T10:00:00Z\"\n    }\n  ]\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"name\": \"Карвон Логистика\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"postal_code\": \"100000\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"status\": \"approved\",\n      \"rejection_reason\": null,\n      \"docs_request_note\": null,\n      \"verified_at\": \"2026-06-09T12:00:00Z\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"updated_at\": \"2026-06-09T12:00:00Z\"\n    }\n  ]\n}"
             }
           ]
         },
@@ -492,7 +492,7 @@
               "name": "200 OK",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"ООО Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"region\": \"Ташкент\",\n    \"phone\": \"+998331108810\",\n    \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"approved\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": \"2026-06-09T12:00:00Z\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T12:00:00Z\"\n  }\n}"
             },
             {
               "name": "404 — Не найдено (ru)",
@@ -518,17 +518,17 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"ООО Карвон Логистика Апдейт\",\n  \"region\": \"Самарканд\",\n  \"phone\": \"+998331108810\",\n  \"inn_doc_url\": \"/uploads/companies/inn_doc_v2.pdf\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\"\n}",
+              "raw": "{\n  \"name\": \"Карвон Логистика Апдейт\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 1\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Обновить данные компании. Все поля опциональны.\n\n- `pending` → `COMPANY_NOT_EDITABLE` (409)\n- `docs_requested` → можно обновить документы, статус автовернётся в `pending`\n- `approved` / `rejected` → можно обновить name, region, phone"
+            "description": "Обновить данные компании. Все поля опциональны.\n\n- `pending` → `COMPANY_NOT_EDITABLE` (409)\n- `docs_requested` → можно обновить свидетельство (reg_doc_url), статус автовернётся в `pending`\n- `approved` / `rejected` → можно обновить country, org_type, name, phone, email, city, region, street, postal_code"
           },
           "response": [
             {
               "name": "200 — ru",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Данные компании обновлены\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"name\": \"ООО Карвон Логистика Апдейт\",\n    \"inn\": \"123456789\",\n    \"region\": \"Самарканд\",\n    \"phone\": \"+998331108810\",\n    \"inn_doc_url\": \"/uploads/companies/inn_doc_v2.pdf\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\",\n    \"status\": \"approved\",\n    \"rejection_reason\": null,\n    \"verified_at\": \"2026-06-09T12:00:00Z\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T13:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Данные компании обновлены\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика Апдейт\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Самарканд\",\n    \"region\": \"Самаркандская область\",\n    \"street\": \"ул. Регистан, 1\",\n    \"postal_code\": \"140100\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\",\n    \"status\": \"approved\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": \"2026-06-09T12:00:00Z\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T13:00:00Z\"\n  }\n}"
             },
             {
               "name": "409 — Нельзя редактировать (ru)",
@@ -564,7 +564,7 @@
                 { "key": "dir", "value": "companies", "type": "text", "description": "Подпапка: companies / fleet / etc. (опционально, default: uploads)" }
               ]
             },
-            "description": "Загрузить файл и получить URL.\n\nВозвращённый URL используется в `POST /companies` как `inn_doc_url` или `reg_doc_url`."
+            "description": "Загрузить файл и получить URL.\n\nВозвращённый URL используется в `POST /companies` как `reg_doc_url` (свидетельство о регистрации)."
           },
           "response": [
             {
@@ -617,7 +617,7 @@
               "name": "200 OK",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"ООО Карвон Логистика\",\n      \"inn\": \"123456789\",\n      \"status\": \"pending\",\n      \"region\": \"Ташкент\",\n      \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 1, \"page\": 1, \"per_page\": 20 }\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"Карвон Логистика\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"status\": \"pending\",\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 1, \"page\": 1, \"per_page\": 20 }\n}"
             }
           ]
         },
@@ -640,7 +640,7 @@
               "name": "200 OK",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"company_name\": \"ООО Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"status\": \"pending\",\n    \"region\": \"Ташкент\",\n    \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"user_name\": \"Алишер\",\n    \"user_phone\": \"+998331108810\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"deadline\": \"2026-06-10T10:00:00Z\",\n    \"is_urgent\": false\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"company_name\": \"Карвон Логистика\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"status\": \"pending\",\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"user_name\": \"Алишер\",\n    \"user_phone\": \"+998331108810\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"deadline\": \"2026-06-10T10:00:00Z\",\n    \"is_urgent\": false\n  }\n}"
             },
             {
               "name": "404 — Не найдено (ru)",
@@ -792,7 +792,7 @@
               "name": "200 OK",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"ООО Карвон Логистика\",\n      \"inn\": \"123456789\",\n      \"status\": \"approved\",\n      \"region\": \"Ташкент\",\n      \"inn_doc_url\": \"/uploads/companies/inn_doc.pdf\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 5, \"page\": 1, \"per_page\": 20 }\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"Карвон Логистика\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"status\": \"approved\",\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 5, \"page\": 1, \"per_page\": 20 }\n}"
             }
           ]
         }

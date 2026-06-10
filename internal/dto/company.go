@@ -7,32 +7,49 @@ import (
 )
 
 type CreateCompanyRequest struct {
-	Name      string  `json:"name"       binding:"required,min=2,max=200"`
-	INN       string  `json:"inn"        binding:"required,min=9,max=20"`
-	Region    *string `json:"region"     binding:"omitempty,max=100"`
-	Phone     *string `json:"phone"      binding:"omitempty,max=20"`
-	INNDocURL *string `json:"inn_doc_url"`
-	RegDocURL *string `json:"reg_doc_url"`
+	Country    string  `json:"country"     binding:"required,max=100"`
+	OrgType    string  `json:"org_type"    binding:"required,oneof=ooo ao ip ltd gmbh co_ltd"`
+	Name       string  `json:"name"        binding:"required,min=2,max=200"`
+	INN        string  `json:"inn"         binding:"required,min=5,max=30"`
+	Phone      string  `json:"phone"       binding:"required,max=20"`
+	Email      string  `json:"email"       binding:"required,email,max=100"`
+	City       string  `json:"city"        binding:"required,max=100"`
+	Region     *string `json:"region"      binding:"omitempty,max=100"`
+	Street     string  `json:"street"      binding:"required,max=200"`
+	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
+	RegDocURL  string  `json:"reg_doc_url" binding:"required"`
 }
 
 type UpdateCompanyRequest struct {
-	Name      *string `json:"name"       binding:"omitempty,min=2,max=200"`
-	Region    *string `json:"region"     binding:"omitempty,max=100"`
-	Phone     *string `json:"phone"      binding:"omitempty,max=20"`
-	INNDocURL *string `json:"inn_doc_url"`
-	RegDocURL *string `json:"reg_doc_url"`
+	Country    *string `json:"country"     binding:"omitempty,max=100"`
+	OrgType    *string `json:"org_type"    binding:"omitempty,oneof=ooo ao ip ltd gmbh co_ltd"`
+	Name       *string `json:"name"        binding:"omitempty,min=2,max=200"`
+	Phone      *string `json:"phone"       binding:"omitempty,max=20"`
+	Email      *string `json:"email"       binding:"omitempty,email,max=100"`
+	City       *string `json:"city"        binding:"omitempty,max=100"`
+	Region     *string `json:"region"      binding:"omitempty,max=100"`
+	Street     *string `json:"street"      binding:"omitempty,max=200"`
+	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
+	RegDocURL  *string `json:"reg_doc_url"`
 }
 
 type CompanyResponse struct {
 	ID              uuid.UUID  `json:"id"`
+	Country         string     `json:"country"`
+	OrgType         string     `json:"org_type"`
 	Name            string     `json:"name"`
 	INN             string     `json:"inn"`
+	INNVerified     bool       `json:"inn_verified"`
+	Phone           string     `json:"phone"`
+	Email           string     `json:"email"`
+	City            string     `json:"city"`
 	Region          *string    `json:"region"`
-	Phone           *string    `json:"phone"`
-	INNDocURL       *string    `json:"inn_doc_url"`
-	RegDocURL       *string    `json:"reg_doc_url"`
+	Street          string     `json:"street"`
+	PostalCode      *string    `json:"postal_code"`
+	RegDocURL       string     `json:"reg_doc_url"`
 	Status          string     `json:"status"`
 	RejectionReason *string    `json:"rejection_reason"`
+	DocsRequestNote *string    `json:"docs_request_note"`
 	VerifiedAt      *time.Time `json:"verified_at"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`

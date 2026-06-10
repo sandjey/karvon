@@ -28,15 +28,20 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 	}
 
 	c := &model.Company{
-		ID:        uuid.New(),
-		UserID:    userID,
-		Name:      req.Name,
-		INN:       req.INN,
-		Region:    req.Region,
-		Phone:     req.Phone,
-		INNDocURL: req.INNDocURL,
-		RegDocURL: req.RegDocURL,
-		Status:    "pending",
+		ID:         uuid.New(),
+		UserID:     userID,
+		Country:    req.Country,
+		OrgType:    req.OrgType,
+		Name:       req.Name,
+		INN:        req.INN,
+		Phone:      req.Phone,
+		Email:      req.Email,
+		City:       req.City,
+		Region:     req.Region,
+		Street:     req.Street,
+		PostalCode: req.PostalCode,
+		RegDocURL:  req.RegDocURL,
+		Status:     "pending",
 	}
 	if err := s.repo.Create(ctx, c); err != nil {
 		return nil, err
@@ -79,24 +84,39 @@ func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID
 	}
 
 	fields := map[string]interface{}{}
+	if req.Country != nil {
+		fields["country"] = *req.Country
+	}
+	if req.OrgType != nil {
+		fields["org_type"] = *req.OrgType
+	}
 	if req.Name != nil {
 		fields["name"] = *req.Name
-	}
-	if req.Region != nil {
-		fields["region"] = *req.Region
 	}
 	if req.Phone != nil {
 		fields["phone"] = *req.Phone
 	}
-	// документы можно обновить только при docs_requested
+	if req.Email != nil {
+		fields["email"] = *req.Email
+	}
+	if req.City != nil {
+		fields["city"] = *req.City
+	}
+	if req.Region != nil {
+		fields["region"] = *req.Region
+	}
+	if req.Street != nil {
+		fields["street"] = *req.Street
+	}
+	if req.PostalCode != nil {
+		fields["postal_code"] = *req.PostalCode
+	}
+	// документ (свидетельство) можно обновить только при docs_requested
 	if c.Status == "docs_requested" {
-		if req.INNDocURL != nil {
-			fields["inn_doc_url"] = *req.INNDocURL
-		}
 		if req.RegDocURL != nil {
 			fields["reg_doc_url"] = *req.RegDocURL
 		}
-		// при обновлении документов — вернуть статус в pending
+		// при обновлении после запроса документов — вернуть статус в pending
 		if len(fields) > 0 {
 			fields["status"] = "pending"
 		}

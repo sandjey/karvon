@@ -98,8 +98,9 @@ func (s *ModeratorService) RequestDocs(ctx context.Context, moderatorID, company
 		return ErrCompanyNotFound
 	}
 	if err := s.companyRepo.Update(ctx, companyID, map[string]interface{}{
-		"status":       "docs_requested",
-		"moderator_id": moderatorID,
+		"status":            "docs_requested",
+		"moderator_id":      moderatorID,
+		"docs_request_note": message,
 	}); err != nil {
 		return err
 	}

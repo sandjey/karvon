@@ -183,6 +183,7 @@ func createEnumTypes(db *gorm.DB) error {
 	enums := []struct{ name, vals string }{
 		{"user_role", "'user','moderator','super_admin'"},
 		{"company_status", "'pending','approved','rejected','docs_requested'"},
+		{"company_org_type", "'ooo','ao','ip','ltd','gmbh','co_ltd'"},
 		{"cargo_type_enum", "'domestic','international'"},
 		{"loading_type_enum", "'ftl','ltl','partial'"},
 		{"customs_type_enum", "'export','import','transit'"},

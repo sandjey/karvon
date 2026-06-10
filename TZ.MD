@@ -1,6 +1,8 @@
-# [НАЗВАНИЕ] — KARVON
-## Stack: Go + GIN · PostgreSQL · Postman
-## MVP v3.0 · Июнь 2025
+# KARVON
+## Stack: Go + Gin · PostgreSQL · Postman
+## MVP v3.1 · Июнь 2025
+### Scope: Регистрация · Компании (верификация) · Грузы · Склады · Монетизация
+> ⚠️ Транспорт и автопарк вынесены из текущего ТЗ (вернём отдельным этапом).
 
 ---
 
@@ -10,18 +12,18 @@
 
 | Слой | Технология |
 |------|-----------|
-| HTTP-фреймворк | Echo v4 |
+| HTTP-фреймворк | Gin |
 | База данных | PostgreSQL 15+ |
-| ORM / query builder | sqlx + чистый SQL (без ORM) |
-| Миграции | golang-migrate |
+| ORM / query builder | GORM (AutoMigrate) + sqlx для сложных выборок |
 | Аутентификация | JWT (access + refresh tokens) |
-| SMS | telegram api and whatsapp|
+| OTP | Telegram Gateway API + WhatsApp (Baileys микросервис) |
 | Платежи | Rahmat (webhook) |
-| Файлы | MinIO или локальный storage (S3-совместимый) |
+| Файлы | Локальный storage (S3-совместимый интерфейс) |
 | Конфиг | .env через godotenv |
 | Логирование | zerolog |
 | Контейнеры | Docker + Docker Compose |
 | API-документация | Postman Collection |
+| i18n | ru / uz / en (поле `message` во всех ответах) |
 
 ---
 
@@ -34,14 +36,16 @@
   /handler        — HTTP-хэндлеры (по модулям)
   /service        — бизнес-логика
   /repository     — запросы к БД
-  /middleware     — JWT, роли, rate limit
-  /model          — структуры данных (Go structs)
+  /middleware     — JWT, роли, lang, rate limit
+  /model          — структуры данных (Go structs / GORM models)
   /dto            — Request / Response объекты
-/migrations       — SQL-файлы миграций
 /pkg
-  /eskiz          — клиент Eskiz SMS
+  /jwt            — генерация/валидация токенов
+  /notifier       — Telegram / WhatsApp OTP
   /rahmat         — клиент Rahmat платежи
   /storage        — работа с файлами
+  /i18n           — переводы сообщений
+/docs/postman     — Postman-коллекция
 /docker-compose.yml
 /.env.example
 ```
@@ -51,16 +55,23 @@
 ## Переменные окружения (.env)
 
 ```
-APP_PORT=8080
+APP_PORT=8082
 DB_URL=postgres://user:pass@localhost:5432/dbname?sslmode=disable
 JWT_SECRET=...
 JWT_ACCESS_TTL=15m
-JWT_REFRESH_TTL=30d
-ESKIZ_EMAIL=...
-ESKIZ_PASSWORD=...
+JWT_REFRESH_TTL=720h
+
+TELEGRAM_GATEWAY_BASE_URL=https://gatewayapi.telegram.org
+TELEGRAM_GATEWAY_TOKEN=...
+TELEGRAM_GATEWAY_BYPASS=false
+
+WHATSAPP_OTP_BASE_URL=http://whatsapp:3211
+WHATSAPP_OTP_TOKEN=...
+WHATSAPP_OTP_BYPASS=false
+
 RAHMAT_MERCHANT_ID=...
 RAHMAT_SECRET_KEY=...
-STORAGE_TYPE=local   # или minio
+STORAGE_TYPE=local
 STORAGE_PATH=./uploads
 ```
 
@@ -68,10 +79,13 @@ STORAGE_PATH=./uploads
 
 ## Формат всех API-ответов
 
+Все ответы (успех и ошибка) ВСЕГДА содержат переведённое поле `message` на языке запроса (ru/uz/en).
+
 **Успех:**
 ```json
 {
   "success": true,
+  "message": "Готово",
   "data": { ... }
 }
 ```
@@ -104,6 +118,8 @@ Base URL: `GET /api/v1/...`
 
 Аутентификация: заголовок `Authorization: Bearer <access_token>`
 
+Язык: `?lang=ru|uz|en` или заголовок `Accept-Language`, по умолчанию `ru`.
+
 ---
 
 ## Коды ошибок (ErrorCode)
@@ -117,6 +133,7 @@ Base URL: `GET /api/v1/...`
 | `OTP_EXPIRED` | OTP истёк |
 | `OTP_INVALID` | Неверный OTP |
 | `OTP_MAX_ATTEMPTS` | Превышено число попыток |
+| `INN_NOT_VERIFIED` | ИНН не прошёл автопроверку по реестру |
 | `COMPANY_NOT_VERIFIED` | Компания не верифицирована |
 | `INSUFFICIENT_TOKENS` | Нет токенов |
 | `FREE_LISTING_USED` | Бесплатное объявление уже использовано |
@@ -127,8 +144,6 @@ Base URL: `GET /api/v1/...`
 
 # РАЗДЕЛ 2 — СХЕМА БАЗЫ ДАННЫХ
 
-Все таблицы создаются через файлы миграций в `/migrations`.
-
 ---
 
 ### users
@@ -138,7 +153,7 @@ Base URL: `GET /api/v1/...`
 |---------|-----|----------|
 | id | UUID PK | gen_random_uuid() |
 | phone | VARCHAR(20) UNIQUE NOT NULL | Номер телефона |
-| name | VARCHAR(100) | Имя / псевдоним |
+| name | VARCHAR(100) | Имя / название |
 | email | VARCHAR(100) | |
 | whatsapp | VARCHAR(20) | |
 | telegram | VARCHAR(50) | |
@@ -168,24 +183,36 @@ Base URL: `GET /api/v1/...`
 ---
 
 ### companies
-Юрлица, привязанные к пользователю. Один user → много companies.
+Юрлица, привязанные к пользователю. Один user → много companies. Каждая верифицируется отдельно.
 
-| Колонка | Тип | Описание |
-|---------|-----|----------|
-| id | UUID PK | |
-| user_id | UUID FK → users | Владелец |
-| name | VARCHAR(200) NOT NULL | Название компании |
-| inn | VARCHAR(20) NOT NULL | ИНН |
-| region | VARCHAR(100) | |
-| phone | VARCHAR(20) | Телефон компании |
-| inn_doc_url | TEXT | Ссылка на файл ИНН |
-| reg_doc_url | TEXT | Ссылка на свидетельство |
-| status | ENUM: pending / approved / rejected / docs_requested | DEFAULT pending |
-| rejection_reason | TEXT | Причина отклонения |
-| moderator_id | UUID FK → users | Кто обрабатывал |
-| verified_at | TIMESTAMPTZ | Дата одобрения |
-| created_at | TIMESTAMPTZ | |
-| updated_at | TIMESTAMPTZ | |
+| Колонка | Тип | Обяз? | Описание |
+|---------|-----|-------|----------|
+| id | UUID PK | | |
+| user_id | UUID FK → users | | Владелец |
+| country | VARCHAR(100) NOT NULL | ✓ | Страна регистрации |
+| org_type | ENUM: ooo / ao / ip / ltd / gmbh / co_ltd | ✓ | Тип организации |
+| name | VARCHAR(200) NOT NULL | ✓ | Полное юридическое название |
+| inn | VARCHAR(30) NOT NULL | ✓ | ИНН / БИН / VAT / USCC |
+| inn_verified | BOOLEAN DEFAULT false | | Прошёл автопроверку по реестру страны |
+| inn_verified_at | TIMESTAMPTZ | | Когда подтверждён ИНН |
+| phone | VARCHAR(20) NOT NULL | ✓ | Телефон компании |
+| email | VARCHAR(100) NOT NULL | ✓ | Email компании |
+| city | VARCHAR(100) NOT NULL | ✓ | Город / район |
+| region | VARCHAR(100) | — | Область / провинция |
+| street | VARCHAR(200) NOT NULL | ✓ | Улица, дом, офис |
+| postal_code | VARCHAR(20) | — | Почтовый индекс |
+| reg_doc_url | TEXT NOT NULL | ✓ | Свидетельство о регистрации (PDF/JPG, до 10 МБ) |
+| status | ENUM: pending / approved / rejected / docs_requested | | DEFAULT pending |
+| rejection_reason | TEXT | | Причина отклонения (обязательна при reject) |
+| docs_request_note | TEXT | | Текст запроса документов модератором |
+| moderator_id | UUID FK → users | | Кто обрабатывал |
+| verified_at | TIMESTAMPTZ | | Дата одобрения |
+| created_at | TIMESTAMPTZ | | |
+| updated_at | TIMESTAMPTZ | | |
+
+**Типы организации (org_type):** ООО (`ooo`), АО (`ao`), ИП (`ip`), Ltd (`ltd`), GmbH (`gmbh`), Co. Ltd (`co_ltd`).
+
+**Соответствие статусов UI:** `pending` = «На проверке», `docs_requested` = «Требует документов», `approved` = «Проверен», `rejected` = «Отклонено».
 
 ---
 
@@ -263,58 +290,8 @@ Base URL: `GET /api/v1/...`
 
 ---
 
-### fleet_vehicles
-Автопарк перевозчика.
-
-| Колонка | Тип | Описание |
-|---------|-----|----------|
-| id | UUID PK | |
-| user_id | UUID FK → users | |
-| composition | ENUM: tractor_semi / truck_trailer | |
-| brand | VARCHAR(100) | Марка |
-| model | VARCHAR(100) | Модель |
-| plate_number | VARCHAR(20) | Гос. номер |
-| year | INT | Год выпуска |
-| country_reg | VARCHAR(100) | Страна регистрации |
-| body_type | VARCHAR(50) | |
-| volume_m3 | DECIMAL | |
-| load_capacity_ton | DECIMAL | |
-| length_m / width_m / height_m | DECIMAL | |
-| tractor_axles | INT | |
-| trailer_axles | INT | |
-| has_tir | BOOLEAN | |
-| has_cmr | BOOLEAN | |
-| has_adr | BOOLEAN | |
-| has_ekmt | BOOLEAN | |
-| allowed_countries | TEXT[] | |
-| driver_language | TEXT[] | |
-| created_at | TIMESTAMPTZ | |
-
----
-
-### transport_listings
-Объявления свободного транспорта.
-
-| Колонка | Тип | Описание |
-|---------|-----|----------|
-| id | UUID PK | |
-| vehicle_id | UUID FK → fleet_vehicles | |
-| user_id | UUID FK → users | |
-| current_location | VARCHAR(150) | |
-| from_city | VARCHAR(100) | |
-| to_city | VARCHAR(100) | |
-| ready_date | DATE | |
-| status | ENUM: active / archived | |
-| is_boosted | BOOLEAN | |
-| boost_expires_at | TIMESTAMPTZ | |
-| is_paid | BOOLEAN | |
-| views_count | INT DEFAULT 0 | |
-| created_at | TIMESTAMPTZ | |
-
----
-
 ### warehouse_listings
-Карточки складов.
+Карточки складов. Только от верифицированных компаний.
 
 | Колонка | Тип | Описание |
 |---------|-----|----------|
@@ -355,12 +332,12 @@ Base URL: `GET /api/v1/...`
 ---
 
 ### listing_media
-Фото и документы для всех типов объявлений.
+Фото и документы для объявлений.
 
 | Колонка | Тип | Описание |
 |---------|-----|----------|
 | id | UUID PK | |
-| entity_type | ENUM: cargo / transport / warehouse / vehicle | |
+| entity_type | ENUM: cargo / warehouse | |
 | entity_id | UUID | ID объявления |
 | file_url | TEXT | Путь к файлу |
 | file_type | ENUM: photo / document | |
@@ -377,7 +354,7 @@ Base URL: `GET /api/v1/...`
 |---------|-----|----------|
 | id | UUID PK | |
 | user_id | UUID FK → users | Кто смотрел |
-| listing_type | ENUM: cargo / transport / warehouse | |
+| listing_type | ENUM: cargo / warehouse | |
 | listing_id | UUID | |
 | tokens_spent | INT | 0 если подписка |
 | viewed_at | TIMESTAMPTZ | |
@@ -458,7 +435,7 @@ Base URL: `GET /api/v1/...`
 ---
 
 ### saved_routes
-Сохранённые маршруты перевозчика.
+Сохранённые маршруты (отслеживание новых грузов).
 
 | Колонка | Тип | Описание |
 |---------|-----|----------|
@@ -478,7 +455,7 @@ Base URL: `GET /api/v1/...`
 |---------|-----|----------|
 | id | UUID PK | |
 | user_id | UUID FK → users | Кто добавил |
-| listing_type | ENUM: cargo / transport / warehouse | |
+| listing_type | ENUM: cargo / warehouse | |
 | listing_id | UUID | |
 | created_at | TIMESTAMPTZ | |
 
@@ -487,17 +464,17 @@ Base URL: `GET /api/v1/...`
 ---
 
 ### notifications
-Внутренние уведомления платформы (без SMS).
+Внутренние уведомления платформы.
 
 | Колонка | Тип | Описание |
 |---------|-----|----------|
 | id | UUID PK | |
 | user_id | UUID FK → users | Получатель |
-| type | VARCHAR(50) | new_cargo_on_route / contact_purchased / sub_expiring / verification_approved / etc. |
+| type | VARCHAR(50) | new_cargo_on_route / contact_purchased / sub_expiring / verification_approved / verification_rejected / docs_requested / etc. |
 | title | VARCHAR(200) | |
 | body | TEXT | |
 | is_read | BOOLEAN DEFAULT false | |
-| meta | JSONB | Дополнительные данные (listing_id и т.д.) |
+| meta | JSONB | Дополнительные данные (listing_id, company_id и т.д.) |
 | created_at | TIMESTAMPTZ | |
 
 ---
@@ -507,146 +484,128 @@ Base URL: `GET /api/v1/...`
 | Middleware | Назначение |
 |-----------|-----------|
 | `AuthMiddleware` | Проверяет JWT, кладёт user в context |
-| `RoleMiddleware(roles...)` | Проверяет role пользователя: user / moderator / super_admin |
+| `RoleMiddleware(roles...)` | Проверяет role: user / moderator / super_admin |
 | `CompanyVerifiedMiddleware` | Проверяет, есть ли у user хоть одна verified company |
+| `LangMiddleware` | Определяет язык запроса (query/header), кладёт в context |
 | `RateLimitMiddleware` | Ограничение запросов (особенно для /auth/send-otp) |
 | `CORSMiddleware` | Разрешённые origins |
 | `LoggerMiddleware` | Логирование запросов |
 
 ---
 
-# РАЗДЕЛ 4 — ПЛАН РАЗРАБОТКИ (10 ДНЕЙ)
+# РАЗДЕЛ 4 — ПЛАН РАЗРАБОТКИ (9 ДНЕЙ)
+
+> Транспорт/автопарк исключены. Поток: Старт → Auth → Профиль+Компании → Модерация → Грузы → Склады → Токены/Контакты → Платежи → Поиск/Маршруты/Избранное/Уведомления/Админ.
 
 ---
 
 ## ДЕНЬ 1 — Инициализация проекта и база данных
 
-**Цель:** Рабочий скелет, все таблицы созданы через миграции, проект стартует.
+**Цель:** Рабочий скелет, все таблицы созданы, проект стартует.
 
 ### Задачи
 
-1. **Инициализировать Go-проект**
-   - `go mod init [название]`
-   - Установить зависимости: echo, sqlx, pgx, golang-migrate, godotenv, zerolog, uuid
-
-2. **Docker Compose**
-   - Сервис PostgreSQL 15
-   - Сервис приложения (опционально, можно позже)
-   - Порты, volumes для данных БД
-
-3. **Конфигурация**
-   - Загрузка всех переменных из `.env`
-   - Структура Config с валидацией (обязательные поля)
-
-4. **Создать все миграции**
-   - Один файл на таблицу (или сгруппировать логически)
-   - Порядок: users → otp_codes → companies → cargo_listings → cargo_waypoints → fleet_vehicles → transport_listings → warehouse_listings → listing_media → contact_views → token_transactions → payment_orders → subscriptions → pricing_config → saved_routes → favorites → notifications
-   - Создать начальный seed для `pricing_config` — заполнить все тарифы нулевыми ценами
-
-5. **Базовый HTTP-сервер**
-   - Echo приложение стартует на APP_PORT
-   - Healthcheck: `GET /health` → `{"status": "ok"}`
-   - Подключение к PostgreSQL с проверкой ping
-
-6. **Postman**
-   - Создать Collection `[НАЗВАНИЕ] API v1`
-   - Переменные: `base_url`, `access_token`, `refresh_token`
-   - Добавить запрос `GET /health`
+1. **Go-проект** — `go mod init karvon`; зависимости: gin, gorm, pgx/lib-pq, godotenv, zerolog, uuid.
+2. **Docker Compose** — PostgreSQL 15, приложение, WhatsApp-микросервис; порты, volumes.
+3. **Конфигурация** — загрузка `.env`, структура Config с валидацией обязательных полей (fail fast).
+4. **Миграции (GORM AutoMigrate)** — порядок: users → otp_codes → refresh_tokens → companies → cargo_listings → cargo_waypoints → warehouse_listings → listing_media → contact_views → token_transactions → payment_orders → subscriptions → pricing_config → saved_routes → favorites → notifications. Seed `pricing_config` всеми тарифами с нулевыми ценами.
+5. **HTTP-сервер** — Gin на APP_PORT; `GET /health` → `{"status":"ok"}`; ping PostgreSQL.
+6. **Postman** — Collection `KARVON API v1`; переменные `base_url`, `access_token`, `refresh_token`; запрос `GET /health`.
 
 ### Бизнес-правила
-- Если БД недоступна при старте → приложение завершается с ошибкой (fail fast)
-- Миграции запускаются автоматически при старте (или отдельной командой)
+- БД недоступна при старте → завершение с ошибкой (fail fast).
+- Миграции запускаются автоматически при старте.
 
 ---
 
-## ДЕНЬ 2 — Аутентификация (OTP + JWT)
+## ДЕНЬ 2 — Регистрация и аутентификация (OTP + JWT)
 
-**Цель:** Пользователь может зарегистрироваться и войти через телефон + OTP.
+**Цель:** Регистрация в три шага: телефон → OTP → имя. Вход и регистрация — единый поток.
+
+### Регистрация — три шага
+
+| Шаг | Действие | Детали |
+|-----|----------|--------|
+| 1 — Телефон | Ввод номера | Код страны + номер. Поддержка УЗ (+998), СНГ, ЕС, Китая. |
+| 2 — OTP код | Ввод 6-значного кода | Отправка через **Telegram Gateway / WhatsApp**. Действует 5 минут. Повторная отправка — таймер 60 сек. |
+| 3 — Имя | Ввод имени или названия | Отображается в профиле. После — аккаунт создан, начислено **5 токенов** автоматически. |
+
+Ролей при регистрации нет. Один аккаунт — все возможности. Верификация компании — отдельный шаг в профиле.
 
 ### Задачи
 
-1. **Интеграция Eskiz.uz**
-   - Получить токен через email/password Eskiz
-   - Метод отправки SMS с OTP-кодом
-   - Токен Eskiz кешируется в памяти (TTL ~24h), обновляется автоматически
-
-2. **Генерация OTP**
-   - 6-значный числовой код
-   - Запись в таблицу `otp_codes`, TTL = 5 минут
-   - Старые коды для этого телефона — деактивировать (used = true)
-
-3. **Rate limit для OTP**
-   - Максимум 3 активных запроса OTP в час с одного телефона
-   - При превышении — ошибка `OTP_MAX_ATTEMPTS`, указать сколько секунд ждать
-
-4. **JWT**
-   - Access token: содержит `user_id`, `role`, TTL = 15 минут
-   - Refresh token: содержит `user_id`, TTL = 30 дней, хранится в таблице (или stateless)
-   - При refresh — выдаётся новая пара токенов
-
-5. **AuthMiddleware**
-   - Читает `Authorization: Bearer <token>`
-   - Валидирует JWT, достаёт user из БД
-   - Если пользователь заблокирован — возвращает 403
+1. **Отправка OTP (Telegram/WhatsApp)** — выбор канала; код извлекается из шаблона сообщения; режим bypass для отладки (логирует код, не отправляет).
+2. **Генерация OTP** — 6-значный код; запись в `otp_codes`, TTL 5 минут; старые коды телефона → used=true.
+3. **Rate limit** — макс. 3 активных запроса OTP в час с телефона; иначе `OTP_MAX_ATTEMPTS` + сколько секунд ждать.
+4. **JWT** — access (user_id, role, 15 мин), refresh (user_id, 30 дней, хранится в `refresh_tokens`); refresh выдаёт новую пару.
+5. **AuthMiddleware** — читает Bearer, валидирует, достаёт user; заблокированный → 403.
 
 ### API Endpoints
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| POST | `/api/v1/auth/send-otp` | Нет | Отправить OTP на телефон |
+| POST | `/api/v1/auth/send-otp` | Нет | Отправить OTP |
 | POST | `/api/v1/auth/verify-otp` | Нет | Проверить OTP, получить токены |
 | POST | `/api/v1/auth/refresh` | Нет | Обновить access token |
 | POST | `/api/v1/auth/logout` | JWT | Инвалидировать refresh token |
+| POST | `/api/v1/auth/complete-registration` | JWT | Шаг 3: ввод имени |
 
-**POST /auth/send-otp**
-- Body: `{ "phone": "+998901234567" }`
-- Response: `{ "expires_in": 300 }` (секунды до истечения кода)
-- Логика: если пользователя нет — создаётся запись с пустым именем (регистрация завершится на следующем шаге)
+**POST /auth/send-otp** — `{ "phone": "+998901234567" }` → `{ "expires_in": 300 }`. Если пользователя нет — создаётся запись с пустым именем.
 
-**POST /auth/verify-otp**
-- Body: `{ "phone": "+998901234567", "code": "123456" }`
-- Response: `{ "access_token", "refresh_token", "is_new_user": true/false }`
-- Если `is_new_user = true` → фронтенд показывает шаг "Введите имя"
-- Если неверный код → `attempts++`, при attempts >= 5 → код блокируется
-- Новому пользователю начислить 5 токенов (insert в token_transactions)
+**POST /auth/verify-otp** — `{ "phone", "code" }` → `{ access_token, refresh_token, is_new_user }`. Новому пользователю начислить 5 токенов. Неверный код → attempts++, при ≥5 код блокируется.
 
-**POST /auth/verify-otp (завершение регистрации)**
-- Отдельный endpoint или флаг `name` в том же запросе — обсудить с фронтом
-- Рекомендация: `POST /api/v1/auth/complete-registration` → `{ "name": "Алишер" }`
-- Обновляет users.name. Доступен только для новых пользователей без имени.
+**POST /auth/complete-registration** — `{ "name": "Алишер" }`. Обновляет users.name. Доступен только новым пользователям без имени.
 
 ### Бизнес-правила
-- Телефон нормализовать перед сохранением: убрать пробелы, скобки, дефисы
-- OTP проверяется максимум за 5 минут (expires_at)
-- После успешной верификации — OTP помечается used = true
-- Если пользователь уже существует — это вход, не регистрация. Токены выдаются в обоих случаях.
-
-### Postman
-- Добавить все 4 запроса
-- В `verify-otp` — тест: автоматически сохранять `access_token` и `refresh_token` в переменные коллекции
+- Телефон нормализовать (убрать пробелы, скобки, дефисы).
+- OTP валиден максимум 5 минут; после успеха → used=true.
+- Существующий пользователь — это вход; токены выдаются в обоих случаях.
 
 ---
 
-## ДЕНЬ 3 — Профиль и компании
+## ДЕНЬ 3 — Профиль и компании (верификация)
 
-**Цель:** Пользователь управляет своим профилем и добавляет юрлица.
+**Цель:** Пользователь управляет профилем и добавляет юрлица с полной формой верификации.
+
+### Точка входа
+Профиль → «Добавить компанию». Один пользователь может добавить несколько компаний; каждая верифицируется отдельно; переключение между компаниями — в личном кабинете.
+
+### Форма верификации — поля
+
+| Группа | Поле | Обяз? |
+|--------|------|-------|
+| Компания | Страна регистрации | ✓ |
+| Компания | Тип организации (ООО, АО, ИП, Ltd, GmbH, Co. Ltd) | ✓ |
+| Компания | Полное юридическое название | ✓ |
+| Компания | ИНН / БИН / VAT / USCC — автопроверка по реестру страны | ✓ |
+| Контакты | Телефон компании | ✓ |
+| Контакты | Email компании | ✓ |
+| Адрес | Город / район | ✓ |
+| Адрес | Область / провинция | — |
+| Адрес | Улица, дом, офис | ✓ |
+| Адрес | Почтовый индекс | — |
+| Документ | Свидетельство о регистрации (PDF/JPG, до 10 МБ) | ✓ |
+
+Кнопка «Отправить на проверку» разблокируется только после: **ИНН подтверждён автопроверкой** + заполнены все обязательные поля + загружен документ.
+
+### Автопроверка ИНН по стране
+
+| Страна | Реестр |
+|--------|--------|
+| Узбекистан | tax.gov.uz |
+| Россия | egrul.nalog.ru |
+| Казахстан | egov.kz |
+| Европа (ЕС) | VIES (ec.europa.eu) |
+| Китай | gsxt.gov.cn |
+
+Реализация: отдельный endpoint автопроверки по стране и номеру; результат пишется в `inn_verified` + `inn_verified_at`. Если реестр недоступен — компания подаётся с `inn_verified=false`, финальное решение за модератором.
 
 ### Задачи
 
-1. **Профиль пользователя**
-   - Получить и обновить личные данные
-   - Поля для редактирования: name, email, whatsapp, telegram, city, country
-
-2. **Загрузка файлов**
-   - Сервис для сохранения файлов (локально или MinIO)
-   - Принимает multipart/form-data
-   - Возвращает URL файла
-   - Ограничения: PDF и изображения, максимум 10 МБ на файл
-
-3. **Компании**
-   - Один пользователь → несколько компаний
-   - Каждая компания верифицируется отдельно
-   - Одно бесплатное объявление — на весь аккаунт (проверяется по user_id, не company_id)
+1. **Профиль** — get/update личных данных: name, email, whatsapp, telegram, city, country.
+2. **Загрузка файлов** — multipart/form-data; PDF и изображения, до 10 МБ; возвращает URL.
+3. **Автопроверка ИНН** — endpoint проверки по реестру страны перед отправкой формы.
+4. **Компании** — создание/чтение/обновление; один user → несколько компаний; одно бесплатное объявление на весь аккаунт (по user_id).
 
 ### API Endpoints
 
@@ -655,26 +614,24 @@ Base URL: `GET /api/v1/...`
 | GET | `/api/v1/users/me` | JWT | Мой профиль |
 | PUT | `/api/v1/users/me` | JWT | Обновить профиль |
 | GET | `/api/v1/users/me/stats` | JWT | Статистика (токены, подписка, активные объявления) |
-| POST | `/api/v1/companies` | JWT | Добавить компанию (шаг 1 и 2 формы) |
+| POST | `/api/v1/companies/verify-inn` | JWT | Автопроверка ИНН по стране |
+| POST | `/api/v1/companies` | JWT | Добавить компанию (отправить на проверку) |
 | GET | `/api/v1/companies` | JWT | Мои компании |
 | GET | `/api/v1/companies/:id` | JWT | Одна компания |
 | PUT | `/api/v1/companies/:id` | JWT | Обновить данные компании |
 | POST | `/api/v1/upload` | JWT | Загрузить файл → вернуть URL |
 
-**POST /companies**
-- Body: `{ name, inn, region, phone, inn_doc_url, reg_doc_url }`
-- `inn_doc_url` и `reg_doc_url` — ссылки, полученные из `/upload`
-- Статус по умолчанию — `pending`
-- Создаётся уведомление модераторам (через notifications или очередь)
+**POST /companies/verify-inn** — `{ "country": "UZ", "inn": "123456789" }` → `{ "verified": true, "name": "...", "registry": "tax.gov.uz" }` либо `INN_NOT_VERIFIED`.
 
-**GET /companies**
-- Возвращает все компании пользователя
-- Включает: name, inn, status, rejection_reason, verified_at
+**POST /companies** — `{ country, org_type, name, inn, phone, email, city, region?, street, postal_code?, reg_doc_url }`. Требуется `inn_verified=true`. Статус по умолчанию `pending`. Создаётся уведомление модераторам.
+
+**GET /companies** — все компании пользователя: name, inn, status, rejection_reason, docs_request_note, verified_at.
 
 ### Бизнес-правила
-- ИНН уникален в рамках платформы. Если такой ИНН уже есть в другой верифицированной компании — ошибка `ALREADY_EXISTS`
-- Пользователь не может редактировать компанию пока она в статусе `pending`
-- При статусе `docs_requested` — пользователь может обновить документы (inn_doc_url, reg_doc_url)
+- ИНН уникален на платформе: если такой ИНН уже у другой verified-компании → `ALREADY_EXISTS`.
+- Нельзя редактировать компанию в статусе `pending`.
+- В статусе `docs_requested` — пользователь может обновить документ и поля и повторно отправить.
+- ИНН в ответе `/companies` скрыт для чужих пользователей.
 
 ---
 
@@ -682,24 +639,27 @@ Base URL: `GET /api/v1/...`
 
 **Цель:** Модератор обрабатывает заявки за 24 часа.
 
+### Статусы заявки
+
+| Статус | Описание |
+|--------|----------|
+| На проверке (`pending`) | Заявка подана, ожидает решения. |
+| Требует документов (`docs_requested`) | Модератор запросил доп. документы; пользователь получает уведомление. |
+| Проверен (`approved`) | Одобрено. Бейдж «✓ Проверен» + право публиковать грузы и склады. |
+| Отклонено (`rejected`) | Отказ с обязательной причиной; пользователь видит причину и может подать повторно. |
+
+### Действия модератора
+
+- **Одобрить** → `approved`, `verified_at=now()`, пользователь получает **push + email**.
+- **Отклонить** → `rejected`, `rejection_reason` обязателен (текст, есть шаблоны), **push + email**.
+- **Запросить документы** → `docs_requested`, `docs_request_note` (текст + шаблоны), **push + email**.
+
 ### Задачи
 
-1. **Middleware для ролей**
-   - `RoleMiddleware("moderator", "super_admin")` — применяется ко всем /moderator/* роутам
-   - `RoleMiddleware("super_admin")` — для /admin/* роутов
-
-2. **Очередь верификации**
-   - Список заявок со статусом `pending` или `docs_requested`, отсортированных по дате
-   - Каждая заявка имеет поле `deadline` = created_at + 24 часа
-   - Если до дедлайна < 2 часов — помечается `is_urgent: true`
-
-3. **Обработка заявок**
-   - Одобрить → status = approved, verified_at = now()
-   - Отклонить → status = rejected, rejection_reason обязателен
-   - Запросить документы → status = docs_requested, пользователь получает уведомление
-
-4. **Уведомление пользователю**
-   - При любом изменении статуса — создавать запись в таблице `notifications`
+1. **Ролевой middleware** — `RoleMiddleware("moderator","super_admin")` на /moderator/*.
+2. **Очередь верификации** — заявки `pending`/`docs_requested`, сортировка по дате; `deadline=created_at+24ч`; `is_urgent=true` если до дедлайна <2ч.
+3. **Обработка** — approve / reject (reason обяз.) / request-docs (note обяз.).
+4. **Уведомления** — при любом изменении статуса: запись в `notifications` + push + email.
 
 ### API Endpoints
 
@@ -708,48 +668,33 @@ Base URL: `GET /api/v1/...`
 | GET | `/api/v1/moderator/queue` | Moderator | Очередь заявок |
 | GET | `/api/v1/moderator/queue/:id` | Moderator | Детали заявки |
 | POST | `/api/v1/moderator/queue/:id/approve` | Moderator | Одобрить |
-| POST | `/api/v1/moderator/queue/:id/reject` | Moderator | Отклонить |
-| POST | `/api/v1/moderator/queue/:id/request-docs` | Moderator | Запросить документы |
+| POST | `/api/v1/moderator/queue/:id/reject` | Moderator | Отклонить (reason обязателен) |
+| POST | `/api/v1/moderator/queue/:id/request-docs` | Moderator | Запросить документы (note обязателен) |
 | GET | `/api/v1/moderator/history` | Moderator | История своих решений |
 
-**GET /moderator/queue**
-- Query params: `status=pending` (по умолчанию)
-- Возвращает: id, company name, inn, created_at, deadline, is_urgent, user_name, user_phone
+**GET /moderator/queue** — `status=pending` (по умолч.); возвращает id, company name, inn, org_type, country, created_at, deadline, is_urgent, user_name, user_phone.
 
-**POST /moderator/queue/:id/reject**
-- Body: `{ "reason": "Документы не читаемы, загрузите скан лучшего качества" }`
-- reason обязателен
+**POST /moderator/queue/:id/reject** — `{ "reason": "Документы не читаемы..." }` (обязателен).
+
+**POST /moderator/queue/:id/request-docs** — `{ "note": "Загрузите свидетельство лучшего качества" }` (обязателен).
 
 ### Бизнес-правила
-- Модератор видит ТОЛЬКО очередь верификации. Никаких платежей, статистики, пользователей.
-- После одобрения компании — пользователь может публиковать грузы и склады без дополнительной модерации
-- Один модератор не может обработать заявку дважды (только первый успешный action)
+- Модератор видит ТОЛЬКО очередь верификации (никаких платежей/статистики/пользователей).
+- После одобрения компании — публикация грузов и складов без доп. модерации.
+- Один модератор не может обработать заявку дважды (только первый успешный action).
 
 ---
 
 ## ДЕНЬ 5 — Объявления о грузах
 
-**Цель:** Верифицированные компании публикуют грузы. Все работает с фильтрами.
+**Цель:** Верифицированные компании публикуют грузы. Работают фильтры.
 
 ### Задачи
 
-1. **Проверка перед публикацией**
-   - Пользователь должен иметь хотя бы одну verified компанию
-   - Проверка бесплатного объявления: если у пользователя нет ни одного активного бесплатного → первое объявление бесплатно. Иначе — нужна оплата (проверить `pricing_config`)
-
-2. **Создание объявления**
-   - Полная форма из ТЗ (все поля раздела 4.2)
-   - Тип перевозки (domestic/international) определяет набор обязательных полей
-   - Автоматически рассчитать `expires_at` = created_at + duration_hours
-
-3. **Фоновая задача — истечение объявлений**
-   - Каждые 30 минут проверять: expires_at < now() AND status = active
-   - Переводить в status = archived
-   - Уведомить пользователя
-
-4. **Шаблоны**
-   - Сохранить текущее объявление как шаблон (is_template = true, template_name = ...)
-   - Создать новое объявление из шаблона — копирует все поля, сбрасывает dates/status
+1. **Проверка перед публикацией** — у пользователя ≥1 verified компания; проверка бесплатного объявления (первое бесплатно, далее — оплата по `pricing_config`).
+2. **Создание** — полная форма; тип перевозки (domestic/international) определяет обязательные поля; `expires_at=created_at+duration_hours`.
+3. **Фоновая задача истечения** — каждые 30 минут: `expires_at<now() AND status=active` → `archived` + уведомление.
+4. **Шаблоны** — сохранить как шаблон; создать из шаблона (копирует поля, сбрасывает даты/статус).
 
 ### API Endpoints
 
@@ -757,7 +702,7 @@ Base URL: `GET /api/v1/...`
 |-------|------|------|----------|
 | POST | `/api/v1/listings/cargo` | JWT + Verified | Создать объявление |
 | GET | `/api/v1/listings/cargo` | Нет | Список с фильтрами |
-| GET | `/api/v1/listings/cargo/:id` | Нет | Карточка объявления |
+| GET | `/api/v1/listings/cargo/:id` | Нет | Карточка |
 | PUT | `/api/v1/listings/cargo/:id` | JWT + Owner | Редактировать |
 | PATCH | `/api/v1/listings/cargo/:id/status` | JWT + Owner | Изменить статус |
 | POST | `/api/v1/listings/cargo/:id/duplicate` | JWT + Verified | Дублировать |
@@ -767,102 +712,36 @@ Base URL: `GET /api/v1/...`
 | POST | `/api/v1/listings/cargo/templates` | JWT + Verified | Сохранить как шаблон |
 | POST | `/api/v1/listings/cargo/from-template/:id` | JWT + Verified | Создать из шаблона |
 
-**GET /listings/cargo — Query параметры фильтров:**
+**GET /listings/cargo — фильтры:**
 ```
 from_city, to_city, type (domestic/international),
 loading_type (ftl/ltl/partial), cargo_type,
 body_types (массив), weight_min, weight_max,
 date_from, verified_only (bool),
-sort (newest/date/weight),
-page, per_page
+sort (newest/date/weight), page, per_page
 ```
 
-**GET /listings/cargo/:id — логика отображения контактов:**
-- Телефон, WhatsApp, Telegram: если у пользователя нет opened contact → показывать `null` (фронтенд применяет blur)
-- Если есть opened contact (проверить contact_views) → показывать реальные данные
+**GET /listings/cargo/:id — контакты:** телефон/WhatsApp/Telegram = `null` (blur) если нет opened contact; реальные данные если есть `contact_views` или это своё объявление.
 
-**GET /listings/cargo/:id/stats**
-- Возвращает: views_count, contacts_bought_count, список пользователей в избранном (name, company, date)
+**GET /listings/cargo/:id/stats:** views_count, contacts_bought_count, список добавивших в избранное (name, company, date).
 
 ### Бизнес-правила
-- При загрузке списка — boosted объявления всегда вверху (сортировка: is_boosted DESC, created_at DESC)
-- Автор объявления видит телефон без токена
-- После истечения объявления — создать уведомление пользователю
-- При дублировании — все поля копируются, кроме: status (active), expires_at (пересчитать), dates погрузки/выгрузки (null)
+- Boosted объявления вверху (is_boosted DESC, created_at DESC).
+- Автор видит телефон без токена.
+- После истечения — уведомление.
+- При дублировании копируются все поля, кроме: status (active), expires_at (пересчёт), даты погрузки/выгрузки (null).
 
 ---
 
-## ДЕНЬ 6 — Автопарк и транспорт
-
-**Цель:** Перевозчики ведут автопарк и публикуют свободные машины.
-
-### Задачи
-
-1. **Автопарк (fleet)** — личный кабинет, не виден публично
-   - CRUD машин
-   - Загрузка фото и документов через /upload
-
-2. **Публикация транспорта**
-   - Из машины автопарка создаётся transport_listing
-   - Одна машина — одно активное объявление одновременно
-   - Та же логика бесплатного объявления, что и для грузов
-
-3. **Список транспорта с фильтрами**
-   - Все поля раздела 5.3 из ТЗ
-   - Специальный фильтр «Китайский маршрут»: показывать только тягачи/грузовики с 5, 6 или 8 осями суммарно
-
-### API Endpoints
-
-| Метод | Путь | Auth | Описание |
-|-------|------|------|----------|
-| POST | `/api/v1/fleet` | JWT | Добавить машину |
-| GET | `/api/v1/fleet` | JWT | Мой автопарк |
-| GET | `/api/v1/fleet/:id` | JWT | Одна машина |
-| PUT | `/api/v1/fleet/:id` | JWT + Owner | Редактировать |
-| DELETE | `/api/v1/fleet/:id` | JWT + Owner | Удалить |
-| POST | `/api/v1/fleet/:id/publish` | JWT | Опубликовать транспорт |
-| GET | `/api/v1/listings/transport` | Нет | Список транспорта |
-| GET | `/api/v1/listings/transport/:id` | Нет | Карточка |
-| PUT | `/api/v1/listings/transport/:id` | JWT + Owner | Редактировать объявление |
-| PATCH | `/api/v1/listings/transport/:id/status` | JWT + Owner | Изменить статус |
-| DELETE | `/api/v1/listings/transport/:id` | JWT + Owner | Удалить |
-
-**GET /listings/transport — Query параметры:**
-```
-from_city, to_city, body_type, total_axles_min, total_axles_max,
-china_route (bool — фильтр 5/6/8 осей),
-volume_min, volume_max,
-load_capacity_min, load_capacity_max,
-has_tir, has_cmr, has_adr,
-allowed_country, ready_date,
-sort, page, per_page
-```
-
-### Бизнес-правила
-- Удаление машины из автопарка: если есть активное объявление → сначала архивировать объявление, потом удалять машину
-- При удалении транспортного объявления — машина остаётся в автопарке
-- Гос. номер машины скрыт для неавторизованных пользователей
-
----
-
-## ДЕНЬ 7 — Склады
+## ДЕНЬ 6 — Склады
 
 **Цель:** Три типа складов с разными полями и картой.
 
 ### Задачи
 
-1. **CRUD складов**
-   - Только от верифицированных компаний
-   - Каждый тип (regular/cold/customs) имеет свои обязательные поля
-   - Геометка: lat/lng сохраняются в БД
-
-2. **Валидация по типу**
-   - `cold`: temp_min, temp_max, cold_chamber_types — обязательны
-   - `customs`: customs_license_number, customs_license_issued, customs_license_expires — обязательны
-   - `regular`: только общие поля
-
-3. **Прогресс-бар занятости**
-   - В ответе вычислять: `occupancy_percent = ((area_total_m2 - area_free_m2) / area_total_m2) * 100`
+1. **CRUD складов** — только verified компании; каждый тип (regular/cold/customs) имеет свои обязательные поля; геометка lat/lng.
+2. **Валидация по типу** — `cold`: temp_min/temp_max/cold_chamber_types обязательны; `customs`: customs_license_* обязательны; `regular`: только общие.
+3. **Прогресс-бар занятости** — `occupancy_percent = ((area_total_m2 - area_free_m2)/area_total_m2)*100`.
 
 ### API Endpoints
 
@@ -875,44 +754,40 @@ sort, page, per_page
 | PATCH | `/api/v1/warehouses/:id/status` | JWT + Owner | Архивировать |
 | DELETE | `/api/v1/warehouses/:id` | JWT + Owner | Удалить |
 
-**GET /warehouses — Query параметры:**
+**GET /warehouses — фильтры:**
 ```
 region, warehouse_type (regular/cold/customs),
-area_min, area_max,
-temp_min, temp_max (только для cold),
+area_min, area_max, temp_min, temp_max (только cold),
 services (массив: crossdock/railway/parking_trucks),
 sort, page, per_page
 ```
 
 ### Бизнес-правила
-- Свободная площадь не может быть больше общей площади
-- При фильтре по температурному режиму — учитывать что cold склад может хранить груз если temp попадает в диапазон [temp_min, temp_max]
+- Свободная площадь ≤ общей площади.
+- При фильтре по температуре — cold склад подходит если temp в [temp_min, temp_max].
+- Контакты склада скрыты так же, как у грузов (через токен/подписку).
 
 ---
 
-## ДЕНЬ 8 — Токены и просмотр контактов
+## ДЕНЬ 7 — Токены и просмотр контактов
 
 **Цель:** Основная монетизация. Пользователь платит токен чтобы увидеть телефон.
 
-### Задачи
-
-1. **Логика просмотра контакта — 5 сценариев**
+### Логика просмотра контакта — сценарии
 
 | Сценарий | Действие |
-|---------|---------|
-| Гость (не авторизован) | Вернуть 401, фронт редиректит на вход |
-| Авторизован, нет токенов, нет подписки | Вернуть 402 с данными тарифов (пакеты + подписки) |
-| Есть активная подписка | Показать контакт, токен НЕ списывать. Записать в contact_views (tokens_spent = 0) |
-| Уже смотрел (запись в contact_views за последние 30 дней) | Показать контакт, токен НЕ списывать |
+|----------|----------|
+| Гость (не авторизован) | 401, фронт редиректит на вход |
+| Авторизован, нет токенов, нет подписки | 402 + данные тарифов (пакеты + подписки) |
+| Есть активная подписка | Показать контакт, токен НЕ списывать; contact_views (tokens_spent=0) |
+| Уже смотрел (за 30 дней) | Показать контакт, токен НЕ списывать |
 | Есть токены, нет подписки, первый просмотр | Списать 1 токен, показать контакт |
+| Своё объявление | Показать контакт, токен НЕ списывать |
 
-2. **Атомарность операции**
-   - Списание токена и запись contact_views — в одной транзакции PostgreSQL
-   - Если транзакция упала — контакт не показывать
+### Задачи
 
-3. **История контактов**
-   - Список всех просмотренных контактов за 30 дней
-   - С деталями объявления (краткая карточка)
+1. **Атомарность** — списание токена и запись contact_views в одной транзакции; при сбое контакт не показывать.
+2. **История контактов** — список за 30 дней с краткой карточкой объявления.
 
 ### API Endpoints
 
@@ -922,57 +797,32 @@ sort, page, per_page
 | GET | `/api/v1/contacts/history` | JWT | История просмотров |
 | GET | `/api/v1/users/me/tokens` | JWT | Баланс и история токенов |
 
-**POST /contacts/view**
-- Body: `{ "listing_type": "cargo", "listing_id": "uuid" }`
-- Response (успех): `{ phone, phone_extra, whatsapp, telegram, email, company_name, city, country }`
-- Response (402): `{ "error": { "code": "INSUFFICIENT_TOKENS" }, "data": { "packages": [...], "subscriptions": [...] } }`
-
-**GET /contacts/history**
-- Возвращает записи из contact_views за последние 30 дней
-- С join на объявление: краткое описание (от/до, груз/транспорт/склад)
+**POST /contacts/view** — `{ "listing_type": "cargo|warehouse", "listing_id": "uuid" }`.
+- Успех: `{ phone, phone_extra, whatsapp, telegram, email, company_name, city, country }`.
+- 402: `{ "error": {"code":"INSUFFICIENT_TOKENS"}, "data": {"packages":[...], "subscriptions":[...]} }`.
 
 ### Бизнес-правила
-- Просмотр собственного объявления — токен не списывать, просто вернуть данные
-- contacts_bought_count в объявлении инкрементируется только когда реально списан токен (не при подписке и не при повторном просмотре)
-- Уведомление автору объявления: при каждой покупке контакта → создать notification типа `contact_purchased` с именем/компанией покупателя
+- `contacts_bought_count` инкрементируется только при реальном списании токена (не при подписке/повторе).
+- Уведомление автору при покупке контакта: notification типа `contact_purchased` с именем/компанией покупателя.
 
 ---
 
-## ДЕНЬ 9 — Монетизация (Rahmat, подписка, Boost)
+## ДЕНЬ 8 — Монетизация (Rahmat, подписка, Boost)
 
-**Цель:** Полный платёжный цикл. Rahmat webhook активирует токены/подписки автоматически.
+**Цель:** Полный платёжный цикл. Webhook Rahmat активирует токены/подписки автоматически.
 
 ### Задачи
 
-1. **Получение тарифов**
-   - Все активные тарифы берутся из `pricing_config`
-   - Никаких хардкодированных цен в коде
-
-2. **Создание платежа**
-   - Создать payment_order со статусом `pending`
-   - Передать данные в Rahmat API (сумма, merchant_id, callback URL, metadata)
-   - Rahmat возвращает URL платёжной страницы → вернуть на фронт
-
-3. **Webhook от Rahmat**
-   - Принять POST на `/api/v1/payments/webhook`
-   - Проверить подпись (HMAC или ключ из Rahmat)
-   - Обновить payment_order.status = paid
-   - В зависимости от `payment_type`:
-     - `tokens` → начислить токены (update token_balance + insert token_transaction)
-     - `subscription` → создать запись в subscriptions с датами
-     - `listing` → пометить объявление как is_paid = true (создать если ещё нет)
-     - `boost` → обновить listing: is_boosted = true, boost_expires_at = now() + duration_days
-
-4. **Boost истекает**
-   - Фоновая задача каждый час: boost_expires_at < now() → is_boosted = false
-
-5. **Ручное пополнение (наличные)**
-   - Только супер-админ
-   - Создаёт token_transaction type=credit, reason=manual
-
-6. **Управление ценами (супер-админ)**
-   - Читать и обновлять pricing_config
-   - Лог изменений: кто, когда, что изменил (поле updated_by + updated_at)
+1. **Тарифы** — все активные из `pricing_config`; никаких хардкодов.
+2. **Создание платежа** — payment_order `pending`; запрос в Rahmat (сумма, merchant_id, callback, metadata); вернуть URL платёжной страницы.
+3. **Webhook** — POST `/payments/webhook`; проверка подписи; status=paid; по `payment_type`:
+   - `tokens` → начислить токены (+token_transaction);
+   - `subscription` → создать subscription с датами;
+   - `listing` → пометить объявление is_paid=true;
+   - `boost` → is_boosted=true, boost_expires_at=now()+duration.
+4. **Boost истекает** — фон каждый час: boost_expires_at<now() → is_boosted=false.
+5. **Ручное пополнение (наличные)** — только супер-админ; token_transaction type=credit, reason=manual.
+6. **Управление ценами** — супер-админ читает/обновляет pricing_config (лог: updated_by, updated_at).
 
 ### API Endpoints
 
@@ -980,80 +830,42 @@ sort, page, per_page
 |-------|------|------|----------|
 | GET | `/api/v1/payments/packages` | Нет | Все тарифы |
 | POST | `/api/v1/payments/create` | JWT | Создать платёж → URL Rahmat |
-| POST | `/api/v1/payments/webhook` | Нет (проверить подпись) | Webhook от Rahmat |
-| GET | `/api/v1/payments/history` | JWT | История платежей пользователя |
+| POST | `/api/v1/payments/webhook` | Нет (подпись) | Webhook от Rahmat |
+| GET | `/api/v1/payments/history` | JWT | История платежей |
 | GET | `/api/v1/subscriptions/active` | JWT | Активная подписка |
-| POST | `/api/v1/listings/:type/:id/boost` | JWT + Owner | Запустить Boost |
+| POST | `/api/v1/listings/:type/:id/boost` | JWT + Owner | Запустить Boost (type: cargo/warehouse) |
 | POST | `/api/v1/admin/payments/topup` | SuperAdmin | Ручное пополнение токенов |
 | GET | `/api/v1/admin/pricing` | SuperAdmin | Все тарифы |
 | PUT | `/api/v1/admin/pricing/:key` | SuperAdmin | Обновить тариф |
 
-**POST /payments/create**
-- Body: `{ "pricing_key": "tokens_basic", "currency": "UZS" }`
-- Создать payment_order
-- Отправить запрос в Rahmat API
-- Вернуть: `{ "payment_url": "https://rahmat.uz/pay/...", "order_id": "uuid" }`
+**POST /payments/create** — `{ "pricing_key": "tokens_basic", "currency": "UZS" }` → `{ payment_url, order_id }`.
 
-**POST /payments/webhook**
-- Обработка идемпотентна: если payment_order уже paid → вернуть 200, не обрабатывать повторно
-- При ошибке обработки — вернуть 500 (Rahmat будет повторять)
+**POST /payments/webhook** — идемпотентен (paid → 200 без повторной обработки); при ошибке → 500 (Rahmat повторит).
 
-**Подписка: уведомление за 3 дня**
-- Фоновая задача раз в сутки: subscriptions WHERE expires_at < now() + 3 days AND is_active = true
-- Создать notification типа `subscription_expiring`
+**Подписка: уведомление за 3 дня** — фон раз в сутки: expires_at<now()+3d AND is_active → notification `sub_expiring`.
 
 ### Бизнес-правила
-- Нельзя купить boost для чужого объявления
-- Если у объявления уже есть активный boost — продлевать, не перезаписывать
-- При покупке подписки — существующая не отменяется, новая добавляет дни сверху (или стартует после окончания текущей — уточнить)
-- payment_orders.status меняется только webhook-ом, не вручную через API (кроме супер-админа)
+- Нельзя купить boost для чужого объявления.
+- Активный boost — продлевать, не перезаписывать.
+- payment_orders.status меняется только webhook-ом (кроме супер-админа).
 
 ---
 
-## ДЕНЬ 10 — Поиск, маршруты, избранное, уведомления, Супер-админ
+## ДЕНЬ 9 — Поиск, маршруты, избранное, уведомления, Супер-админ
 
-**Цель:** Финальные модули. Полноценная панель супер-админа. Postman-коллекция готова.
+**Цель:** Финальные модули и панель супер-админа. Postman готов.
 
-### Задачи
-
-1. **Единый поиск**
-   - Один endpoint принимает тип (cargo/transport/warehouse) и параметры
-   - Автодополнение городов: отдельный endpoint для подсказок
-
-2. **Сохранённые маршруты**
-   - Перевозчик сохраняет пару from/to
-   - При создании нового cargo_listing → проверить все saved_routes, найти совпадения → создать notifications
-
-3. **Избранное**
-   - Добавить/убрать объявление
-   - В ответе списка избранного — проверять, активно ли объявление ещё
-
-4. **Уведомления**
-   - Получить список (с пагинацией, сначала непрочитанные)
-   - Пометить прочитанным (одно или все)
-   - Счётчик непрочитанных: `GET /notifications/unread-count`
-
-5. **Супер-админ панель**
-   - Все разделы из ТЗ раздела 13.2
-
-### API Endpoints — Поиск
+### Поиск
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| GET | `/api/v1/search` | Нет | Общий поиск |
+| GET | `/api/v1/search` | Нет | Общий поиск (type=cargo/warehouse) |
 | GET | `/api/v1/search/cities` | Нет | Автодополнение городов |
 
-**GET /search**
-- Query: `type=cargo&from_city=Ташкент&to_city=Москва&...` (все фильтры из разделов 9.2–9.4)
-- Использует те же фильтры что и /listings/cargo, /listings/transport, /warehouses
+**GET /search** — `type=cargo|warehouse` + соответствующие фильтры (из Дней 5/6).
+**GET /search/cities** — `q=Таш` → `["Ташкент","Ташкентская область"]` (статичный список СНГ/ЕС/Китай).
 
-**GET /search/cities**
-- Query: `q=Таш` → возвращает список: `["Ташкент", "Ташкентская область"]`
-- Источник: статичный список городов СНГ в коде (JSON-файл) или таблица в БД
-
----
-
-### API Endpoints — Маршруты
+### Маршруты
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
@@ -1062,85 +874,65 @@ sort, page, per_page
 | DELETE | `/api/v1/routes/:id` | JWT + Owner | Удалить |
 | PATCH | `/api/v1/routes/:id/notifications` | JWT + Owner | Вкл/выкл уведомления |
 
-### Бизнес-правила маршрутов
-- При создании груза (POST /listings/cargo) — в конце транзакции запускать поиск совпадений по saved_routes
-- Совпадение: from_city объявления ILIKE from_city маршрута (и аналогично to_city)
-- Уведомление создаётся только если notifications_enabled = true для маршрута
+- При создании груза — в конце транзакции искать совпадения по saved_routes (from_city/to_city ILIKE) → notifications (если notifications_enabled).
 
----
-
-### API Endpoints — Избранное
+### Избранное
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| POST | `/api/v1/favorites` | JWT | Добавить в избранное |
-| DELETE | `/api/v1/favorites` | JWT | Убрать из избранного |
+| POST | `/api/v1/favorites` | JWT | Добавить (listing_type: cargo/warehouse) |
+| DELETE | `/api/v1/favorites` | JWT | Убрать |
 | GET | `/api/v1/favorites` | JWT | Мои избранные |
 
-**POST /favorites**
-- Body: `{ "listing_type": "cargo", "listing_id": "uuid" }`
-- Если уже в избранном — вернуть 200 (идемпотентно)
+- POST идемпотентен; GET помечает `is_expired:true` для архивных объявлений.
 
-**GET /favorites**
-- Возвращает объявления с флагом `is_expired: true` если объявление архивировано
-
----
-
-### API Endpoints — Уведомления
+### Уведомления
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| GET | `/api/v1/notifications` | JWT | Список |
+| GET | `/api/v1/notifications` | JWT | Список (пагинация, сначала непрочитанные) |
 | GET | `/api/v1/notifications/unread-count` | JWT | Счётчик непрочитанных |
 | PATCH | `/api/v1/notifications/:id/read` | JWT | Прочитать одно |
 | PATCH | `/api/v1/notifications/read-all` | JWT | Прочитать все |
 
----
-
-### API Endpoints — Супер-Админ
+### Супер-админ
 
 | Метод | Путь | Описание |
 |-------|------|----------|
 | GET | `/api/v1/admin/dashboard` | Метрики: пользователи, объявления, выручка за период |
-| GET | `/api/v1/admin/users` | Список пользователей (поиск, фильтры) |
-| GET | `/api/v1/admin/users/:id` | Профиль пользователя (полный) |
-| PATCH | `/api/v1/admin/users/:id/block` | Заблокировать / разблокировать |
+| GET | `/api/v1/admin/users` | Список пользователей |
+| GET | `/api/v1/admin/users/:id` | Профиль пользователя |
+| PATCH | `/api/v1/admin/users/:id/block` | Блокировать / разблокировать |
 | POST | `/api/v1/admin/users/:id/topup` | Начислить токены вручную |
-| GET | `/api/v1/admin/listings` | Все объявления всех типов |
+| GET | `/api/v1/admin/listings` | Все объявления (cargo/warehouse) |
 | DELETE | `/api/v1/admin/listings/:type/:id` | Удалить объявление |
 | PATCH | `/api/v1/admin/listings/:type/:id/block` | Заблокировать объявление |
 | GET | `/api/v1/admin/companies` | Все компании |
 | GET | `/api/v1/admin/payments` | Все платежи |
 | GET | `/api/v1/admin/pricing` | Все тарифы |
 | PUT | `/api/v1/admin/pricing/:key` | Обновить тариф |
-| POST | `/api/v1/admin/moderators` | Создать учётную запись модератора |
+| POST | `/api/v1/admin/moderators` | Создать модератора |
 | DELETE | `/api/v1/admin/moderators/:id` | Удалить модератора |
 
-**GET /admin/dashboard**
-- Query: `period=7d / 30d / 90d`
-- Возвращает: новые пользователи, новые объявления, выручка (UZS/USD), купленные контакты, активные подписки, срочные верификации (deadline < 2h)
-
----
+**GET /admin/dashboard** — `period=7d/30d/90d`: новые пользователи, новые объявления, выручка (UZS/USD), купленные контакты, активные подписки, срочные верификации (deadline<2h).
 
 ### Финальный Postman
-
-- Все 60+ endpoint-ов в одной коллекции
-- Папки по дням/модулям: Auth, Users, Companies, Moderator, Cargo, Fleet, Transport, Warehouses, Contacts, Payments, Search, Routes, Favorites, Notifications, Admin
-- Переменные: `base_url`, `access_token`, `admin_token`, `moderator_token`
-- Pre-request Script для автообновления access_token через refresh
-- Тесты на критичных запросах: verify-otp сохраняет токены, contact/view проверяет что contacts_bought_count вырос
+- Все endpoint-ы в одной коллекции; папки: Auth, Users, Companies, Moderator, Cargo, Warehouses, Contacts, Payments, Search, Routes, Favorites, Notifications, Admin.
+- Переменные: `base_url`, `access_token`, `admin_token`, `moderator_token`.
+- Pre-request Script для автообновления access_token через refresh.
+- Тесты: verify-otp сохраняет токены; contact/view проверяет рост contacts_bought_count.
 
 ---
 
 # РАЗДЕЛ 5 — ФОНОВЫЕ ЗАДАЧИ
 
-Реализовать как goroutine с ticker внутри приложения (или через pg_cron):
+Реализовать как goroutine с ticker внутри приложения (или pg_cron):
 
 | Задача | Интервал | Логика |
 |--------|---------|--------|
-| Истечение объявлений | 30 минут | cargo/transport: expires_at < now() AND active → archived + notification |
-| Истечение Boost | 1 час | boost_expires_at < now() AND is_boosted → is_boosted = false |
-| Уведомление подписки | 1 раз в сутки в 09:00 | expires_at < now() + 3 days → notification sub_expiring |
+| Истечение объявлений | 30 минут | cargo: expires_at<now() AND active → archived + notification |
+| Истечение Boost | 1 час | boost_expires_at<now() AND is_boosted → is_boosted=false |
+| Уведомление подписки | 1 раз в сутки в 09:00 | expires_at<now()+3 days → notification sub_expiring |
 | OTP очистка | 1 раз в сутки | Удалять otp_codes старше 24 часов |
 
 ---
@@ -1150,9 +942,8 @@ sort, page, per_page
 | Правило | Реализация |
 |---------|-----------|
 | Только свои объявления | При PUT/DELETE проверять user_id = listing.user_id |
-| ИНН через модератора | ИНН в ответе /companies скрыт для обычных пользователей |
-| Телефон скрыт | В карточке объявления phone = null если нет contact_view |
-| Гос. номер скрыт | fleet_vehicles.plate_number не возвращать неавторизованным |
-| Webhook подпись | Проверять HMAC-подпись от Rahmat (документация Rahmat) |
-| Rate limit OTP | Максимум 3 запроса OTP в час с одного IP / телефона |
+| ИНН через модератора | ИНН в ответе /companies скрыт для чужих пользователей |
+| Телефон скрыт | В карточке объявления phone=null если нет contact_view |
+| Webhook подпись | Проверять HMAC-подпись от Rahmat |
+| Rate limit OTP | Максимум 3 запроса OTP в час с телефона |
 | Блокировка | Заблокированный пользователь получает 403 на любой запрос |
