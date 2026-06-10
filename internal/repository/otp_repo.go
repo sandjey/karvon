@@ -64,3 +64,11 @@ func (r *OTPRepo) MarkUsed(ctx context.Context, id interface{}) error {
 		Where("id = ?", id).
 		Update("used", true).Error
 }
+
+// DeleteOlderThan удаляет OTP-коды старше указанного времени (фоновая очистка).
+func (r *OTPRepo) DeleteOlderThan(ctx context.Context, age time.Duration) (int64, error) {
+	res := r.db.WithContext(ctx).
+		Where("created_at < ?", time.Now().Add(-age)).
+		Delete(&model.OTPCode{})
+	return res.RowsAffected, res.Error
+}

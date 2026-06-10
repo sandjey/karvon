@@ -27,12 +27,13 @@ const (
 var phoneRegexp = regexp.MustCompile(`[\s\-\(\)]`)
 
 type AuthService struct {
-	userRepo  *repository.UserRepo
-	otpRepo   *repository.OTPRepo
-	tokenRepo *repository.TokenRepo
-	jwtMgr    *jwtpkg.Manager
-	whatsapp  notifier.Notifier
-	telegram  notifier.Notifier
+	userRepo     *repository.UserRepo
+	otpRepo      *repository.OTPRepo
+	tokenRepo    *repository.TokenRepo
+	jwtMgr       *jwtpkg.Manager
+	whatsapp     notifier.Notifier
+	telegram     notifier.Notifier
+	universalOTP string
 }
 
 func NewAuthService(
@@ -42,14 +43,16 @@ func NewAuthService(
 	jwtMgr *jwtpkg.Manager,
 	whatsapp notifier.Notifier,
 	telegram notifier.Notifier,
+	universalOTP string,
 ) *AuthService {
 	return &AuthService{
-		userRepo:  userRepo,
-		otpRepo:   otpRepo,
-		tokenRepo: tokenRepo,
-		jwtMgr:    jwtMgr,
-		whatsapp:  whatsapp,
-		telegram:  telegram,
+		userRepo:     userRepo,
+		otpRepo:      otpRepo,
+		tokenRepo:    tokenRepo,
+		jwtMgr:       jwtMgr,
+		whatsapp:     whatsapp,
+		telegram:     telegram,
+		universalOTP: universalOTP,
 	}
 }
 
@@ -118,21 +121,23 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (*dto.TokenPair, error) {
 	phone := normalizePhone(req.Phone)
 
-	otp, err := s.otpRepo.FindActive(ctx, phone, req.Code)
-	if err != nil {
-		return nil, err
-	}
-	if otp == nil {
-		// Найти любой OTP для инкремента попыток
-		return nil, ErrOTPInvalid
-	}
-	if otp.Attempts >= otpMaxAttempts {
-		return nil, ErrOTPMaxAttempts
-	}
+	// Универсальный OTP (QA): если задан в .env и совпадает — пропускаем проверку кода.
+	universal := s.universalOTP != "" && req.Code == s.universalOTP
 
-	// Неверный код уже отсеян в FindActive (код сравнивается в запросе).
-	// Помечаем как использованный.
-	_ = s.otpRepo.MarkUsed(ctx, otp.ID)
+	if !universal {
+		otp, err := s.otpRepo.FindActive(ctx, phone, req.Code)
+		if err != nil {
+			return nil, err
+		}
+		if otp == nil {
+			return nil, ErrOTPInvalid
+		}
+		if otp.Attempts >= otpMaxAttempts {
+			return nil, ErrOTPMaxAttempts
+		}
+		// Помечаем как использованный.
+		_ = s.otpRepo.MarkUsed(ctx, otp.ID)
+	}
 
 	// Получить или создать пользователя
 	user, err := s.userRepo.FindByPhone(ctx, phone)

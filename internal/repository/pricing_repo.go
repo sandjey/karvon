@@ -1,0 +1,51 @@
+package repository
+
+import (
+	"context"
+	"errors"
+
+	"gorm.io/gorm"
+
+	"karvon/internal/model"
+)
+
+type PricingRepo struct {
+	db *gorm.DB
+}
+
+func NewPricingRepo(db *gorm.DB) *PricingRepo { return &PricingRepo{db: db} }
+
+func (r *PricingRepo) ListActive(ctx context.Context) ([]model.PricingConfig, error) {
+	var list []model.PricingConfig
+	err := r.db.WithContext(ctx).Where("is_active = true").Order("key ASC").Find(&list).Error
+	return list, err
+}
+
+func (r *PricingRepo) ListAll(ctx context.Context) ([]model.PricingConfig, error) {
+	var list []model.PricingConfig
+	err := r.db.WithContext(ctx).Order("key ASC").Find(&list).Error
+	return list, err
+}
+
+// ListByPrefix возвращает активные тарифы, ключ которых начинается с префикса (tokens_, sub_).
+func (r *PricingRepo) ListByPrefix(ctx context.Context, prefix string) ([]model.PricingConfig, error) {
+	var list []model.PricingConfig
+	err := r.db.WithContext(ctx).
+		Where("is_active = true AND key LIKE ?", prefix+"%").
+		Order("key ASC").Find(&list).Error
+	return list, err
+}
+
+func (r *PricingRepo) FindByKey(ctx context.Context, key string) (*model.PricingConfig, error) {
+	var p model.PricingConfig
+	err := r.db.WithContext(ctx).First(&p, "key = ?", key).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &p, err
+}
+
+func (r *PricingRepo) Update(ctx context.Context, key string, fields map[string]interface{}) error {
+	return r.db.WithContext(ctx).Model(&model.PricingConfig{}).
+		Where("key = ?", key).Updates(fields).Error
+}

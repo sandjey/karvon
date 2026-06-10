@@ -6,11 +6,17 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "base_url",      "value": "http://localhost:8080" },
-    { "key": "access_token",  "value": "" },
-    { "key": "refresh_token", "value": "" },
-    { "key": "lang",          "value": "ru" },
-    { "key": "company_id",    "value": "" }
+    { "key": "base_url",        "value": "https://fan.sarbon.me" },
+    { "key": "access_token",    "value": "" },
+    { "key": "refresh_token",   "value": "" },
+    { "key": "admin_token",     "value": "" },
+    { "key": "lang",            "value": "ru" },
+    { "key": "company_id",      "value": "" },
+    { "key": "cargo_id",        "value": "" },
+    { "key": "warehouse_id",    "value": "" },
+    { "key": "route_id",        "value": "" },
+    { "key": "notification_id", "value": "" },
+    { "key": "user_id",         "value": "" }
   ],
   "item": [
     {
@@ -571,7 +577,7 @@
               "name": "200 — ru",
               "status": "OK", "code": 200,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Файл успешно загружен\",\n  \"data\": {\n    \"url\": \"http://localhost:8080/uploads/companies/1749456000_a1b2c3d4.pdf\",\n    \"name\": \"inn_doc.pdf\",\n    \"size\": 245760\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Файл успешно загружен\",\n  \"data\": {\n    \"url\": \"https://fan.sarbon.me/uploads/companies/1749456000_a1b2c3d4.pdf\",\n    \"name\": \"inn_doc.pdf\",\n    \"size\": 245760\n  }\n}"
             },
             {
               "name": "400 — Файл слишком большой (ru)",
@@ -932,6 +938,434 @@
               "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"name_ru\": \"Ташкент\",  \"name_en\": \"Tashkent\",  \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Tashkent\",  \"lat\": 41.29910, \"lng\": 69.24007, \"population\": 1978028 },\n    { \"name_ru\": \"Андижон\",  \"name_en\": \"Andijon\",   \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Andijan\",   \"lat\": 40.78206, \"lng\": 72.34424, \"population\": 747800 },\n    { \"name_ru\": \"Наманган\", \"name_en\": \"Namangan\",  \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Namangan\",  \"lat\": 41.00423, \"lng\": 71.66603, \"population\": 713220 },\n    { \"name_ru\": \"Самарканд\",\"name_en\": \"Samarkand\", \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Samarkand\", \"lat\": 39.65417, \"lng\": 66.97583, \"population\": 595200 }\n  ]\n}"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Cargo",
+      "description": "Объявления о грузах. Создание — только верифицированной компанией. Контакты скрыты (см. Contacts → View).",
+      "item": [
+        {
+          "name": "POST /listings/cargo — создать",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('cargo_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"domestic\",\n  \"cargo_name\": \"Текстиль\",\n  \"cargo_type\": \"паллеты\",\n  \"weight_ton\": 20,\n  \"volume_m3\": 86,\n  \"loading_type\": \"ftl\",\n  \"body_types\": [\"tent\"],\n  \"from_city\": \"Ташкент\",\n  \"from_country\": \"Узбекистан\",\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"Узбекистан\",\n  \"rate_mode\": \"fixed\",\n  \"rate_amount\": 5000000,\n  \"rate_currency\": \"UZS\",\n  \"duration_hours\": 48,\n  \"notes\": \"Погрузка с утра\",\n  \"waypoints\": [{ \"sort_order\": 1, \"waypoint_type\": \"passthrough\", \"city\": \"Джизак\", \"country\": \"Узбекистан\" }]\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Требует JWT + хотя бы одну approved-компанию. company_id можно указать явно, иначе берётся первая approved."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo — список (фильтры)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{lang}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/listings/cargo?from_city=&to_city=&type=&loading_type=&cargo_type=&weight_min=&weight_max=&verified_only=&sort=newest&page=1&per_page=20&lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"],
+              "query": [
+                { "key": "from_city", "value": "" }, { "key": "to_city", "value": "" }, { "key": "type", "value": "", "description": "domestic|international" },
+                { "key": "loading_type", "value": "", "description": "ftl|ltl|partial" }, { "key": "cargo_type", "value": "" },
+                { "key": "weight_min", "value": "" }, { "key": "weight_max", "value": "" }, { "key": "verified_only", "value": "", "description": "true|false" },
+                { "key": "sort", "value": "newest", "description": "newest|date|weight" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }, { "key": "lang", "value": "{{lang}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/templates — мои шаблоны",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/templates", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","templates"] } },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/:id — карточка",
+          "request": { "method": "GET", "header": [{ "key": "Accept-Language", "value": "{{lang}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] }, "description": "Контакты скрыты (phone/email компании = пусто). Реальные контакты — через POST /contacts/view." },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/:id/stats — статистика (owner)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/stats", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","stats"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /listings/cargo/:id — редактировать",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"type\": \"domestic\",\n  \"weight_ton\": 22,\n  \"notes\": \"Обновлено\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /listings/cargo/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/status", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"archived\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/:id/duplicate",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/duplicate", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","duplicate"] } },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/:id/template — сохранить как шаблон",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/template", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","template"] },
+            "body": { "mode": "raw", "raw": "{\n  \"template_name\": \"Ташкент-Самарканд текстиль\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/from-template/:id",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/from-template/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","from-template","{{cargo_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /listings/cargo/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Warehouses",
+      "description": "Склады (regular/cold/customs). Создание — верифицированной компанией. Для cold обязательны temp_min/temp_max/cold_chamber_types; для customs — customs_license_*. occupancy_percent считается автоматически.",
+      "item": [
+        {
+          "name": "POST /warehouses — создать",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('warehouse_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"storage_type\": [\"стеллажное\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" }\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /warehouses — список (фильтры)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{lang}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/warehouses?region=&warehouse_type=&area_min=&area_max=&temp_min=&temp_max=&services=&sort=&page=1&per_page=20",
+              "host": ["{{base_url}}"], "path": ["api","v1","warehouses"],
+              "query": [
+                { "key": "region", "value": "" }, { "key": "warehouse_type", "value": "", "description": "regular|cold|customs" },
+                { "key": "area_min", "value": "" }, { "key": "area_max", "value": "" }, { "key": "temp_min", "value": "" }, { "key": "temp_max", "value": "" },
+                { "key": "services", "value": "", "description": "crossdock|railway|parking_trucks" }, { "key": "sort", "value": "" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /warehouses/:id",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /warehouses/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад (обновлён)\",\n  \"area_free_m2\": 200\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /warehouses/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}/status", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"archived\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /warehouses/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contacts & Tokens",
+      "description": "Открытие контактов за токены. Своё объявление/повтор за 30 дней/подписка — без списания. Нет токенов → 402 с тарифами.",
+      "item": [
+        {
+          "name": "POST /contacts/view — открыть контакт",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/contacts/view?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","contacts","view"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "listing_type: cargo|warehouse. При нехватке токенов — 402 + data.packages/subscriptions."
+          },
+          "response": [
+            { "name": "402 — нет токенов", "status": "Payment Required", "code": 402, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"INSUFFICIENT_TOKENS\", \"message\": \"Недостаточно токенов\" },\n  \"data\": { \"packages\": [], \"subscriptions\": [] }\n}" }
+          ]
+        },
+        {
+          "name": "GET /contacts/history — за 30 дней",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/contacts/history", "host": ["{{base_url}}"], "path": ["api","v1","contacts","history"] } },
+          "response": []
+        },
+        {
+          "name": "GET /users/me/tokens — баланс и история",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/users/me/tokens", "host": ["{{base_url}}"], "path": ["api","v1","users","me","tokens"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments (тарифы)",
+      "description": "Витрина тарифов. Полный цикл Rahmat (создание платежа/webhook/boost) — НЕ реализован (День 8).",
+      "item": [
+        {
+          "name": "GET /payments/packages — тарифы",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/payments/packages", "host": ["{{base_url}}"], "path": ["api","v1","payments","packages"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "description": "Избранное. POST идемпотентен. В списке is_expired=true если объявление не активно.",
+      "item": [
+        {
+          "name": "POST /favorites",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /favorites",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "description": "Сохранённые маршруты. При создании груза по совпадающему маршруту владелец получает уведомление.",
+      "item": [
+        {
+          "name": "POST /routes",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('route_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/routes", "host": ["{{base_url}}"], "path": ["api","v1","routes"] },
+            "body": { "mode": "raw", "raw": "{\n  \"from_city\": \"Ташкент\",\n  \"to_city\": \"Самарканд\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /routes",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/routes", "host": ["{{base_url}}"], "path": ["api","v1","routes"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /routes/:id/notifications",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/routes/{{route_id}}/notifications", "host": ["{{base_url}}"], "path": ["api","v1","routes","{{route_id}}","notifications"] },
+            "body": { "mode": "raw", "raw": "{\n  \"enabled\": false\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /routes/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/routes/{{route_id}}", "host": ["{{base_url}}"], "path": ["api","v1","routes","{{route_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Внутренние уведомления. Список: сначала непрочитанные.",
+      "item": [
+        {
+          "name": "GET /notifications",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","notifications"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /notifications/unread-count",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/unread-count", "host": ["{{base_url}}"], "path": ["api","v1","notifications","unread-count"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /notifications/:id/read",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read", "host": ["{{base_url}}"], "path": ["api","v1","notifications","{{notification_id}}","read"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /notifications/read-all",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/read-all", "host": ["{{base_url}}"], "path": ["api","v1","notifications","read-all"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "description": "Единый поиск по типу (cargo|warehouse) + автодополнение городов.",
+      "item": [
+        {
+          "name": "GET /search?type=cargo",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search?type=cargo&from_city=Ташкент&to_city=Самарканд&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","search"], "query": [{ "key": "type", "value": "cargo" }, { "key": "from_city", "value": "Ташкент" }, { "key": "to_city", "value": "Самарканд" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /search?type=warehouse",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search?type=warehouse&region=Ташкент&warehouse_type=cold", "host": ["{{base_url}}"], "path": ["api","v1","search"], "query": [{ "key": "type", "value": "warehouse" }, { "key": "region", "value": "Ташкент" }, { "key": "warehouse_type", "value": "cold" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /search/cities — автодополнение",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search/cities?q=таш&limit=10", "host": ["{{base_url}}"], "path": ["api","v1","search","cities"], "query": [{ "key": "q", "value": "таш" }, { "key": "limit", "value": "10" }] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin (Super Admin)",
+      "description": "Скрытый статик-админ. Вход по login+password (из .env ADMIN_LOGIN/ADMIN_PASSWORD), без OTP. Остальные эндпоинты требуют роль super_admin. Используйте {{admin_token}}.",
+      "item": [
+        {
+          "name": "POST /admin/login — скрытый вход",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('admin_token', r.data.access_token);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/login", "host": ["{{base_url}}"], "path": ["api","v1","admin","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"karvonadmin\",\n  \"password\": \"karvon321321\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Возвращает JWT супер-админа. Тест сохраняет access_token в {{admin_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/dashboard",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/dashboard?period=30d", "host": ["{{base_url}}"], "path": ["api","v1","admin","dashboard"], "query": [{ "key": "period", "value": "30d", "description": "7d|30d|90d" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/users",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/users?q=&role=&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","users"], "query": [{ "key": "q", "value": "" }, { "key": "role", "value": "", "description": "user|moderator|super_admin" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/users/:id",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /admin/users/:id/block",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}/block", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}","block"] },
+            "body": { "mode": "raw", "raw": "{\n  \"blocked\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/users/:id/topup — начислить токены",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}/topup", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}","topup"] },
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 50\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/moderators — создать модератора",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/moderators", "host": ["{{base_url}}"], "path": ["api","v1","admin","moderators"] },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"name\": \"Модератор Иван\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Создаёт нового пользователя с ролью moderator или повышает существующего по телефону. Модератор затем входит обычным OTP."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/moderators/:id — снять модератора",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/moderators/{{user_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","moderators","{{user_id}}"] }, "description": "Понижает роль обратно до user." },
+          "response": []
+        },
+        {
+          "name": "GET /admin/listings?type=cargo",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings?type=cargo&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings"], "query": [{ "key": "type", "value": "cargo", "description": "cargo|warehouse" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /admin/listings/:type/:id/block",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings/cargo/{{cargo_id}}/block", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings","cargo","{{cargo_id}}","block"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/listings/:type/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings","cargo","{{cargo_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/companies",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/companies?status=&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","companies"], "query": [{ "key": "status", "value": "", "description": "pending|approved|rejected|docs_requested" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/payments",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","payments"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/pricing",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/pricing", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /admin/pricing/:key",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/pricing/tokens_basic", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing","tokens_basic"] },
+            "body": { "mode": "raw", "raw": "{\n  \"price_uzs\": 30000,\n  \"price_usd\": 2.5,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
         }
       ]
     }

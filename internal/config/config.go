@@ -25,11 +25,18 @@ type Config struct {
 	WhatsAppOTPToken   string
 	WhatsAppOTPBypass  bool
 
+	// Универсальный OTP-код (QA): проходит для любого телефона, если задан
+	UniversalOTP string
+
 	RahmatMerchantID string
 	RahmatSecretKey  string
 
 	StorageType string
 	StoragePath string
+
+	// Скрытый статик-админ для входа в админку
+	AdminLogin    string
+	AdminPassword string
 }
 
 func Load() (*Config, error) {
@@ -48,10 +55,15 @@ func Load() (*Config, error) {
 		WhatsAppOTPToken:   os.Getenv("WHATSAPP_OTP_TOKEN"),
 		WhatsAppOTPBypass:  os.Getenv("WHATSAPP_OTP_BYPASS") == "true",
 
+		UniversalOTP: os.Getenv("UNIVERSAL_OTP"),
+
 		RahmatMerchantID: os.Getenv("RAHMAT_MERCHANT_ID"),
 		RahmatSecretKey:  os.Getenv("RAHMAT_SECRET_KEY"),
 		StorageType:      getEnv("STORAGE_TYPE", "local"),
 		StoragePath:      getEnv("STORAGE_PATH", "./uploads"),
+
+		AdminLogin:    getEnv("ADMIN_LOGIN", "superadmin"),
+		AdminPassword: getEnv("ADMIN_PASSWORD", "karvon_admin_2026"),
 	}
 
 	var err error

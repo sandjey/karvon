@@ -72,21 +72,48 @@ func main() {
 	waNotifier := notifier.NewWhatsApp(cfg.WhatsAppOTPBaseURL, cfg.WhatsAppOTPToken, cfg.WhatsAppOTPBypass)
 	log.Info().Str("url", cfg.WhatsAppOTPBaseURL).Bool("bypass", cfg.WhatsAppOTPBypass).Msg("whatsapp notifier initialized")
 
-	userRepo    := repository.NewUserRepo(gormDB)
-	otpRepo     := repository.NewOTPRepo(gormDB)
-	tokenRepo   := repository.NewTokenRepo(gormDB)
-	companyRepo := repository.NewCompanyRepo(gormDB)
-	notifRepo   := repository.NewNotificationRepo(gormDB)
+	userRepo      := repository.NewUserRepo(gormDB)
+	otpRepo       := repository.NewOTPRepo(gormDB)
+	tokenRepo     := repository.NewTokenRepo(gormDB)
+	companyRepo   := repository.NewCompanyRepo(gormDB)
+	notifRepo     := repository.NewNotificationRepo(gormDB)
+	cargoRepo     := repository.NewCargoRepo(gormDB)
+	warehouseRepo := repository.NewWarehouseRepo(gormDB)
+	contactRepo   := repository.NewContactRepo(gormDB)
+	favoriteRepo  := repository.NewFavoriteRepo(gormDB)
+	routeRepo     := repository.NewRouteRepo(gormDB)
+	pricingRepo   := repository.NewPricingRepo(gormDB)
+	adminRepo     := repository.NewAdminRepo(gormDB)
 
-	authSvc       := service.NewAuthService(userRepo, otpRepo, tokenRepo, jwtMgr, waNotifier, tgNotifier)
-	userSvc       := service.NewUserService(userRepo, companyRepo)
-	companySvc    := service.NewCompanyService(companyRepo)
-	moderatorSvc  := service.NewModeratorService(companyRepo, notifRepo)
+	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
+	userSvc      := service.NewUserService(userRepo, companyRepo)
+	companySvc   := service.NewCompanyService(companyRepo)
+	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo)
+	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo)
+	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo)
+	pricingSvc   := service.NewPricingService(pricingRepo)
+	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo)
+	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
+	routeSvc     := service.NewRouteService(routeRepo)
+	notifSvc     := service.NewNotificationService(notifRepo)
+	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, pricingSvc, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
+
+	// Сид скрытого статик-админа
+	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
+		log.Warn().Err(err).Msg("super admin seed warning")
+	} else {
+		log.Info().Str("login", cfg.AdminLogin).Msg("super admin ensured")
+	}
 
 	store := storage.NewLocal(cfg.StoragePath)
 
 	authMiddleware          := middleware.Auth(jwtMgr, userRepo)
+	verifiedMiddleware      := middleware.CompanyVerified(companyRepo)
 	moderatorRoleMiddleware := middleware.Role("moderator", "super_admin")
+	superAdminMiddleware    := middleware.Role("super_admin")
+
+	// Фоновые задачи
+	startBackgroundWorkers(cargoRepo, notifRepo, otpRepo)
 
 	// ── HTTP роутер ──────────────────────────────────────────────────────────
 	gin.SetMode(gin.ReleaseMode)
@@ -107,6 +134,15 @@ func main() {
 	handler.NewUploadHandler(store, "http://localhost:"+cfg.AppPort).RegisterRoutes(v1, authMiddleware)
 	handler.NewModeratorHandler(moderatorSvc).RegisterRoutes(v1, authMiddleware, moderatorRoleMiddleware)
 	handler.NewGeoHandler().RegisterRoutes(v1)
+	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
+	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
+	handler.NewContactHandler(contactSvc, pricingSvc).RegisterRoutes(v1, authMiddleware)
+	handler.NewPaymentsHandler(pricingSvc).RegisterRoutes(v1)
+	handler.NewFavoriteHandler(favoriteSvc).RegisterRoutes(v1, authMiddleware)
+	handler.NewRouteHandler(routeSvc).RegisterRoutes(v1, authMiddleware)
+	handler.NewNotificationHandler(notifSvc).RegisterRoutes(v1, authMiddleware)
+	handler.NewSearchHandler(cargoSvc, warehouseSvc).RegisterRoutes(v1)
+	handler.NewAdminHandler(adminSvc).RegisterRoutes(v1, authMiddleware, superAdminMiddleware)
 
 	// ── Сервер ───────────────────────────────────────────────────────────────
 	srv := &http.Server{

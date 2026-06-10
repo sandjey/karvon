@@ -17,4 +17,10 @@ var (
 	ErrCompanyNotFound       = errors.New("COMPANY_NOT_FOUND")
 	ErrCompanyNotOwned       = errors.New("FORBIDDEN")
 	ErrCompanyNotEditable    = errors.New("COMPANY_NOT_EDITABLE")
+
+	ErrListingNotFound  = errors.New("LISTING_NOT_FOUND")
+	ErrNotOwner         = errors.New("FORBIDDEN")
+	ErrInsufficientTokens = errors.New("INSUFFICIENT_TOKENS")
+	ErrInvalidCredentials = errors.New("INVALID_CREDENTIALS")
+	ErrValidation         = errors.New("VALIDATION_ERROR")
 )
