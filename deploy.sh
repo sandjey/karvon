@@ -8,11 +8,9 @@ echo "[karvon] Pulling latest code..."
 git pull --ff-only origin master
 
 echo "[karvon] Building and restarting containers..."
-COMPOSE="docker compose"
-command -v docker-compose &>/dev/null && COMPOSE="docker-compose"
-
-# Remove stopped karvon containers to avoid docker-compose 1.29.2 ContainerConfig bug
-docker rm $(docker ps -aq --filter "status=exited" --filter "name=karvon") 2>/dev/null || true
+# Prefer docker compose v2 over legacy docker-compose v1
+COMPOSE="docker-compose"
+docker compose version &>/dev/null 2>&1 && COMPOSE="docker compose"
 
 $COMPOSE pull 2>/dev/null || true
 $COMPOSE up -d --build
