@@ -39,10 +39,10 @@ type CreatePaymentInput struct {
 	Currency    string // UZS | USD
 	ListingType string // для listing/boost: cargo|warehouse
 	ListingID   string // для listing/boost
-	CallbackURL string
+	Lang        string // ru|uz|en — язык страницы оплаты
 }
 
-// Create создаёт платёжный заказ (pending) и возвращает order + payment_url.
+// Create создаёт платёжный заказ (pending) и возвращает order + checkout_url.
 func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*model.PaymentOrder, string, error) {
 	p, err := s.pricing.FindByKey(ctx, in.PricingKey)
 	if err != nil {
@@ -79,18 +79,22 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 		return nil, "", err
 	}
 
-	url, err := s.rahmat.CreatePayment(order.ID.String(), amount, currency, in.CallbackURL)
+	invoiceUUID, checkoutURL, err := s.rahmat.CreatePayment(ctx, order.ID.String(), amount, in.Lang, p.Label)
 	if err != nil {
 		return nil, "", err
 	}
-	return order, url, nil
+
+	// Сохраняем UUID инвойса Multicard для последующей сверки
+	if invoiceUUID != "" {
+		_ = s.payments.SaveInvoiceUUID(ctx, order.ID, invoiceUUID)
+	}
+
+	return order, checkoutURL, nil
 }
 
-// Webhook обрабатывает уведомление об оплате (идемпотентно).
-func (s *PaymentService) Webhook(ctx context.Context, orderID uuid.UUID, method string, payload []byte, signature string) error {
-	if !s.rahmat.VerifySignature(payload, signature) {
-		return ErrInvalidCredentials
-	}
+// Webhook обрабатывает callback от Multicard (идемпотентно).
+// orderID = store_invoice_id из тела callback (наш UUID заказа).
+func (s *PaymentService) Webhook(ctx context.Context, orderID uuid.UUID, paymentMethod, multicardTxnUUID string) error {
 	order, err := s.payments.FindByID(ctx, orderID)
 	if err != nil {
 		return err
@@ -101,8 +105,12 @@ func (s *PaymentService) Webhook(ctx context.Context, orderID uuid.UUID, method 
 	if order.Status == "paid" {
 		return nil // идемпотентность
 	}
-	if err := s.payments.MarkPaid(ctx, order.ID, method); err != nil {
+	if err := s.payments.MarkPaid(ctx, order.ID, paymentMethod); err != nil {
 		return err
+	}
+	// Сохраняем UUID транзакции Multicard (если ещё не сохранён из invoice UUID)
+	if multicardTxnUUID != "" {
+		_ = s.payments.SaveInvoiceUUID(ctx, order.ID, multicardTxnUUID)
 	}
 	return s.apply(ctx, order)
 }
@@ -161,7 +169,7 @@ func (s *PaymentService) apply(ctx context.Context, o *model.PaymentOrder) error
 
 func (s *PaymentService) markListingPaid(ctx context.Context, lt string, id uuid.UUID) error {
 	if lt == "warehouse" {
-		return s.warehouse.UpdateStatus(ctx, id, "active") // заглушка: помечаем активным
+		return s.warehouse.UpdateStatus(ctx, id, "active")
 	}
 	return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_paid": true})
 }
@@ -175,7 +183,7 @@ func (s *PaymentService) ActiveSubscription(ctx context.Context, userID uuid.UUI
 }
 
 // Boost создаёт платёжный заказ на продвижение объявления.
-func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingType, listingID, pricingKey, callbackURL string) (*model.PaymentOrder, string, error) {
+func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingType, listingID, pricingKey, currency, lang string) (*model.PaymentOrder, string, error) {
 	if err := s.assertOwner(ctx, userID, listingType, listingID); err != nil {
 		return nil, "", err
 	}
@@ -183,9 +191,10 @@ func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingTyp
 		UserID:      userID,
 		PaymentType: "boost",
 		PricingKey:  pricingKey,
+		Currency:    currency,
 		ListingType: listingType,
 		ListingID:   listingID,
-		CallbackURL: callbackURL,
+		Lang:        lang,
 	})
 }
 

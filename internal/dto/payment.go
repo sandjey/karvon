@@ -13,8 +13,10 @@ type BoostRequest struct {
 	Currency   string `json:"currency" binding:"omitempty,oneof=UZS USD"`
 }
 
-type WebhookRequest struct {
-	OrderID   string `json:"order_id" binding:"required"`
-	Method    string `json:"method"`
-	Signature string `json:"signature"`
+// MulticardCallback — тело callback-запроса от Multicard при успешной оплате инвойса.
+type MulticardCallback struct {
+	StoreInvoiceID string `json:"store_invoice_id"` // наш UUID заказа
+	Status         string `json:"status"`            // success|error|revert|draft|progress|billing
+	PS             string `json:"ps"`                // uzcard|humo|visa|mastercard|...
+	UUID           string `json:"uuid"`              // UUID транзакции в Multicard
 }

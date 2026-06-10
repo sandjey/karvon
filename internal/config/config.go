@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -31,8 +32,14 @@ type Config struct {
 	// URL своего сервера карт (tileserver) для фронтенда
 	MapTilesURL string
 
-	RahmatMerchantID string
-	RahmatSecretKey  string
+	MulticardBaseURL     string
+	MulticardAppID       string
+	MulticardSecret      string
+	MulticardStoreID     int
+	MulticardMXIK        string
+	MulticardPackageCode string
+	MulticardCallbackURL string
+	MulticardReturnURL   string
 
 	StorageType string
 	StoragePath string
@@ -61,8 +68,14 @@ func Load() (*Config, error) {
 		UniversalOTP: os.Getenv("UNIVERSAL_OTP"),
 		MapTilesURL:  os.Getenv("MAP_TILES_URL"),
 
-		RahmatMerchantID: os.Getenv("RAHMAT_MERCHANT_ID"),
-		RahmatSecretKey:  os.Getenv("RAHMAT_SECRET_KEY"),
+		MulticardBaseURL:     getEnv("MULTICARD_BASE_URL", "https://dev-mesh.multicard.uz"),
+		MulticardAppID:       getEnv("MULTICARD_APP_ID", os.Getenv("RAHMAT_MERCHANT_ID")),
+		MulticardSecret:      getEnv("MULTICARD_SECRET", os.Getenv("RAHMAT_SECRET_KEY")),
+		MulticardStoreID:     getEnvInt("MULTICARD_STORE_ID", 6),
+		MulticardMXIK:        getEnv("MULTICARD_MXIK", "10305001001000000"),
+		MulticardPackageCode: getEnv("MULTICARD_PACKAGE_CODE", "1514918"),
+		MulticardCallbackURL: os.Getenv("MULTICARD_CALLBACK_URL"),
+		MulticardReturnURL:   os.Getenv("MULTICARD_RETURN_URL"),
 		StorageType:      getEnv("STORAGE_TYPE", "local"),
 		StoragePath:      getEnv("STORAGE_PATH", "./uploads"),
 
@@ -96,6 +109,15 @@ func mustEnv(key string) string {
 func getEnv(key, defaultVal string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
+	}
+	return defaultVal
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
 	}
 	return defaultVal
 }

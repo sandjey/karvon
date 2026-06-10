@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,7 @@ func (h *PaymentsHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFu
 	g := rg.Group("/payments")
 	g.GET("/packages", h.Packages)
 	g.POST("/create", auth, h.Create)
-	g.POST("/webhook", h.Webhook) // публичный, проверка подписи внутри
+	g.POST("/webhook", h.Webhook) // публичный, верификация через store_invoice_id
 	g.GET("/history", auth, h.History)
 
 	rg.GET("/subscriptions/active", auth, h.ActiveSubscription)
@@ -48,13 +47,14 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 		return
 	}
 	userID := c.MustGet("user_id").(uuid.UUID)
-	order, url, err := h.payments.Create(c.Request.Context(), service.CreatePaymentInput{
+	order, checkoutURL, err := h.payments.Create(c.Request.Context(), service.CreatePaymentInput{
 		UserID:      userID,
 		PaymentType: req.PaymentType,
 		PricingKey:  req.PricingKey,
 		Currency:    req.Currency,
 		ListingType: req.ListingType,
 		ListingID:   req.ListingID,
+		Lang:        i18n.Lang(c),
 	})
 	if err != nil {
 		if isErr(err, service.ErrNotFound) {
@@ -64,27 +64,43 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": url, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
+	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": checkoutURL, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
 }
 
+// Webhook принимает callback от Multicard при успешной оплате инвойса.
+// Тело запроса — PaymentModel от Multicard; ключевые поля: store_invoice_id, status, ps, uuid.
+// При любом статусе, кроме "success", просто подтверждаем приём (200).
+// При ошибке обработки возвращаем 500 — Multicard повторит запрос.
 func (h *PaymentsHandler) Webhook(c *gin.Context) {
-	payload, _ := c.GetRawData()
-	var req dto.WebhookRequest
-	if err := json.Unmarshal(payload, &req); err != nil {
-		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
+	var cb dto.MulticardCallback
+	if err := c.ShouldBindJSON(&cb); err != nil {
+		// Неизвестный формат — отвечаем 200, чтобы Multicard не повторял бесконечно
+		c.JSON(http.StatusOK, gin.H{"ok": true})
 		return
 	}
-	orderID, err := uuid.Parse(req.OrderID)
+
+	if cb.Status != "success" {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+		return
+	}
+
+	orderID, err := uuid.Parse(cb.StoreInvoiceID)
 	if err != nil {
-		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		c.JSON(http.StatusOK, gin.H{"ok": true})
 		return
 	}
-	if err := h.payments.Webhook(c.Request.Context(), orderID, req.Method, payload, req.Signature); err != nil {
-		// Rahmat будет повторять при 500
+
+	if err := h.payments.Webhook(c.Request.Context(), orderID, cb.PS, cb.UUID); err != nil {
+		if isErr(err, service.ErrNotFound) {
+			// Неизвестный заказ — не повторять
+			c.JSON(http.StatusOK, gin.H{"ok": true})
+			return
+		}
+		// Внутренняя ошибка — Multicard сделает повторную попытку
 		InternalError(c)
 		return
 	}
-	OK(c, gin.H{"ok": true})
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 func (h *PaymentsHandler) History(c *gin.Context) {
@@ -115,7 +131,15 @@ func (h *PaymentsHandler) Boost(c *gin.Context) {
 		return
 	}
 	userID := c.MustGet("user_id").(uuid.UUID)
-	order, url, err := h.payments.Boost(c.Request.Context(), userID, c.Param("type"), c.Param("id"), req.PricingKey, req.Currency)
+	order, checkoutURL, err := h.payments.Boost(
+		c.Request.Context(),
+		userID,
+		c.Param("type"),
+		c.Param("id"),
+		req.PricingKey,
+		req.Currency,
+		i18n.Lang(c),
+	)
 	if err != nil {
 		switch {
 		case isErr(err, service.ErrListingNotFound):
@@ -129,5 +153,5 @@ func (h *PaymentsHandler) Boost(c *gin.Context) {
 		}
 		return
 	}
-	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": url, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
+	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": checkoutURL, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
 }

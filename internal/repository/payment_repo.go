@@ -37,6 +37,12 @@ func (r *PaymentRepo) MarkPaid(ctx context.Context, id uuid.UUID, method string)
 		Updates(map[string]interface{}{"status": "paid", "paid_at": now, "payment_method": method}).Error
 }
 
+func (r *PaymentRepo) SaveInvoiceUUID(ctx context.Context, id uuid.UUID, invoiceUUID string) error {
+	return r.db.WithContext(ctx).Model(&model.PaymentOrder{}).
+		Where("id = ?", id).
+		Update("rahmat_order_id", invoiceUUID).Error
+}
+
 func (r *PaymentRepo) History(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.PaymentOrder, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.PaymentOrder{}).Where("user_id = ?", userID)
 	var total int64

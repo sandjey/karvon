@@ -95,7 +95,16 @@ func main() {
 	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo)
 	pricingSvc   := service.NewPricingService(pricingRepo)
-	rahmatClient := rahmat.NewClient(cfg.RahmatMerchantID, cfg.RahmatSecretKey)
+	rahmatClient := rahmat.NewClient(rahmat.Config{
+		BaseURL:     cfg.MulticardBaseURL,
+		AppID:       cfg.MulticardAppID,
+		Secret:      cfg.MulticardSecret,
+		StoreID:     cfg.MulticardStoreID,
+		MXIK:        cfg.MulticardMXIK,
+		PackageCode: cfg.MulticardPackageCode,
+		CallbackURL: cfg.MulticardCallbackURL,
+		ReturnURL:   cfg.MulticardReturnURL,
+	})
 	paymentSvc   := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
 	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo)
 	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
