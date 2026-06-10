@@ -12,11 +12,17 @@ echo "[karvon] Building and restarting containers..."
 COMPOSE="docker-compose"
 docker compose version &>/dev/null 2>&1 && COMPOSE="docker compose"
 
-$COMPOSE pull 2>/dev/null || true
-$COMPOSE up -d --build
+# Ensure postgres and whatsapp are running (start if not, no recreate)
+$COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
+
+# Build new app image first (doesn't stop anything)
+$COMPOSE build app
+
+# Restart only the app container (--no-deps = don't touch postgres/whatsapp)
+$COMPOSE up -d --no-deps app
 
 echo "[karvon] Waiting for app to be healthy..."
-sleep 5
+sleep 10
 if curl -sf http://127.0.0.1:8082/health > /dev/null 2>&1; then
   echo "[karvon] OK — app is running at :8082"
 else
