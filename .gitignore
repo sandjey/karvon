@@ -29,3 +29,7 @@ Thumbs.db
 # Postman folder-sync (автогенерация Postman-app, дубль karvon_api.json)
 docs/postman/postman/
 docs/postman/.postman/
+
+# Postman OpenAPI export artifacts (root)
+Default module.md
+Default module.openapi.json
