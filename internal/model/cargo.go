@@ -5,8 +5,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"gorm.io/datatypes"
 )
 
+// CargoListing — карточка ТОВАРА (маркетплейс-модель). Грузовладелец публикует товар,
+// перевозчик находит и покупает контакт. Карточка постоянная (не истекает по таймеру).
 type CargoListing struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	CompanyID uuid.UUID `gorm:"type:uuid;not null;index" json:"company_id"`
@@ -14,54 +17,60 @@ type CargoListing struct {
 	UserID    uuid.UUID `gorm:"type:uuid;not null;index" json:"user_id"`
 	User      *User     `gorm:"foreignKey:UserID" json:"-"`
 
-	Type          string         `gorm:"type:cargo_type_enum;not null" json:"type"`
-	CargoName     *string        `gorm:"type:varchar(200)" json:"cargo_name"`
-	CargoType     *string        `gorm:"type:varchar(50)" json:"cargo_type"`
-	IsADR         bool           `gorm:"not null;default:false;column:is_adr" json:"is_adr"`
-	HasTempRegime bool           `gorm:"not null;default:false" json:"has_temp_regime"`
-	TempMin       *float64       `gorm:"type:decimal" json:"temp_min"`
-	TempMax       *float64       `gorm:"type:decimal" json:"temp_max"`
-	WeightTon     *float64       `gorm:"type:decimal" json:"weight_ton"`
-	VolumeM3      *float64       `gorm:"type:decimal;column:volume_m3" json:"volume_m3"`
-	PlacesCount   *int           `gorm:"type:int" json:"places_count"`
-	LengthM       *float64       `gorm:"type:decimal;column:length_m" json:"length_m"`
-	WidthM        *float64       `gorm:"type:decimal;column:width_m" json:"width_m"`
-	HeightM       *float64       `gorm:"type:decimal;column:height_m" json:"height_m"`
-	LoadingType   *string        `gorm:"type:loading_type_enum" json:"loading_type"`
-	BodyTypes     pq.StringArray `gorm:"type:text[]" json:"body_types"`
-	VehicleType   *string        `gorm:"type:varchar(50)" json:"vehicle_type"`
-	TractorAxles  *int           `json:"tractor_axles"`
-	TrailerAxles  *int           `json:"trailer_axles"`
-	OnlyRecoupling bool          `gorm:"not null;default:false" json:"only_recoupling"`
+	// ── О товаре ──────────────────────────────────────────────
+	CargoName   string  `gorm:"type:varchar(200);not null" json:"cargo_name"`             // Наименование товара
+	Category    string  `gorm:"type:cargo_category_enum;not null;index" json:"category"` // Категория товара
+	Description *string `gorm:"type:text" json:"description"`                            // Описание/состав/характеристики
 
-	FromCity      *string    `gorm:"type:varchar(100);index" json:"from_city"`
-	FromCountry   *string    `gorm:"type:varchar(100)" json:"from_country"`
-	FromDate      *time.Time `json:"from_date"`
-	LoadingMethod *string    `gorm:"type:varchar(50)" json:"loading_method"`
-	ToCity        *string    `gorm:"type:varchar(100);index" json:"to_city"`
-	ToCountry     *string    `gorm:"type:varchar(100)" json:"to_country"`
-	ToDate        *time.Time `json:"to_date"`
+	// ── Объём ─────────────────────────────────────────────────
+	QuantityAvailable *float64 `gorm:"type:decimal" json:"quantity_available"`            // Всего в наличии
+	QuantityUnit      *string  `gorm:"type:quantity_unit_enum" json:"quantity_unit"`      // ton|places|pallet|m3
+	MinOrder          *float64 `gorm:"type:decimal" json:"min_order"`                     // Мин. заказ
+	MinOrderUnit      *string  `gorm:"type:quantity_unit_enum" json:"min_order_unit"`
+	Divisibility      *string  `gorm:"type:divisibility_enum" json:"divisibility"`        // ftl|ltl|dogruz
 
-	UnloadingMethod  *string        `gorm:"type:varchar(50)" json:"unloading_method"`
-	TransitCountries pq.StringArray `gorm:"type:text[]" json:"transit_countries"`
-	BorderCrossing   *string        `gorm:"type:varchar(100)" json:"border_crossing"`
-	CustomsType      *string        `gorm:"type:customs_type_enum" json:"customs_type"`
-	Incoterms        *string        `gorm:"type:varchar(20)" json:"incoterms"`
-	Permits          pq.StringArray `gorm:"type:text[]" json:"permits"`
+	// ── Упаковка ──────────────────────────────────────────────
+	Packaging     *string  `gorm:"type:packaging_enum" json:"packaging"` // bulk|pallets|bags|barrels|rolls|boxes|liquid|oversized
+	WeightPerPlace *float64 `gorm:"type:decimal" json:"weight_per_place"`
+	LengthM       *float64 `gorm:"type:decimal;column:length_m" json:"length_m"`
+	WidthM        *float64 `gorm:"type:decimal;column:width_m" json:"width_m"`
+	HeightM       *float64 `gorm:"type:decimal;column:height_m" json:"height_m"`
 
-	RateMode          *string  `gorm:"type:rate_mode_enum" json:"rate_mode"`
-	RateAmount        *float64 `gorm:"type:decimal" json:"rate_amount"`
-	RateCurrency      *string  `gorm:"type:currency_enum" json:"rate_currency"`
-	RateVAT           bool     `gorm:"not null;default:false;column:rate_vat" json:"rate_vat"`
-	PaymentTerms      *string  `gorm:"type:text" json:"payment_terms"`
-	PaymentMethod     *string  `gorm:"type:varchar(50)" json:"payment_method"`
-	PrepaymentPercent *int     `json:"prepayment_percent"`
+	// ── Цена (видна в листинге без покупки контакта) ──────────
+	PriceMode     *string  `gorm:"type:rate_mode_enum;column:rate_mode" json:"price_mode"`  // negotiable|fixed|announcement(=on_request)
+	PricePerUnit  *float64 `gorm:"type:decimal;column:rate_amount" json:"price_per_unit"`
+	Currency      *string  `gorm:"type:currency_enum;column:rate_currency" json:"currency"`
+	VatMode       *string  `gorm:"type:vat_mode_enum" json:"vat_mode"`                      // yes|no|unspecified
+	PaymentTerms  *string  `gorm:"type:varchar(50)" json:"payment_terms"`                  // prepaid|on_fact|deferred
+	PaymentMethod *string  `gorm:"type:varchar(50)" json:"payment_method"`                 // cash|bank|agreement
 
-	DurationHours int        `gorm:"not null;default:24" json:"duration_hours"`
-	ExpiresAt     *time.Time `gorm:"index" json:"expires_at"`
-	Notes         *string    `gorm:"type:text" json:"notes"`
-	Status        string     `gorm:"type:cargo_status_enum;not null;default:'active';index" json:"status"`
+	// ── Место забора ──────────────────────────────────────────
+	FromCountry    *string        `gorm:"type:varchar(100)" json:"from_country"`
+	FromCity       *string        `gorm:"type:varchar(100);index" json:"from_city"`
+	PickupAddress  *string        `gorm:"type:text" json:"pickup_address"`
+	Lat            *float64       `gorm:"type:decimal" json:"lat"`
+	Lng            *float64       `gorm:"type:decimal" json:"lng"`
+	LoadingMethods pq.StringArray `gorm:"type:text[]" json:"loading_methods"` // self|loader|crane
+	WorkingHours   datatypes.JSON `gorm:"type:jsonb" json:"working_hours,omitempty"`
 
+	// ── Параметры ─────────────────────────────────────────────
+	IsADR            bool           `gorm:"not null;default:false;column:is_adr" json:"is_adr"`
+	ADRClass         *int           `gorm:"column:adr_class" json:"adr_class"` // 1..9
+	HasTempRegime    bool           `gorm:"not null;default:false" json:"has_temp_regime"`
+	TempMin          *float64       `gorm:"type:decimal" json:"temp_min"`
+	TempMax          *float64       `gorm:"type:decimal" json:"temp_max"`
+	RequiredBodyTypes pq.StringArray `gorm:"type:text[];column:body_types" json:"required_body_types"` // tent|ref|container|cistern|carcarrier
+
+	// ── Логистика (для международных) ─────────────────────────
+	Incoterms          *string        `gorm:"type:varchar(20)" json:"incoterms"`
+	DeliveryGeography  pq.StringArray `gorm:"type:text[]" json:"delivery_geography"` // uz|cis|world
+	Permits            pq.StringArray `gorm:"type:text[]" json:"permits"`            // TIR|CMR|phyto|CITES|EKMT
+
+	CommentForCarrier *string `gorm:"type:text;column:notes" json:"comment_for_carrier"`
+
+	// ── Статус / служебные ────────────────────────────────────
+	InStock      bool    `gorm:"not null;default:true" json:"in_stock"` // false = «Нет в наличии»
+	Status       string  `gorm:"type:cargo_status_enum;not null;default:'active';index" json:"status"`
 	IsTemplate   bool    `gorm:"not null;default:false" json:"is_template"`
 	TemplateName *string `gorm:"type:varchar(100)" json:"template_name"`
 
@@ -72,17 +81,12 @@ type CargoListing struct {
 	ViewsCount          int `gorm:"not null;default:0" json:"views_count"`
 	ContactsBoughtCount int `gorm:"not null;default:0" json:"contacts_bought_count"`
 
-	Waypoints []CargoWaypoint `gorm:"foreignKey:CargoListingID" json:"waypoints,omitempty"`
+	Media []ListingMedia `gorm:"-" json:"media,omitempty"` // фото/видео/сертификаты (entity=cargo)
+
+	// Legacy-колонки (NOT NULL в БД) — заполняются дефолтами, в API не используются.
+	Type          string `gorm:"type:cargo_type_enum;not null;default:'domestic'" json:"-"`
+	DurationHours int    `gorm:"not null;default:24" json:"-"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type CargoWaypoint struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	CargoListingID uuid.UUID `gorm:"type:uuid;not null;index" json:"cargo_listing_id"`
-	SortOrder      int       `gorm:"not null;default:0" json:"sort_order"`
-	WaypointType   string    `gorm:"type:waypoint_type_enum;not null" json:"waypoint_type"`
-	City           *string   `gorm:"type:varchar(100)" json:"city"`
-	Country        *string   `gorm:"type:varchar(100)" json:"country"`
 }

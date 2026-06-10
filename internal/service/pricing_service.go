@@ -42,3 +42,19 @@ func (s *PricingService) Update(ctx context.Context, key string, fields map[stri
 	fields["updated_by"] = updatedBy
 	return s.repo.Update(ctx, key, fields)
 }
+
+func (s *PricingService) Create(ctx context.Context, p *model.PricingConfig, by uuid.UUID) error {
+	existing, err := s.repo.FindByKey(ctx, p.Key)
+	if err != nil {
+		return err
+	}
+	if existing != nil {
+		return ErrAlreadyExists
+	}
+	p.UpdatedBy = &by
+	return s.repo.Create(ctx, p)
+}
+
+func (s *PricingService) Delete(ctx context.Context, key string) error {
+	return s.repo.Delete(ctx, key)
+}

@@ -3,10 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 
 	"karvon/internal/model"
@@ -18,21 +16,24 @@ type CargoRepo struct {
 
 func NewCargoRepo(db *gorm.DB) *CargoRepo { return &CargoRepo{db: db} }
 
-// CargoFilter описывает параметры фильтрации списка грузов.
+// CargoFilter — фильтры листинга товаров.
 type CargoFilter struct {
-	FromCity     string
-	ToCity       string
-	Type         string
-	LoadingType  string
-	CargoType    string
-	BodyTypes    []string
-	WeightMin    *float64
-	WeightMax    *float64
-	DateFrom     *time.Time
-	VerifiedOnly bool
-	Sort         string // newest | date | weight
-	Offset       int
-	Limit        int
+	Category      string
+	FromCity      string
+	FromCountry   string
+	Divisibility  string
+	Packaging     string
+	MinOrderMax   *float64
+	QtyMin        *float64
+	QtyMax        *float64
+	PriceMin      *float64
+	PriceMax      *float64
+	HasTempRegime bool
+	IsADR         *bool
+	VerifiedOnly  bool
+	Sort          string // newest | price_asc | price_desc | quantity
+	Offset        int
+	Limit         int
 }
 
 func (r *CargoRepo) Create(ctx context.Context, c *model.CargoListing) error {
@@ -48,7 +49,6 @@ func (r *CargoRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CargoLis
 	err := r.db.WithContext(ctx).
 		Preload("Company").
 		Preload("User").
-		Preload("Waypoints", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
 		First(&c, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -62,46 +62,55 @@ func (r *CargoRepo) IncrementViews(ctx context.Context, id uuid.UUID) error {
 		UpdateColumn("views_count", gorm.Expr("views_count + 1")).Error
 }
 
-func (r *CargoRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (r *CargoRepo) UpdateStatus(ctx context.Context, id uuid.UUID, fields map[string]interface{}) error {
 	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
-		Where("id = ?", id).Update("status", status).Error
+		Where("id = ?", id).Updates(fields).Error
 }
 
 func (r *CargoRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&model.CargoListing{}, "id = ?", id).Error
 }
 
-// List возвращает активные (не шаблонные) объявления с фильтрами. Boosted — сверху.
+// List — активные не-шаблонные карточки товаров. Boosted — сверху.
 func (r *CargoRepo) List(ctx context.Context, f CargoFilter) ([]model.CargoListing, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.CargoListing{}).
 		Where("status = 'active' AND is_template = false")
 
+	if f.Category != "" {
+		q = q.Where("category = ?", f.Category)
+	}
 	if f.FromCity != "" {
 		q = q.Where("from_city ILIKE ?", "%"+f.FromCity+"%")
 	}
-	if f.ToCity != "" {
-		q = q.Where("to_city ILIKE ?", "%"+f.ToCity+"%")
+	if f.FromCountry != "" {
+		q = q.Where("from_country ILIKE ?", "%"+f.FromCountry+"%")
 	}
-	if f.Type != "" {
-		q = q.Where("type = ?", f.Type)
+	if f.Divisibility != "" {
+		q = q.Where("divisibility = ?", f.Divisibility)
 	}
-	if f.LoadingType != "" {
-		q = q.Where("loading_type = ?", f.LoadingType)
+	if f.Packaging != "" {
+		q = q.Where("packaging = ?", f.Packaging)
 	}
-	if f.CargoType != "" {
-		q = q.Where("cargo_type ILIKE ?", "%"+f.CargoType+"%")
+	if f.MinOrderMax != nil {
+		q = q.Where("min_order <= ?", *f.MinOrderMax)
 	}
-	if len(f.BodyTypes) > 0 {
-		q = q.Where("body_types && ?", pq.StringArray(f.BodyTypes))
+	if f.QtyMin != nil {
+		q = q.Where("quantity_available >= ?", *f.QtyMin)
 	}
-	if f.WeightMin != nil {
-		q = q.Where("weight_ton >= ?", *f.WeightMin)
+	if f.QtyMax != nil {
+		q = q.Where("quantity_available <= ?", *f.QtyMax)
 	}
-	if f.WeightMax != nil {
-		q = q.Where("weight_ton <= ?", *f.WeightMax)
+	if f.PriceMin != nil {
+		q = q.Where("rate_amount >= ?", *f.PriceMin)
 	}
-	if f.DateFrom != nil {
-		q = q.Where("from_date >= ?", *f.DateFrom)
+	if f.PriceMax != nil {
+		q = q.Where("rate_amount <= ?", *f.PriceMax)
+	}
+	if f.HasTempRegime {
+		q = q.Where("has_temp_regime = true")
+	}
+	if f.IsADR != nil {
+		q = q.Where("is_adr = ?", *f.IsADR)
 	}
 	if f.VerifiedOnly {
 		q = q.Joins("JOIN companies ON companies.id = cargo_listings.company_id").
@@ -115,10 +124,12 @@ func (r *CargoRepo) List(ctx context.Context, f CargoFilter) ([]model.CargoListi
 
 	order := "is_boosted DESC, created_at DESC"
 	switch f.Sort {
-	case "date":
-		order = "is_boosted DESC, from_date ASC NULLS LAST"
-	case "weight":
-		order = "is_boosted DESC, weight_ton DESC NULLS LAST"
+	case "price_asc":
+		order = "is_boosted DESC, rate_amount ASC NULLS LAST"
+	case "price_desc":
+		order = "is_boosted DESC, rate_amount DESC NULLS LAST"
+	case "quantity":
+		order = "is_boosted DESC, quantity_available DESC NULLS LAST"
 	}
 
 	var list []model.CargoListing
@@ -129,7 +140,6 @@ func (r *CargoRepo) List(ctx context.Context, f CargoFilter) ([]model.CargoListi
 	return list, total, err
 }
 
-// ListByUser — объявления пользователя (включая архив, без шаблонов).
 func (r *CargoRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.CargoListing, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.CargoListing{}).
 		Where("user_id = ? AND is_template = false", userID)
@@ -142,7 +152,6 @@ func (r *CargoRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, li
 	return list, total, err
 }
 
-// ListTemplates — шаблоны пользователя.
 func (r *CargoRepo) ListTemplates(ctx context.Context, userID uuid.UUID) ([]model.CargoListing, error) {
 	var list []model.CargoListing
 	err := r.db.WithContext(ctx).
@@ -151,23 +160,17 @@ func (r *CargoRepo) ListTemplates(ctx context.Context, userID uuid.UUID) ([]mode
 	return list, err
 }
 
-// ExpireDue переводит истёкшие активные объявления в archived. Возвращает их ID.
-func (r *CargoRepo) ExpireDue(ctx context.Context) ([]model.CargoListing, error) {
-	var due []model.CargoListing
-	now := time.Now()
-	if err := r.db.WithContext(ctx).
-		Where("status = 'active' AND is_template = false AND expires_at IS NOT NULL AND expires_at < ?", now).
-		Find(&due).Error; err != nil {
-		return nil, err
-	}
-	if len(due) == 0 {
-		return nil, nil
-	}
-	ids := make([]uuid.UUID, len(due))
-	for i, c := range due {
-		ids[i] = c.ID
-	}
-	err := r.db.WithContext(ctx).Model(&model.CargoListing{}).
-		Where("id IN ?", ids).Update("status", "archived").Error
-	return due, err
+// ExpireBoosts снимает истёкшие бусты. Возвращает число затронутых.
+func (r *CargoRepo) ExpireBoosts(ctx context.Context) (int64, error) {
+	res := r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("is_boosted = true AND boost_expires_at IS NOT NULL AND boost_expires_at < now()").
+		Update("is_boosted", false)
+	return res.RowsAffected, res.Error
+}
+
+// SetBoost включает буст до указанного времени.
+func (r *CargoRepo) SetBoost(ctx context.Context, id uuid.UUID, until interface{}) error {
+	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_boosted": true, "boost_expires_at": until}).Error
 }

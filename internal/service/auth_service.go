@@ -30,6 +30,7 @@ type AuthService struct {
 	userRepo     *repository.UserRepo
 	otpRepo      *repository.OTPRepo
 	tokenRepo    *repository.TokenRepo
+	pricingRepo  *repository.PricingRepo
 	jwtMgr       *jwtpkg.Manager
 	whatsapp     notifier.Notifier
 	telegram     notifier.Notifier
@@ -40,6 +41,7 @@ func NewAuthService(
 	userRepo *repository.UserRepo,
 	otpRepo *repository.OTPRepo,
 	tokenRepo *repository.TokenRepo,
+	pricingRepo *repository.PricingRepo,
 	jwtMgr *jwtpkg.Manager,
 	whatsapp notifier.Notifier,
 	telegram notifier.Notifier,
@@ -49,6 +51,7 @@ func NewAuthService(
 		userRepo:     userRepo,
 		otpRepo:      otpRepo,
 		tokenRepo:    tokenRepo,
+		pricingRepo:  pricingRepo,
 		jwtMgr:       jwtMgr,
 		whatsapp:     whatsapp,
 		telegram:     telegram,
@@ -158,9 +161,12 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (
 		}
 		user = newUser
 
-		// Начислить 5 токенов новому пользователю
-		if err := s.userRepo.CreditTokens(ctx, user.ID, 5, "registration"); err != nil {
-			return nil, err
+		// Начислить бонусные токены новому пользователю (сумма управляется супер-админом).
+		bonus := s.pricingRepo.TokensAmount(ctx, "tokens_registration", 5)
+		if bonus > 0 {
+			if err := s.userRepo.CreditTokens(ctx, user.ID, bonus, "registration"); err != nil {
+				return nil, err
+			}
 		}
 	}
 

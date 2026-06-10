@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"karvon/internal/dto"
+	"karvon/internal/model"
 	"karvon/internal/service"
 	"karvon/pkg/i18n"
 )
@@ -35,7 +36,9 @@ func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.
 	g.GET("/companies", h.Companies)
 	g.GET("/payments", h.Payments)
 	g.GET("/pricing", h.Pricing)
+	g.POST("/pricing", h.CreatePricing)
 	g.PUT("/pricing/:key", h.UpdatePricing)
+	g.DELETE("/pricing/:key", h.DeletePricing)
 	g.POST("/moderators", h.CreateModerator)
 	g.DELETE("/moderators/:id", h.DeleteModerator)
 }
@@ -225,6 +228,45 @@ func (h *AdminHandler) UpdatePricing(c *gin.Context) {
 	adminID := c.MustGet("user_id").(uuid.UUID)
 	if err := h.svc.UpdatePricing(c.Request.Context(), c.Param("key"), fields, adminID); err != nil {
 		FailCode(c, http.StatusNotFound, "NOT_FOUND")
+		return
+	}
+	OKMsg(c, nil, "PRICING_UPDATED")
+}
+
+func (h *AdminHandler) CreatePricing(c *gin.Context) {
+	var req dto.CreatePricingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
+		return
+	}
+	active := true
+	if req.IsActive != nil {
+		active = *req.IsActive
+	}
+	adminID := c.MustGet("user_id").(uuid.UUID)
+	p := &model.PricingConfig{
+		Key:          req.Key,
+		Label:        req.Label,
+		PriceUZS:     req.PriceUZS,
+		PriceUSD:     req.PriceUSD,
+		TokensAmount: req.TokensAmount,
+		DurationDays: req.DurationDays,
+		IsActive:     active,
+	}
+	if err := h.svc.CreatePricing(c.Request.Context(), p, adminID); err != nil {
+		if isErr(err, service.ErrAlreadyExists) {
+			FailCode(c, http.StatusConflict, "ALREADY_EXISTS")
+			return
+		}
+		InternalError(c)
+		return
+	}
+	CreatedMsg(c, p, "PRICING_UPDATED")
+}
+
+func (h *AdminHandler) DeletePricing(c *gin.Context) {
+	if err := h.svc.DeletePricing(c.Request.Context(), c.Param("key")); err != nil {
+		InternalError(c)
 		return
 	}
 	OKMsg(c, nil, "PRICING_UPDATED")

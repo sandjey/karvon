@@ -40,10 +40,11 @@ func (r *FavoriteRepo) ListByUser(ctx context.Context, userID uuid.UUID) ([]mode
 	return list, err
 }
 
-// FavoriteUserRow — кто добавил объявление в избранное.
+// FavoriteUserRow — кто добавил объявление в избранное (имя + компания).
 type FavoriteUserRow struct {
-	UserName  *string
-	CreatedAt time.Time
+	UserName    *string
+	CompanyName *string
+	CreatedAt   time.Time
 }
 
 // UsersByListing возвращает пользователей, добавивших объявление в избранное (для статистики автора).
@@ -51,7 +52,7 @@ func (r *FavoriteRepo) UsersByListing(ctx context.Context, listingType string, l
 	var rows []FavoriteUserRow
 	err := r.db.WithContext(ctx).
 		Table("favorites").
-		Select("users.name AS user_name, favorites.created_at AS created_at").
+		Select("users.name AS user_name, (SELECT c.name FROM companies c WHERE c.user_id = favorites.user_id ORDER BY c.created_at LIMIT 1) AS company_name, favorites.created_at AS created_at").
 		Joins("JOIN users ON users.id = favorites.user_id").
 		Where("favorites.listing_type = ? AND favorites.listing_id = ?", listingType, listingID).
 		Order("favorites.created_at DESC").

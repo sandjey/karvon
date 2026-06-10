@@ -49,3 +49,20 @@ func (r *PricingRepo) Update(ctx context.Context, key string, fields map[string]
 	return r.db.WithContext(ctx).Model(&model.PricingConfig{}).
 		Where("key = ?", key).Updates(fields).Error
 }
+
+func (r *PricingRepo) Create(ctx context.Context, p *model.PricingConfig) error {
+	return r.db.WithContext(ctx).Create(p).Error
+}
+
+func (r *PricingRepo) Delete(ctx context.Context, key string) error {
+	return r.db.WithContext(ctx).Where("key = ?", key).Delete(&model.PricingConfig{}).Error
+}
+
+// TokensAmount возвращает кол-во токенов по ключу тарифа, либо fallback если ключа нет.
+func (r *PricingRepo) TokensAmount(ctx context.Context, key string, fallback int) int {
+	p, err := r.FindByKey(ctx, key)
+	if err != nil || p == nil {
+		return fallback
+	}
+	return p.TokensAmount
+}

@@ -47,6 +47,20 @@ services:
       postgres:
         condition: service_healthy
 
+  # Своя карта — self-hosted сервер тайлов OpenStreetMap (Leaflet на фронте указывает сюда).
+  # Положите регион-экстракт в ./services/tiles/tiles.mbtiles (например Узбекистан+СНГ из openmaptiles/geofabrik),
+  # затем запустите: docker compose up -d tiles
+  # Карта будет доступна на http://<host>:8083  (фронт: MAP_TILES_URL=https://maps.fan.sarbon.me)
+  tiles:
+    image: maptiler/tileserver-gl:latest
+    container_name: karvon_tiles
+    restart: unless-stopped
+    command: ["--mbtiles", "tiles.mbtiles", "--port", "8083"]
+    volumes:
+      - ./services/tiles:/data
+    ports:
+      - "8083:8083"
+
 volumes:
   postgres_data:
   whatsapp_auth:

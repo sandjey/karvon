@@ -1,8 +1,17 @@
 # KARVON
-## Stack: Go + Gin · PostgreSQL · Postman
-## MVP v3.1 · Июнь 2025
-### Scope: Регистрация · Компании (верификация) · Грузы · Склады · Монетизация
+## Stack: Go + Gin · PostgreSQL · Postman · Next.js (фронт) · OpenStreetMap (своя карта)
+## MVP v3.2 · Июнь 2026
+### Scope: Регистрация · Компании · **Товары (маркетплейс)** · Склады · Монетизация
 > ⚠️ Транспорт и автопарк вынесены из текущего ТЗ (вернём отдельным этапом).
+
+**Изменения v3.2:**
+- **Грузы → карточка товара (маркетплейс):** наименование, категория, количество в наличии + мин. заказ, делимость, упаковка, **цена за единицу видна без покупки контакта**, фото/видео/сертификаты, статус «Нет в наличии», постоянная карточка (без таймера истечения).
+- **Тарифы полностью динамические:** супер-админ через панель управляет тарифами/токенами/суммами (вкл. бонус за регистрацию `tokens_registration`); CRUD тарифов. Пакеты: Мини 5 / Базовый 20 / Стандарт 50 / Максимум 100 (значения редактируемы).
+- **Своя карта:** self-hosted tileserver (OpenStreetMap), фронт берёт адрес из `GET /api/v1/config`.
+- **Дашборд:** лента событий (кто купил контакт / добавил в избранное) — `GET /users/me/events`.
+- **Склады:** контактное лицо обязательно, поддержка видео, цветовая кодировка типов в ответе (`color`).
+- **Избранное:** автор видит кто добавил (имя + компания), без анонимизации.
+- **Оплата:** Rahmat scaffold готов к подключению (заказ → webhook → активация токенов/подписки/Boost).
 
 ---
 
@@ -216,77 +225,56 @@ Base URL: `GET /api/v1/...`
 
 ---
 
-### cargo_listings
-Объявления о грузах. Только от верифицированных компаний.
+### cargo_listings — КАРТОЧКА ТОВАРА (маркетплейс-модель)
+Грузовладелец публикует карточку товара (как в маркетплейсе): наименование, количество, цена, откуда забрать. Перевозчик находит товар и покупает контакт. Карточка **постоянная** (не истекает по таймеру). Только верифицированные компании. Цена видна в листинге **без** покупки контакта.
 
 | Колонка | Тип | Описание |
 |---------|-----|----------|
 | id | UUID PK | |
 | company_id | UUID FK → companies | |
 | user_id | UUID FK → users | Публикатор |
-| type | ENUM: domestic / international | Тип перевозки |
-| cargo_name | VARCHAR(200) | Наименование груза |
-| cargo_type | VARCHAR(50) | навалом / паллеты / бочки и т.д. |
+| cargo_name | VARCHAR(200) NOT NULL | Наименование товара |
+| category | ENUM cargo_category_enum | stroymat/food/textile/metal/chemical/wood/electronics/other |
+| description | TEXT | Описание, состав, характеристики |
+| quantity_available | DECIMAL | Всего в наличии |
+| quantity_unit | ENUM: ton/places/pallet/m3 | Ед. измерения |
+| min_order | DECIMAL | Минимальный заказ |
+| min_order_unit | ENUM: ton/places/pallet/m3 | |
+| divisibility | ENUM: ftl/ltl/dogruz | Делимость |
+| packaging | ENUM: bulk/pallets/bags/barrels/rolls/boxes/liquid/oversized | Упаковка |
+| weight_per_place | DECIMAL | Вес одного места/паллета |
+| length_m / width_m / height_m | DECIMAL | Габариты |
+| rate_mode (price_mode) | ENUM: negotiable/fixed/announcement | Режим цены |
+| rate_amount (price_per_unit) | DECIMAL | Цена за единицу |
+| rate_currency (currency) | ENUM: UZS/USD | |
+| vat_mode | ENUM: yes/no/unspecified | Включает НДС |
+| payment_terms | VARCHAR(50) | prepaid/on_fact/deferred |
+| payment_method | VARCHAR(50) | cash/bank/agreement |
+| from_country / from_city | VARCHAR(100) | Откуда забрать |
+| pickup_address | TEXT | Адрес склада/завода |
+| lat / lng | DECIMAL | Геометка (OpenStreetMap) |
+| loading_methods | TEXT[] | self/loader/crane |
+| working_hours | JSONB | Режим работы по дням |
 | is_adr | BOOLEAN | Опасный груз |
+| adr_class | INT (1–9) | Класс ADR |
 | has_temp_regime | BOOLEAN | |
 | temp_min / temp_max | DECIMAL | Температурный режим |
-| weight_ton | DECIMAL | |
-| volume_m3 | DECIMAL | |
-| places_count | INT | |
-| length_m / width_m / height_m | DECIMAL | Габариты |
-| loading_type | ENUM: ftl / ltl / partial | |
-| body_types | TEXT[] | Массив типов кузова |
-| vehicle_type | VARCHAR(50) | тягач+полуприцеп и т.д. |
-| tractor_axles | INT | |
-| trailer_axles | INT | |
-| only_recoupling | BOOLEAN | Только перецепка |
-| from_city | VARCHAR(100) | |
-| from_country | VARCHAR(100) | |
-| from_date | DATE | |
-| loading_method | VARCHAR(50) | |
-| to_city | VARCHAR(100) | |
-| to_country | VARCHAR(100) | |
-| to_date | DATE | |
-| unloading_method | VARCHAR(50) | |
-| transit_countries | TEXT[] | |
-| border_crossing | VARCHAR(100) | КПП |
-| customs_type | ENUM: export / import / transit | |
-| incoterms | VARCHAR(20) | |
-| permits | TEXT[] | TIR / CMR / ADR и т.д. |
-| rate_mode | ENUM: negotiable / fixed / announcement | |
-| rate_amount | DECIMAL | |
-| rate_currency | ENUM: UZS / USD | |
-| rate_vat | BOOLEAN | |
-| payment_terms | TEXT | |
-| payment_method | VARCHAR(50) | |
-| prepayment_percent | INT | |
-| duration_hours | INT | 24 / 48 / 72 |
-| expires_at | TIMESTAMPTZ | created_at + duration |
-| notes | TEXT | |
-| status | ENUM: active / archived / completed | DEFAULT active |
-| is_template | BOOLEAN DEFAULT false | |
-| template_name | VARCHAR(100) | |
-| is_boosted | BOOLEAN DEFAULT false | |
-| boost_expires_at | TIMESTAMPTZ | |
-| is_paid | BOOLEAN DEFAULT false | Платное или бесплатное |
-| views_count | INT DEFAULT 0 | |
-| contacts_bought_count | INT DEFAULT 0 | |
-| created_at | TIMESTAMPTZ | |
-| updated_at | TIMESTAMPTZ | |
+| body_types (required_body_types) | TEXT[] | Требования к кузову: tent/ref/container/cistern/carcarrier |
+| incoterms | VARCHAR(20) | Базис поставки (для международных) |
+| delivery_geography | TEXT[] | uz/cis/world |
+| permits | TEXT[] | TIR/CMR/phyto/CITES/EKMT |
+| notes (comment_for_carrier) | TEXT | Комментарий перевозчику |
+| in_stock | BOOLEAN DEFAULT true | false = «Нет в наличии» |
+| status | ENUM: active / archived | DEFAULT active (`completed` не используется) |
+| is_template / template_name | | Шаблоны постоянных товаров |
+| is_boosted / boost_expires_at | | Boost (продвижение) |
+| is_paid | BOOLEAN | Платное/бесплатное объявление |
+| views_count / contacts_bought_count | INT | Статистика |
+| created_at / updated_at | TIMESTAMPTZ | |
 
----
+**Медиа** (фото/видео/сертификаты, до 10) хранятся в `listing_media` (`entity_type='cargo'`). Контакты в карточке скрыты — открываются через `POST /contacts/view`.
 
-### cargo_waypoints
-Промежуточные пункты маршрута груза.
-
-| Колонка | Тип | Описание |
-|---------|-----|----------|
-| id | UUID PK | |
-| cargo_listing_id | UUID FK → cargo_listings | |
-| sort_order | INT | Порядок |
-| waypoint_type | ENUM: border / customs / reload / passthrough | |
-| city | VARCHAR(100) | |
-| country | VARCHAR(100) | |
+> Поле `type` (domestic/international) и `duration_hours` сохранены в БД как legacy NOT NULL и заполняются дефолтами; в API не используются (карточка товара постоянная, без маршрута назначения).
 
 ---
 
@@ -689,47 +677,47 @@ Base URL: `GET /api/v1/...`
 
 **Цель:** Верифицированные компании публикуют грузы. Работают фильтры.
 
+**Модель:** карточка ТОВАРА (см. схему `cargo_listings`). Карточка постоянная — без таймера истечения; «снимается» вручную (status=archived) или помечается «Нет в наличии» (in_stock=false).
+
 ### Задачи
 
-1. **Проверка перед публикацией** — у пользователя ≥1 verified компания; проверка бесплатного объявления (первое бесплатно, далее — оплата по `pricing_config`).
-2. **Создание** — полная форма; тип перевозки (domestic/international) определяет обязательные поля; `expires_at=created_at+duration_hours`.
-3. **Фоновая задача истечения** — каждые 30 минут: `expires_at<now() AND status=active` → `archived` + уведомление.
-4. **Шаблоны** — сохранить как шаблон; создать из шаблона (копирует поля, сбрасывает даты/статус).
+1. **Проверка перед публикацией** — у пользователя ≥1 verified компания.
+2. **Создание** — форма товара (категория, количество+ед., мин. заказ, делимость, упаковка, цена за ед., геометка, ADR/класс, темп. режим, требования к кузову, медиа). Медиа (фото/видео/сертификаты) — в `listing_media`.
+3. **Цена видна в листинге** без покупки контакта; скрыты только контакты компании.
+4. **Шаблоны / дублирование** — для постоянных товаров.
 
 ### API Endpoints
 
 | Метод | Путь | Auth | Описание |
 |-------|------|------|----------|
-| POST | `/api/v1/listings/cargo` | JWT + Verified | Создать объявление |
-| GET | `/api/v1/listings/cargo` | Нет | Список с фильтрами |
+| POST | `/api/v1/listings/cargo` | JWT + Verified | Создать карточку товара |
+| GET | `/api/v1/listings/cargo` | Нет | Листинг с фильтрами |
 | GET | `/api/v1/listings/cargo/:id` | Нет | Карточка |
 | PUT | `/api/v1/listings/cargo/:id` | JWT + Owner | Редактировать |
-| PATCH | `/api/v1/listings/cargo/:id/status` | JWT + Owner | Изменить статус |
+| PATCH | `/api/v1/listings/cargo/:id/status` | JWT + Owner | Статус (active/archived) и/или in_stock |
 | POST | `/api/v1/listings/cargo/:id/duplicate` | JWT + Verified | Дублировать |
 | DELETE | `/api/v1/listings/cargo/:id` | JWT + Owner | Удалить |
-| GET | `/api/v1/listings/cargo/:id/stats` | JWT + Owner | Статистика объявления |
+| GET | `/api/v1/listings/cargo/:id/stats` | JWT + Owner | Статистика |
 | GET | `/api/v1/listings/cargo/templates` | JWT | Мои шаблоны |
-| POST | `/api/v1/listings/cargo/templates` | JWT + Verified | Сохранить как шаблон |
+| POST | `/api/v1/listings/cargo/:id/template` | JWT + Owner | Сохранить как шаблон |
 | POST | `/api/v1/listings/cargo/from-template/:id` | JWT + Verified | Создать из шаблона |
 
 **GET /listings/cargo — фильтры:**
 ```
-from_city, to_city, type (domestic/international),
-loading_type (ftl/ltl/partial), cargo_type,
-body_types (массив), weight_min, weight_max,
-date_from, verified_only (bool),
-sort (newest/date/weight), page, per_page
+category, from_city, from_country, divisibility (ftl/ltl/dogruz),
+packaging, min_order_max, qty_min, qty_max, price_min, price_max,
+temp_regime (bool), adr (bool), verified_only (bool),
+sort (newest/price_asc/price_desc/quantity), page, per_page
 ```
 
-**GET /listings/cargo/:id — контакты:** телефон/WhatsApp/Telegram = `null` (blur) если нет opened contact; реальные данные если есть `contact_views` или это своё объявление.
+**GET /listings/cargo/:id:** контакты компании скрыты (открываются через `POST /contacts/view`); цена за единицу и объём видны сразу.
 
-**GET /listings/cargo/:id/stats:** views_count, contacts_bought_count, список добавивших в избранное (name, company, date).
+**GET /listings/cargo/:id/stats:** views_count, contacts_bought_count, список добавивших в избранное (имя + компания + дата).
 
 ### Бизнес-правила
-- Boosted объявления вверху (is_boosted DESC, created_at DESC).
-- Автор видит телефон без токена.
-- После истечения — уведомление.
-- При дублировании копируются все поля, кроме: status (active), expires_at (пересчёт), даты погрузки/выгрузки (null).
+- Boosted карточки вверху (is_boosted DESC, created_at DESC).
+- Карточка постоянная; «Нет в наличии» = in_stock=false (видна, но помечена).
+- При дублировании копируются все поля и медиа; сбрасываются статистика/boost.
 
 ---
 

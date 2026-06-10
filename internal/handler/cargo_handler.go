@@ -3,7 +3,6 @@ package handler
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -57,30 +56,7 @@ func (h *CargoHandler) Create(c *gin.Context) {
 
 func (h *CargoHandler) List(c *gin.Context) {
 	page, perPage := parsePagination(c)
-	f := repository.CargoFilter{
-		FromCity:     c.Query("from_city"),
-		ToCity:       c.Query("to_city"),
-		Type:         c.Query("type"),
-		LoadingType:  c.Query("loading_type"),
-		CargoType:    c.Query("cargo_type"),
-		BodyTypes:    c.QueryArray("body_types"),
-		VerifiedOnly: c.Query("verified_only") == "true",
-		Sort:         c.Query("sort"),
-		Offset:       (page - 1) * perPage,
-		Limit:        perPage,
-	}
-	if v := c.Query("weight_min"); v != "" {
-		if f.WeightMin = parseFloatPtr(v); f.WeightMin == nil {
-		}
-	}
-	if v := c.Query("weight_max"); v != "" {
-		f.WeightMax = parseFloatPtr(v)
-	}
-	if v := c.Query("date_from"); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
-			f.DateFrom = &t
-		}
-	}
+	f := buildCargoFilter(c, page, perPage)
 	list, total, err := h.svc.List(c.Request.Context(), f)
 	if err != nil {
 		InternalError(c)
@@ -90,6 +66,35 @@ func (h *CargoHandler) List(c *gin.Context) {
 		maskCargo(&list[i])
 	}
 	Paginated(c, list, int(total), page, perPage)
+}
+
+// buildCargoFilter собирает фильтр листинга товаров из query-параметров.
+func buildCargoFilter(c *gin.Context, page, perPage int) repository.CargoFilter {
+	f := repository.CargoFilter{
+		Category:      c.Query("category"),
+		FromCity:      c.Query("from_city"),
+		FromCountry:   c.Query("from_country"),
+		Divisibility:  c.Query("divisibility"),
+		Packaging:     c.Query("packaging"),
+		MinOrderMax:   parseFloatPtr(c.Query("min_order_max")),
+		QtyMin:        parseFloatPtr(c.Query("qty_min")),
+		QtyMax:        parseFloatPtr(c.Query("qty_max")),
+		PriceMin:      parseFloatPtr(c.Query("price_min")),
+		PriceMax:      parseFloatPtr(c.Query("price_max")),
+		HasTempRegime: c.Query("temp_regime") == "true",
+		VerifiedOnly:  c.Query("verified_only") == "true",
+		Sort:          c.Query("sort"),
+		Offset:        (page - 1) * perPage,
+		Limit:         perPage,
+	}
+	if v := c.Query("adr"); v == "true" {
+		t := true
+		f.IsADR = &t
+	} else if v == "false" {
+		fl := false
+		f.IsADR = &fl
+	}
+	return f
 }
 
 func (h *CargoHandler) GetOne(c *gin.Context) {
@@ -142,7 +147,7 @@ func (h *CargoHandler) SetStatus(c *gin.Context) {
 		return
 	}
 	userID := c.MustGet("user_id").(uuid.UUID)
-	if err := h.svc.SetStatus(c.Request.Context(), id, userID, req.Status); err != nil {
+	if err := h.svc.SetStatus(c.Request.Context(), id, userID, req.Status, req.InStock); err != nil {
 		handleCargoErr(c, err)
 		return
 	}

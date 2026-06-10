@@ -25,6 +25,17 @@ func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFunc) 
 	g.GET("/me", h.GetProfile)
 	g.PUT("/me", h.UpdateProfile)
 	g.GET("/me/stats", h.GetStats)
+	g.GET("/me/events", h.GetEvents)
+}
+
+func (h *UserHandler) GetEvents(c *gin.Context) {
+	userID := c.MustGet("user_id").(uuid.UUID)
+	events, err := h.svc.GetEvents(c.Request.Context(), userID)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	OK(c, events)
 }
 
 func (h *UserHandler) GetProfile(c *gin.Context) {

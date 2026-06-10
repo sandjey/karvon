@@ -16,7 +16,8 @@
     { "key": "warehouse_id",    "value": "" },
     { "key": "route_id",        "value": "" },
     { "key": "notification_id", "value": "" },
-    { "key": "user_id",         "value": "" }
+    { "key": "user_id",         "value": "" },
+    { "key": "order_id",        "value": "" }
   ],
   "item": [
     {
@@ -956,8 +957,8 @@
               { "key": "Accept-Language", "value": "{{lang}}" }
             ],
             "url": { "raw": "{{base_url}}/api/v1/listings/cargo?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"type\": \"domestic\",\n  \"cargo_name\": \"Текстиль\",\n  \"cargo_type\": \"паллеты\",\n  \"weight_ton\": 20,\n  \"volume_m3\": 86,\n  \"loading_type\": \"ftl\",\n  \"body_types\": [\"tent\"],\n  \"from_city\": \"Ташкент\",\n  \"from_country\": \"Узбекистан\",\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"Узбекистан\",\n  \"rate_mode\": \"fixed\",\n  \"rate_amount\": 5000000,\n  \"rate_currency\": \"UZS\",\n  \"duration_hours\": 48,\n  \"notes\": \"Погрузка с утра\",\n  \"waypoints\": [{ \"sort_order\": 1, \"waypoint_type\": \"passthrough\", \"city\": \"Джизак\", \"country\": \"Узбекистан\" }]\n}", "options": { "raw": { "language": "json" } } },
-            "description": "Требует JWT + хотя бы одну approved-компанию. company_id можно указать явно, иначе берётся первая approved."
+            "body": { "mode": "raw", "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\"loader\"],\n  \"is_adr\": false,\n  \"has_temp_regime\": false,\n  \"required_body_types\": [\"tent\"],\n  \"delivery_geography\": [\"uz\", \"cis\"],\n  \"comment_for_carrier\": \"Погрузка с 9:00\",\n  \"media\": [{ \"file_url\": \"/uploads/cargo/yarn1.jpg\", \"file_type\": \"photo\" }]\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Карточка ТОВАРА. Требует JWT + approved-компанию. company_id опционален (иначе первая approved). category: stroymat|food|textile|metal|chemical|wood|electronics|other. media: file_type photo|video|document."
           },
           "response": []
         },
@@ -967,13 +968,17 @@
             "method": "GET",
             "header": [{ "key": "Accept-Language", "value": "{{lang}}" }],
             "url": {
-              "raw": "{{base_url}}/api/v1/listings/cargo?from_city=&to_city=&type=&loading_type=&cargo_type=&weight_min=&weight_max=&verified_only=&sort=newest&page=1&per_page=20&lang={{lang}}",
+              "raw": "{{base_url}}/api/v1/listings/cargo?category=&from_city=&from_country=&divisibility=&packaging=&min_order_max=&qty_min=&qty_max=&price_min=&price_max=&temp_regime=&adr=&verified_only=&sort=newest&page=1&per_page=20&lang={{lang}}",
               "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"],
               "query": [
-                { "key": "from_city", "value": "" }, { "key": "to_city", "value": "" }, { "key": "type", "value": "", "description": "domestic|international" },
-                { "key": "loading_type", "value": "", "description": "ftl|ltl|partial" }, { "key": "cargo_type", "value": "" },
-                { "key": "weight_min", "value": "" }, { "key": "weight_max", "value": "" }, { "key": "verified_only", "value": "", "description": "true|false" },
-                { "key": "sort", "value": "newest", "description": "newest|date|weight" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }, { "key": "lang", "value": "{{lang}}" }
+                { "key": "category", "value": "", "description": "stroymat|food|textile|metal|chemical|wood|electronics|other" },
+                { "key": "from_city", "value": "" }, { "key": "from_country", "value": "" },
+                { "key": "divisibility", "value": "", "description": "ftl|ltl|dogruz" }, { "key": "packaging", "value": "" },
+                { "key": "min_order_max", "value": "" }, { "key": "qty_min", "value": "" }, { "key": "qty_max", "value": "" },
+                { "key": "price_min", "value": "" }, { "key": "price_max", "value": "" },
+                { "key": "temp_regime", "value": "", "description": "true|false" }, { "key": "adr", "value": "", "description": "true|false" },
+                { "key": "verified_only", "value": "", "description": "true|false" },
+                { "key": "sort", "value": "newest", "description": "newest|price_asc|price_desc|quantity" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }, { "key": "lang", "value": "{{lang}}" }
               ]
             }
           },
@@ -1000,7 +1005,7 @@
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] },
-            "body": { "mode": "raw", "raw": "{\n  \"type\": \"domestic\",\n  \"weight_ton\": 22,\n  \"notes\": \"Обновлено\"\n}", "options": { "raw": { "language": "json" } } }
+            "body": { "mode": "raw", "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа (обновлено)\",\n  \"category\": \"textile\",\n  \"quantity_available\": 100,\n  \"quantity_unit\": \"ton\",\n  \"price_per_unit\": 26000000,\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } }
           },
           "response": []
         },
@@ -1010,7 +1015,7 @@
             "method": "PATCH",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/status", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","status"] },
-            "body": { "mode": "raw", "raw": "{\n  \"status\": \"archived\"\n}", "options": { "raw": { "language": "json" } } }
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\",\n  \"in_stock\": false\n}", "options": { "raw": { "language": "json" } } }
           },
           "response": []
         },
@@ -1052,7 +1057,7 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/warehouses?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
-            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"storage_type\": [\"стеллажное\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" }\n}", "options": { "raw": { "language": "json" } } }
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"storage_type\": [\"стеллажное\"],\n  \"infrastructure\": [\"loader\", \"parking_trucks\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" },\n  \"media\": [{ \"file_url\": \"/uploads/wh/wh1.jpg\", \"file_type\": \"photo\" }, { \"file_url\": \"/uploads/wh/tour.mp4\", \"file_type\": \"video\" }]\n}", "options": { "raw": { "language": "json" } } }
           },
           "response": []
         },
@@ -1084,7 +1089,8 @@
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] },
-            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад (обновлён)\",\n  \"area_free_m2\": 200\n}", "options": { "raw": { "language": "json" } } }
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад (обновлён)\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 200\n}", "options": { "raw": { "language": "json" } } },
+            "description": "contact_person обязателен (валидация по типу). Для cold — temp_min/temp_max/cold_chamber_types; для customs — customs_license_*."
           },
           "response": []
         },
@@ -1135,12 +1141,56 @@
       ]
     },
     {
-      "name": "Payments (тарифы)",
-      "description": "Витрина тарифов. Полный цикл Rahmat (создание платежа/webhook/boost) — НЕ реализован (День 8).",
+      "name": "Payments",
+      "description": "Тарифы + платёжный цикл. Rahmat — scaffold (заказ → webhook → активация токенов/подписки/Boost). Реальный вызов Rahmat API подключается в pkg/rahmat.",
       "item": [
         {
           "name": "GET /payments/packages — тарифы",
           "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/payments/packages", "host": ["{{base_url}}"], "path": ["api","v1","payments","packages"] } },
+          "response": []
+        },
+        {
+          "name": "POST /payments/create — создать платёж",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('order_id', r.data.order_id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/payments/create", "host": ["{{base_url}}"], "path": ["api","v1","payments","create"] },
+            "body": { "mode": "raw", "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_basic\",\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "payment_type: tokens|subscription|listing. Для listing укажите listing_type+listing_id. Возвращает order_id + payment_url."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /payments/webhook — уведомление Rahmat",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/payments/webhook", "host": ["{{base_url}}"], "path": ["api","v1","payments","webhook"] },
+            "body": { "mode": "raw", "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"method\": \"uzcard\",\n  \"signature\": \"\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Активирует заказ: токены/подписка/listing/boost. Идемпотентно. Подпись проверяется в pkg/rahmat (в режиме заглушки пропускается)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /payments/history",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/payments/history?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","payments","history"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /subscriptions/active",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/subscriptions/active", "host": ["{{base_url}}"], "path": ["api","v1","subscriptions","active"] } },
+          "response": []
+        },
+        {
+          "name": "POST /listings/:type/:id/boost — продвижение",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/boost", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","boost"] },
+            "body": { "mode": "raw", "raw": "{\n  \"pricing_key\": \"boost_3day\",\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "type: cargo|warehouse. Создаёт платёжный заказ на Boost; буст активируется после webhook."
+          },
           "response": []
         }
       ]
@@ -1358,13 +1408,47 @@
           "response": []
         },
         {
-          "name": "PUT /admin/pricing/:key",
+          "name": "PUT /admin/pricing/:key — изменить тариф/токены/сумму",
           "request": {
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/admin/pricing/tokens_basic", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing","tokens_basic"] },
-            "body": { "mode": "raw", "raw": "{\n  \"price_uzs\": 30000,\n  \"price_usd\": 2.5,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } }
+            "body": { "mode": "raw", "raw": "{\n  \"label\": \"Базовый пакет\",\n  \"price_uzs\": 30000,\n  \"price_usd\": 2.5,\n  \"tokens_amount\": 20,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Динамическое управление тарифами: суммы (price_uzs/usd), кол-во токенов (tokens_amount), длительность (duration_days). Ключ tokens_registration задаёт бонус при регистрации."
           },
+          "response": []
+        },
+        {
+          "name": "POST /admin/pricing — создать тариф",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/pricing", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing"] },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"tokens_promo\",\n  \"label\": \"Промо пакет (10 токенов)\",\n  \"price_uzs\": 15000,\n  \"price_usd\": 1.2,\n  \"tokens_amount\": 10,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/pricing/:key — удалить тариф",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/pricing/tokens_promo", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing","tokens_promo"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Misc (Config, Dashboard)",
+      "description": "Публичный конфиг (адрес карты, языки) и лента событий дашборда.",
+      "item": [
+        {
+          "name": "GET /config — публичная конфигурация",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/config", "host": ["{{base_url}}"], "path": ["api","v1","config"] } },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": true,\n  \"data\": {\n    \"map_tiles_url\": \"https://maps.fan.sarbon.me\",\n    \"languages\": [\"ru\", \"uz\"]\n  }\n}" }
+          ]
+        },
+        {
+          "name": "GET /users/me/events — лента событий",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/users/me/events", "host": ["{{base_url}}"], "path": ["api","v1","users","me","events"] }, "description": "Кто купил контакт / добавил в избранное по моим объявлениям." },
           "response": []
         }
       ]

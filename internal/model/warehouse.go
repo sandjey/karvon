@@ -53,4 +53,6 @@ type WarehouseListing struct {
 	Status         string     `gorm:"type:warehouse_status_enum;not null;default:'active';index" json:"status"`
 	ViewsCount     int        `gorm:"not null;default:0" json:"views_count"`
 	CreatedAt      time.Time  `json:"created_at"`
+
+	Media []ListingMedia `gorm:"-" json:"media,omitempty"` // фото/видео (entity=warehouse)
 }

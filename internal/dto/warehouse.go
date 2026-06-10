@@ -19,7 +19,7 @@ type WarehouseUpsertRequest struct {
 
 	PhoneMain     *string `json:"phone_main"`
 	PhoneExtra    *string `json:"phone_extra"`
-	ContactPerson *string `json:"contact_person"`
+	ContactPerson *string `json:"contact_person" binding:"required"`
 	Email         *string `json:"email" binding:"omitempty,email"`
 	Website       *string `json:"website"`
 
@@ -41,6 +41,8 @@ type WarehouseUpsertRequest struct {
 	Infrastructure []string       `json:"infrastructure"`
 	Services       []string       `json:"services"`
 	WorkingHours   datatypes.JSON `json:"working_hours"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type WarehouseStatusRequest struct {

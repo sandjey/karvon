@@ -98,6 +98,19 @@ func (r *WarehouseRepo) List(ctx context.Context, f WarehouseFilter) ([]model.Wa
 	return list, total, err
 }
 
+func (r *WarehouseRepo) ExpireBoosts(ctx context.Context) (int64, error) {
+	res := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("is_boosted = true AND boost_expires_at IS NOT NULL AND boost_expires_at < now()").
+		Update("is_boosted", false)
+	return res.RowsAffected, res.Error
+}
+
+func (r *WarehouseRepo) SetBoost(ctx context.Context, id uuid.UUID, until interface{}) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_boosted": true, "boost_expires_at": until}).Error
+}
+
 func (r *WarehouseRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.WarehouseListing, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).Where("user_id = ?", userID)
 	var total int64

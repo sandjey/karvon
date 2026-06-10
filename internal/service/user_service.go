@@ -56,6 +56,10 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, req d
 	return s.userRepo.UpdateProfile(ctx, userID, fields)
 }
 
+func (s *UserService) GetEvents(ctx context.Context, userID uuid.UUID) ([]repository.DashboardEvent, error) {
+	return s.userRepo.DashboardEvents(ctx, userID, 50)
+}
+
 func (s *UserService) GetStats(ctx context.Context, userID uuid.UUID) (*dto.UserStatsResponse, error) {
 	u, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil || u == nil {

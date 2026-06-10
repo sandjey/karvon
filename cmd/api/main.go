@@ -26,6 +26,7 @@ import (
 	"karvon/internal/service"
 	jwtpkg "karvon/pkg/jwt"
 	"karvon/pkg/notifier"
+	"karvon/pkg/rahmat"
 	"karvon/pkg/storage"
 )
 
@@ -84,14 +85,18 @@ func main() {
 	routeRepo     := repository.NewRouteRepo(gormDB)
 	pricingRepo   := repository.NewPricingRepo(gormDB)
 	adminRepo     := repository.NewAdminRepo(gormDB)
+	mediaRepo     := repository.NewMediaRepo(gormDB)
+	paymentRepo   := repository.NewPaymentRepo(gormDB)
 
-	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
+	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
 	userSvc      := service.NewUserService(userRepo, companyRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo)
-	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo)
-	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo)
+	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo)
+	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo)
 	pricingSvc   := service.NewPricingService(pricingRepo)
+	rahmatClient := rahmat.NewClient(cfg.RahmatMerchantID, cfg.RahmatSecretKey)
+	paymentSvc   := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
 	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo)
 	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
 	routeSvc     := service.NewRouteService(routeRepo)
@@ -113,7 +118,7 @@ func main() {
 	superAdminMiddleware    := middleware.Role("super_admin")
 
 	// Фоновые задачи
-	startBackgroundWorkers(cargoRepo, notifRepo, otpRepo)
+	startBackgroundWorkers(cargoRepo, warehouseRepo, otpRepo)
 
 	// ── HTTP роутер ──────────────────────────────────────────────────────────
 	gin.SetMode(gin.ReleaseMode)
@@ -134,10 +139,11 @@ func main() {
 	handler.NewUploadHandler(store, "http://localhost:"+cfg.AppPort).RegisterRoutes(v1, authMiddleware)
 	handler.NewModeratorHandler(moderatorSvc).RegisterRoutes(v1, authMiddleware, moderatorRoleMiddleware)
 	handler.NewGeoHandler().RegisterRoutes(v1)
+	handler.NewConfigHandler(cfg.MapTilesURL).RegisterRoutes(v1)
 	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
 	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
 	handler.NewContactHandler(contactSvc, pricingSvc).RegisterRoutes(v1, authMiddleware)
-	handler.NewPaymentsHandler(pricingSvc).RegisterRoutes(v1)
+	handler.NewPaymentsHandler(pricingSvc, paymentSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewFavoriteHandler(favoriteSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewRouteHandler(routeSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewNotificationHandler(notifSvc).RegisterRoutes(v1, authMiddleware)
@@ -199,7 +205,6 @@ func runMigrations(db *gorm.DB) error {
 		&model.RefreshToken{},
 		&model.Company{},
 		&model.CargoListing{},
-		&model.CargoWaypoint{},
 		&model.FleetVehicle{},
 		&model.TransportListing{},
 		&model.WarehouseListing{},
@@ -220,6 +225,11 @@ func createEnumTypes(db *gorm.DB) error {
 		{"user_role", "'user','moderator','super_admin'"},
 		{"company_status", "'pending','approved','rejected','docs_requested'"},
 		{"company_org_type", "'ooo','ao','ip','ltd','gmbh','co_ltd'"},
+		{"cargo_category_enum", "'stroymat','food','textile','metal','chemical','wood','electronics','other'"},
+		{"quantity_unit_enum", "'ton','places','pallet','m3'"},
+		{"divisibility_enum", "'ftl','ltl','dogruz'"},
+		{"packaging_enum", "'bulk','pallets','bags','barrels','rolls','boxes','liquid','oversized'"},
+		{"vat_mode_enum", "'yes','no','unspecified'"},
 		{"cargo_type_enum", "'domestic','international'"},
 		{"loading_type_enum", "'ftl','ltl','partial'"},
 		{"customs_type_enum", "'export','import','transit'"},
@@ -249,6 +259,15 @@ func createEnumTypes(db *gorm.DB) error {
 			return fmt.Errorf("enum %s: %w", e.name, err)
 		}
 	}
+	// Дополнения к существующим enum (идемпотентно).
+	alters := []string{
+		"ALTER TYPE media_file_type_enum ADD VALUE IF NOT EXISTS 'video'",
+	}
+	for _, a := range alters {
+		if err := db.Exec(a).Error; err != nil {
+			return fmt.Errorf("alter enum: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -259,10 +278,11 @@ func seedPricingConfig(db *gorm.DB) error {
 		return nil
 	}
 	seeds := []model.PricingConfig{
-		{Key: "tokens_mini", Label: "Мини пакет (10 токенов)", TokensAmount: 10},
-		{Key: "tokens_basic", Label: "Базовый пакет (30 токенов)", TokensAmount: 30},
-		{Key: "tokens_standard", Label: "Стандарт пакет (60 токенов)", TokensAmount: 60},
-		{Key: "tokens_max", Label: "Макс пакет (150 токенов)", TokensAmount: 150},
+		{Key: "tokens_registration", Label: "Бонус при регистрации", TokensAmount: 5},
+		{Key: "tokens_mini", Label: "Мини пакет (5 токенов)", TokensAmount: 5},
+		{Key: "tokens_basic", Label: "Базовый пакет (20 токенов)", TokensAmount: 20},
+		{Key: "tokens_standard", Label: "Стандарт пакет (50 токенов)", TokensAmount: 50},
+		{Key: "tokens_max", Label: "Макс пакет (100 токенов)", TokensAmount: 100},
 		{Key: "sub_week", Label: "Подписка на неделю", DurationDays: 7},
 		{Key: "sub_month", Label: "Подписка на месяц", DurationDays: 30},
 		{Key: "sub_year", Label: "Подписка на год", DurationDays: 365},

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -55,25 +54,7 @@ func (h *SearchHandler) Search(c *gin.Context) {
 		}
 		Paginated(c, out, int(total), page, perPage)
 	default:
-		f := repository.CargoFilter{
-			FromCity:     c.Query("from_city"),
-			ToCity:       c.Query("to_city"),
-			Type:         c.Query("cargo_type_kind"),
-			LoadingType:  c.Query("loading_type"),
-			CargoType:    c.Query("cargo_type"),
-			BodyTypes:    c.QueryArray("body_types"),
-			WeightMin:    parseFloatPtr(c.Query("weight_min")),
-			WeightMax:    parseFloatPtr(c.Query("weight_max")),
-			VerifiedOnly: c.Query("verified_only") == "true",
-			Sort:         c.Query("sort"),
-			Offset:       (page - 1) * perPage,
-			Limit:        perPage,
-		}
-		if v := c.Query("date_from"); v != "" {
-			if t, err := time.Parse("2006-01-02", v); err == nil {
-				f.DateFrom = &t
-			}
-		}
+		f := buildCargoFilter(c, page, perPage)
 		list, total, err := h.cargo.List(c.Request.Context(), f)
 		if err != nil {
 			InternalError(c)

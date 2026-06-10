@@ -6,36 +6,31 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"karvon/internal/model"
 	"karvon/internal/repository"
 )
 
 // startBackgroundWorkers запускает фоновые задачи (тикеры).
-func startBackgroundWorkers(cargoRepo *repository.CargoRepo, notifRepo *repository.NotificationRepo, otpRepo *repository.OTPRepo) {
-	go expireListingsWorker(cargoRepo, notifRepo)
+func startBackgroundWorkers(cargoRepo *repository.CargoRepo, warehouseRepo *repository.WarehouseRepo, otpRepo *repository.OTPRepo) {
+	go boostExpiryWorker(cargoRepo, warehouseRepo)
 	go otpCleanupWorker(otpRepo)
 }
 
-// expireListingsWorker каждые 30 минут архивирует истёкшие грузы и шлёт уведомления.
-func expireListingsWorker(cargoRepo *repository.CargoRepo, notifRepo *repository.NotificationRepo) {
-	ticker := time.NewTicker(30 * time.Minute)
+// boostExpiryWorker каждый час снимает истёкшие бусты с грузов и складов.
+func boostExpiryWorker(cargoRepo *repository.CargoRepo, warehouseRepo *repository.WarehouseRepo) {
+	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 	for {
 		ctx := context.Background()
-		expired, err := cargoRepo.ExpireDue(ctx)
+		nc, err := cargoRepo.ExpireBoosts(ctx)
 		if err != nil {
-			log.Warn().Err(err).Msg("expire listings worker error")
-		} else if len(expired) > 0 {
-			for _, c := range expired {
-				body := "Срок действия вашего объявления истёк, оно перемещено в архив."
-				_ = notifRepo.Create(ctx, &model.Notification{
-					UserID: c.UserID,
-					Type:   "listing_expired",
-					Title:  "Объявление архивировано",
-					Body:   &body,
-				})
-			}
-			log.Info().Int("count", len(expired)).Msg("archived expired cargo listings")
+			log.Warn().Err(err).Msg("cargo boost expiry error")
+		}
+		nw, err := warehouseRepo.ExpireBoosts(ctx)
+		if err != nil {
+			log.Warn().Err(err).Msg("warehouse boost expiry error")
+		}
+		if nc+nw > 0 {
+			log.Info().Int64("cargo", nc).Int64("warehouse", nw).Msg("boosts expired")
 		}
 		<-ticker.C
 	}

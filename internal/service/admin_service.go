@@ -196,7 +196,7 @@ func (s *AdminService) DeleteListing(ctx context.Context, listingType string, id
 func (s *AdminService) BlockListing(ctx context.Context, listingType string, id uuid.UUID) error {
 	switch listingType {
 	case "cargo":
-		return s.cargo.UpdateStatus(ctx, id, "archived")
+		return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"status": "archived"})
 	case "warehouse":
 		return s.warehouse.UpdateStatus(ctx, id, "archived")
 	}
@@ -217,6 +217,14 @@ func (s *AdminService) Pricing(ctx context.Context) ([]model.PricingConfig, erro
 
 func (s *AdminService) UpdatePricing(ctx context.Context, key string, fields map[string]interface{}, by uuid.UUID) error {
 	return s.pricing.Update(ctx, key, fields, by)
+}
+
+func (s *AdminService) CreatePricing(ctx context.Context, p *model.PricingConfig, by uuid.UUID) error {
+	return s.pricing.Create(ctx, p, by)
+}
+
+func (s *AdminService) DeletePricing(ctx context.Context, key string) error {
+	return s.pricing.Delete(ctx, key)
 }
 
 func normalizeAdminPhone(phone string) string {

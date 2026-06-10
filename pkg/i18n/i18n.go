@@ -70,6 +70,7 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Тариф обновлён",
 		"LISTING_DELETED":       "Объявление удалено",
 		"LISTING_BLOCK_UPDATED": "Статус объявления обновлён",
+		"PAYMENT_CREATED":       "Платёж создан",
 	},
 	"uz": {
 		// errors
@@ -135,6 +136,7 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Tarif yangilandi",
 		"LISTING_DELETED":       "E'lon o'chirildi",
 		"LISTING_BLOCK_UPDATED": "E'lon holati yangilandi",
+		"PAYMENT_CREATED":       "To'lov yaratildi",
 	},
 	"en": {
 		// errors
@@ -200,6 +202,7 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Pricing updated",
 		"LISTING_DELETED":       "Listing deleted",
 		"LISTING_BLOCK_UPDATED": "Listing block status updated",
+		"PAYMENT_CREATED":       "Payment created",
 	},
 }
 

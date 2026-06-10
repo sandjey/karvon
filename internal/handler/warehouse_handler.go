@@ -34,6 +34,14 @@ func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gi
 type warehouseResp struct {
 	*model.WarehouseListing
 	OccupancyPercent *float64 `json:"occupancy_percent"`
+	Color            string   `json:"color"`
+}
+
+// цветовая кодировка типов складов (BRD)
+var warehouseColors = map[string]string{
+	"regular": "#1A56A0",
+	"cold":    "#0288D1",
+	"customs": "#6A1B9A",
 }
 
 func wrapWarehouse(w *model.WarehouseListing) warehouseResp {
@@ -42,7 +50,7 @@ func wrapWarehouse(w *model.WarehouseListing) warehouseResp {
 		v := (*w.AreaTotalM2 - *w.AreaFreeM2) / *w.AreaTotalM2 * 100
 		occ = &v
 	}
-	return warehouseResp{WarehouseListing: w, OccupancyPercent: occ}
+	return warehouseResp{WarehouseListing: w, OccupancyPercent: occ, Color: warehouseColors[w.WarehouseType]}
 }
 
 func maskWarehouse(w *model.WarehouseListing) {

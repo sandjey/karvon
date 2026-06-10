@@ -14,10 +14,11 @@ import (
 type WarehouseService struct {
 	repo    *repository.WarehouseRepo
 	company *repository.CompanyRepo
+	media   *repository.MediaRepo
 }
 
-func NewWarehouseService(repo *repository.WarehouseRepo, company *repository.CompanyRepo) *WarehouseService {
-	return &WarehouseService{repo: repo, company: company}
+func NewWarehouseService(repo *repository.WarehouseRepo, company *repository.CompanyRepo, media *repository.MediaRepo) *WarehouseService {
+	return &WarehouseService{repo: repo, company: company, media: media}
 }
 
 func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -43,6 +44,10 @@ func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID,
 
 // validateByType проверяет обязательные поля по типу склада.
 func validateByType(req *dto.WarehouseUpsertRequest) error {
+	// контактное лицо обязательно для всех типов
+	if req.ContactPerson == nil || *req.ContactPerson == "" {
+		return ErrValidation
+	}
 	switch req.WarehouseType {
 	case "cold":
 		if req.TempMin == nil || req.TempMax == nil || len(req.ColdChamberTypes) == 0 {
@@ -78,7 +83,8 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	if err := s.repo.Create(ctx, w); err != nil {
 		return nil, err
 	}
-	return s.repo.FindByID(ctx, w.ID)
+	s.saveMedia(ctx, w.ID, req.Media)
+	return s.loadFull(ctx, w.ID)
 }
 
 func (s *WarehouseService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*model.WarehouseListing, error) {
@@ -92,7 +98,28 @@ func (s *WarehouseService) GetByID(ctx context.Context, id, viewerID uuid.UUID) 
 	if w.UserID != viewerID {
 		_ = s.repo.IncrementViews(ctx, id)
 	}
+	w.Media, _ = s.media.ListByEntity(ctx, "warehouse", id)
 	return w, nil
+}
+
+func (s *WarehouseService) loadFull(ctx context.Context, id uuid.UUID) (*model.WarehouseListing, error) {
+	w, err := s.repo.FindByID(ctx, id)
+	if err != nil || w == nil {
+		return w, err
+	}
+	w.Media, _ = s.media.ListByEntity(ctx, "warehouse", id)
+	return w, nil
+}
+
+func (s *WarehouseService) saveMedia(ctx context.Context, id uuid.UUID, items []dto.MediaItem) {
+	if items == nil {
+		return
+	}
+	media := make([]model.ListingMedia, len(items))
+	for i, it := range items {
+		media[i] = model.ListingMedia{FileURL: it.FileURL, FileType: it.FileType, OriginalName: it.OriginalName, SortOrder: it.SortOrder}
+	}
+	_ = s.media.Replace(ctx, "warehouse", id, media)
 }
 
 func (s *WarehouseService) List(ctx context.Context, f repository.WarehouseFilter) ([]model.WarehouseListing, int64, error) {
@@ -125,7 +152,10 @@ func (s *WarehouseService) Update(ctx context.Context, id, userID uuid.UUID, req
 	if err := s.repo.Save(ctx, w); err != nil {
 		return nil, err
 	}
-	return s.repo.FindByID(ctx, id)
+	if req.Media != nil {
+		s.saveMedia(ctx, id, req.Media)
+	}
+	return s.loadFull(ctx, id)
 }
 
 func (s *WarehouseService) SetStatus(ctx context.Context, id, userID uuid.UUID, status string) error {
@@ -139,6 +169,7 @@ func (s *WarehouseService) Delete(ctx context.Context, id, userID uuid.UUID) err
 	if _, err := s.owned(ctx, id, userID); err != nil {
 		return err
 	}
+	_ = s.media.DeleteByEntity(ctx, "warehouse", id)
 	return s.repo.Delete(ctx, id)
 }
 

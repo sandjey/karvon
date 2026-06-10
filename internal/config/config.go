@@ -28,6 +28,9 @@ type Config struct {
 	// Универсальный OTP-код (QA): проходит для любого телефона, если задан
 	UniversalOTP string
 
+	// URL своего сервера карт (tileserver) для фронтенда
+	MapTilesURL string
+
 	RahmatMerchantID string
 	RahmatSecretKey  string
 
@@ -56,6 +59,7 @@ func Load() (*Config, error) {
 		WhatsAppOTPBypass:  os.Getenv("WHATSAPP_OTP_BYPASS") == "true",
 
 		UniversalOTP: os.Getenv("UNIVERSAL_OTP"),
+		MapTilesURL:  os.Getenv("MAP_TILES_URL"),
 
 		RahmatMerchantID: os.Getenv("RAHMAT_MERCHANT_ID"),
 		RahmatSecretKey:  os.Getenv("RAHMAT_SECRET_KEY"),

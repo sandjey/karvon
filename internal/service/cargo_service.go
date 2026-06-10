@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -20,6 +19,7 @@ type CargoService struct {
 	routes    *repository.RouteRepo
 	notif     *repository.NotificationRepo
 	favorites *repository.FavoriteRepo
+	media     *repository.MediaRepo
 }
 
 func NewCargoService(
@@ -28,11 +28,11 @@ func NewCargoService(
 	routes *repository.RouteRepo,
 	notif *repository.NotificationRepo,
 	favorites *repository.FavoriteRepo,
+	media *repository.MediaRepo,
 ) *CargoService {
-	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites}
+	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media}
 }
 
-// resolveCompany выбирает компанию для публикации: явно указанную (своя+approved) или первую approved.
 func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
 	companies, err := s.company.FindByUserID(ctx, userID)
 	if err != nil {
@@ -59,38 +59,21 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if err != nil {
 		return nil, err
 	}
-
 	m := &model.CargoListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
 		Status:    "active",
+		InStock:   true,
+		Type:      "domestic", // legacy NOT NULL
 	}
 	applyCargo(&req, m)
-
-	if req.DurationHours != nil && *req.DurationHours > 0 {
-		m.DurationHours = *req.DurationHours
-	} else {
-		m.DurationHours = 24
-	}
-	exp := time.Now().Add(time.Duration(m.DurationHours) * time.Hour)
-	m.ExpiresAt = &exp
-
-	for i, w := range req.Waypoints {
-		m.Waypoints = append(m.Waypoints, model.CargoWaypoint{
-			SortOrder:    pickSort(w.SortOrder, i),
-			WaypointType: w.WaypointType,
-			City:         w.City,
-			Country:      w.Country,
-		})
-	}
-
 	if err := s.repo.Create(ctx, m); err != nil {
 		return nil, err
 	}
-
+	s.saveMedia(ctx, m.ID, req.Media)
 	s.notifyMatchingRoutes(ctx, m)
-	return s.repo.FindByID(ctx, m.ID)
+	return s.loadFull(ctx, m.ID)
 }
 
 func (s *CargoService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*model.CargoListing, error) {
@@ -104,6 +87,16 @@ func (s *CargoService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*mo
 	if c.UserID != viewerID {
 		_ = s.repo.IncrementViews(ctx, id)
 	}
+	c.Media, _ = s.media.ListByEntity(ctx, "cargo", id)
+	return c, nil
+}
+
+func (s *CargoService) loadFull(ctx context.Context, id uuid.UUID) (*model.CargoListing, error) {
+	c, err := s.repo.FindByID(ctx, id)
+	if err != nil || c == nil {
+		return c, err
+	}
+	c.Media, _ = s.media.ListByEntity(ctx, "cargo", id)
 	return c, nil
 }
 
@@ -134,89 +127,79 @@ func (s *CargoService) Update(ctx context.Context, id, userID uuid.UUID, req dto
 	if err != nil {
 		return nil, err
 	}
-	c.Waypoints = nil
 	applyCargo(&req, c)
 	if err := s.repo.Save(ctx, c); err != nil {
 		return nil, err
 	}
-	return s.repo.FindByID(ctx, id)
+	if req.Media != nil {
+		s.saveMedia(ctx, id, req.Media)
+	}
+	return s.loadFull(ctx, id)
 }
 
-func (s *CargoService) SetStatus(ctx context.Context, id, userID uuid.UUID, status string) error {
+func (s *CargoService) SetStatus(ctx context.Context, id, userID uuid.UUID, status *string, inStock *bool) error {
 	if _, err := s.ownedListing(ctx, id, userID); err != nil {
 		return err
 	}
-	return s.repo.UpdateStatus(ctx, id, status)
+	fields := map[string]interface{}{}
+	if status != nil {
+		fields["status"] = *status
+	}
+	if inStock != nil {
+		fields["in_stock"] = *inStock
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	return s.repo.UpdateStatus(ctx, id, fields)
 }
 
 func (s *CargoService) Delete(ctx context.Context, id, userID uuid.UUID) error {
 	if _, err := s.ownedListing(ctx, id, userID); err != nil {
 		return err
 	}
+	_ = s.media.DeleteByEntity(ctx, "cargo", id)
 	return s.repo.Delete(ctx, id)
 }
 
 func (s *CargoService) Duplicate(ctx context.Context, id, userID uuid.UUID) (*model.CargoListing, error) {
-	src, err := s.repo.FindByID(ctx, id)
+	src, err := s.ownedListing(ctx, id, userID)
 	if err != nil {
 		return nil, err
-	}
-	if src == nil {
-		return nil, ErrListingNotFound
-	}
-	if src.UserID != userID {
-		return nil, ErrNotOwner
 	}
 	cp := *src
 	cp.ID = uuid.New()
 	cp.Status = "active"
+	cp.InStock = true
 	cp.IsTemplate = false
 	cp.TemplateName = nil
-	cp.FromDate = nil
-	cp.ToDate = nil
 	cp.ViewsCount = 0
 	cp.ContactsBoughtCount = 0
 	cp.IsBoosted = false
 	cp.BoostExpiresAt = nil
 	cp.Company = nil
 	cp.User = nil
-	cp.Waypoints = nil
-	exp := time.Now().Add(time.Duration(cp.DurationHours) * time.Hour)
-	cp.ExpiresAt = &exp
-	for _, w := range src.Waypoints {
-		cp.Waypoints = append(cp.Waypoints, model.CargoWaypoint{
-			SortOrder:    w.SortOrder,
-			WaypointType: w.WaypointType,
-			City:         w.City,
-			Country:      w.Country,
-		})
-	}
+	cp.Media = nil
 	if err := s.repo.Create(ctx, &cp); err != nil {
 		return nil, err
 	}
-	return s.repo.FindByID(ctx, cp.ID)
+	s.copyMedia(ctx, id, cp.ID)
+	return s.loadFull(ctx, cp.ID)
 }
 
 func (s *CargoService) SaveAsTemplate(ctx context.Context, id, userID uuid.UUID, name string) (*model.CargoListing, error) {
-	src, err := s.repo.FindByID(ctx, id)
+	src, err := s.ownedListing(ctx, id, userID)
 	if err != nil {
 		return nil, err
-	}
-	if src == nil {
-		return nil, ErrListingNotFound
-	}
-	if src.UserID != userID {
-		return nil, ErrNotOwner
 	}
 	cp := *src
 	cp.ID = uuid.New()
 	cp.IsTemplate = true
 	cp.TemplateName = &name
 	cp.Status = "archived"
-	cp.ExpiresAt = nil
 	cp.Company = nil
 	cp.User = nil
-	cp.Waypoints = nil
+	cp.Media = nil
 	if err := s.repo.Create(ctx, &cp); err != nil {
 		return nil, err
 	}
@@ -243,15 +226,14 @@ func (s *CargoService) FromTemplate(ctx context.Context, templateID, userID uuid
 	cp.IsTemplate = false
 	cp.TemplateName = nil
 	cp.Status = "active"
+	cp.InStock = true
 	cp.Company = nil
 	cp.User = nil
-	cp.Waypoints = nil
-	exp := time.Now().Add(time.Duration(cp.DurationHours) * time.Hour)
-	cp.ExpiresAt = &exp
+	cp.Media = nil
 	if err := s.repo.Create(ctx, &cp); err != nil {
 		return nil, err
 	}
-	return s.repo.FindByID(ctx, cp.ID)
+	return s.loadFull(ctx, cp.ID)
 }
 
 func (s *CargoService) Stats(ctx context.Context, id, userID uuid.UUID) (*dto.CargoStatsResponse, error) {
@@ -265,7 +247,7 @@ func (s *CargoService) Stats(ctx context.Context, id, userID uuid.UUID) (*dto.Ca
 	}
 	favs := make([]dto.FavoriteUser, len(rows))
 	for i, r := range rows {
-		favs[i] = dto.FavoriteUser{UserName: r.UserName, AddedAt: r.CreatedAt}
+		favs[i] = dto.FavoriteUser{UserName: r.UserName, CompanyName: r.CompanyName, AddedAt: r.CreatedAt}
 	}
 	return &dto.CargoStatsResponse{
 		ViewsCount:          c.ViewsCount,
@@ -274,18 +256,42 @@ func (s *CargoService) Stats(ctx context.Context, id, userID uuid.UUID) (*dto.Ca
 	}, nil
 }
 
+func (s *CargoService) saveMedia(ctx context.Context, cargoID uuid.UUID, items []dto.MediaItem) {
+	if items == nil {
+		return
+	}
+	media := make([]model.ListingMedia, len(items))
+	for i, it := range items {
+		media[i] = model.ListingMedia{
+			FileURL:      it.FileURL,
+			FileType:     it.FileType,
+			OriginalName: it.OriginalName,
+			SortOrder:    it.SortOrder,
+		}
+	}
+	_ = s.media.Replace(ctx, "cargo", cargoID, media)
+}
+
+func (s *CargoService) copyMedia(ctx context.Context, srcID, dstID uuid.UUID) {
+	items, err := s.media.ListByEntity(ctx, "cargo", srcID)
+	if err != nil || len(items) == 0 {
+		return
+	}
+	for i := range items {
+		items[i].ID = uuid.Nil
+	}
+	_ = s.media.Replace(ctx, "cargo", dstID, items)
+}
+
 func (s *CargoService) notifyMatchingRoutes(ctx context.Context, c *model.CargoListing) {
-	from, to := "", ""
+	from := ""
 	if c.FromCity != nil {
 		from = *c.FromCity
 	}
-	if c.ToCity != nil {
-		to = *c.ToCity
-	}
-	if from == "" && to == "" {
+	if from == "" {
 		return
 	}
-	routes, err := s.routes.FindMatching(ctx, from, to)
+	routes, err := s.routes.FindMatching(ctx, from, "")
 	if err != nil {
 		return
 	}
@@ -294,78 +300,67 @@ func (s *CargoService) notifyMatchingRoutes(ctx context.Context, c *model.CargoL
 		if rt.UserID == c.UserID {
 			continue
 		}
-		body := fmt.Sprintf("Новый груз по маршруту %s → %s", rt.FromCity, rt.ToCity)
+		body := fmt.Sprintf("Новый товар из %s по вашему маршруту", from)
 		_ = s.notif.Create(ctx, &model.Notification{
 			UserID: rt.UserID,
 			Type:   "new_cargo_on_route",
-			Title:  "Новый груз по вашему маршруту",
+			Title:  "Новый товар по вашему маршруту",
 			Body:   &body,
 			Meta:   meta,
 		})
 	}
 }
 
-func pickSort(v, fallback int) int {
-	if v != 0 {
-		return v
-	}
-	return fallback
-}
-
-// applyCargo переносит непустые поля запроса в модель.
+// applyCargo переносит поля запроса в модель карточки товара.
 func applyCargo(req *dto.CargoUpsertRequest, m *model.CargoListing) {
-	m.Type = req.Type
 	m.CargoName = req.CargoName
-	m.CargoType = req.CargoType
+	m.Category = req.Category
+	m.Description = req.Description
+	m.QuantityAvailable = req.QuantityAvailable
+	m.QuantityUnit = req.QuantityUnit
+	m.MinOrder = req.MinOrder
+	m.MinOrderUnit = req.MinOrderUnit
+	m.Divisibility = req.Divisibility
+	m.Packaging = req.Packaging
+	m.WeightPerPlace = req.WeightPerPlace
+	m.LengthM = req.LengthM
+	m.WidthM = req.WidthM
+	m.HeightM = req.HeightM
+	m.PriceMode = req.PriceMode
+	m.PricePerUnit = req.PricePerUnit
+	m.Currency = req.Currency
+	m.VatMode = req.VatMode
+	m.PaymentTerms = req.PaymentTerms
+	m.PaymentMethod = req.PaymentMethod
+	m.FromCountry = req.FromCountry
+	m.FromCity = req.FromCity
+	m.PickupAddress = req.PickupAddress
+	m.Lat = req.Lat
+	m.Lng = req.Lng
+	if req.LoadingMethods != nil {
+		m.LoadingMethods = pq.StringArray(req.LoadingMethods)
+	}
+	if req.WorkingHours != nil {
+		m.WorkingHours = req.WorkingHours
+	}
 	if req.IsADR != nil {
 		m.IsADR = *req.IsADR
 	}
+	m.ADRClass = req.ADRClass
 	if req.HasTempRegime != nil {
 		m.HasTempRegime = *req.HasTempRegime
 	}
 	m.TempMin = req.TempMin
 	m.TempMax = req.TempMax
-	m.WeightTon = req.WeightTon
-	m.VolumeM3 = req.VolumeM3
-	m.PlacesCount = req.PlacesCount
-	m.LengthM = req.LengthM
-	m.WidthM = req.WidthM
-	m.HeightM = req.HeightM
-	m.LoadingType = req.LoadingType
-	if req.BodyTypes != nil {
-		m.BodyTypes = pq.StringArray(req.BodyTypes)
+	if req.RequiredBodyTypes != nil {
+		m.RequiredBodyTypes = pq.StringArray(req.RequiredBodyTypes)
 	}
-	m.VehicleType = req.VehicleType
-	m.TractorAxles = req.TractorAxles
-	m.TrailerAxles = req.TrailerAxles
-	if req.OnlyRecoupling != nil {
-		m.OnlyRecoupling = *req.OnlyRecoupling
-	}
-	m.FromCity = req.FromCity
-	m.FromCountry = req.FromCountry
-	m.FromDate = req.FromDate
-	m.LoadingMethod = req.LoadingMethod
-	m.ToCity = req.ToCity
-	m.ToCountry = req.ToCountry
-	m.ToDate = req.ToDate
-	m.UnloadingMethod = req.UnloadingMethod
-	if req.TransitCountries != nil {
-		m.TransitCountries = pq.StringArray(req.TransitCountries)
-	}
-	m.BorderCrossing = req.BorderCrossing
-	m.CustomsType = req.CustomsType
 	m.Incoterms = req.Incoterms
+	if req.DeliveryGeography != nil {
+		m.DeliveryGeography = pq.StringArray(req.DeliveryGeography)
+	}
 	if req.Permits != nil {
 		m.Permits = pq.StringArray(req.Permits)
 	}
-	m.RateMode = req.RateMode
-	m.RateAmount = req.RateAmount
-	m.RateCurrency = req.RateCurrency
-	if req.RateVAT != nil {
-		m.RateVAT = *req.RateVAT
-	}
-	m.PaymentTerms = req.PaymentTerms
-	m.PaymentMethod = req.PaymentMethod
-	m.PrepaymentPercent = req.PrepaymentPercent
-	m.Notes = req.Notes
+	m.CommentForCarrier = req.CommentForCarrier
 }

@@ -26,3 +26,13 @@ type UpdatePricingRequest struct {
 	DurationDays *int     `json:"duration_days"`
 	IsActive     *bool    `json:"is_active"`
 }
+
+type CreatePricingRequest struct {
+	Key          string  `json:"key" binding:"required,max=100"`
+	Label        string  `json:"label" binding:"required,max=200"`
+	PriceUZS     float64 `json:"price_uzs"`
+	PriceUSD     float64 `json:"price_usd"`
+	TokensAmount int     `json:"tokens_amount"`
+	DurationDays int     `json:"duration_days"`
+	IsActive     *bool   `json:"is_active"`
+}

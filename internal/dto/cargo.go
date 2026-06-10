@@ -4,72 +4,82 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
-type CargoWaypointRequest struct {
+type MediaItem struct {
+	FileURL      string  `json:"file_url" binding:"required"`
+	FileType     string  `json:"file_type" binding:"required,oneof=photo video document"`
+	OriginalName *string `json:"original_name"`
 	SortOrder    int     `json:"sort_order"`
-	WaypointType string  `json:"waypoint_type" binding:"required,oneof=border customs reload passthrough"`
-	City         *string `json:"city"`
-	Country      *string `json:"country"`
 }
 
-// CargoUpsertRequest — тело для создания/обновления груза. Все опциональные поля — указатели.
+// CargoUpsertRequest — тело создания/обновления карточки ТОВАРА.
 type CargoUpsertRequest struct {
-	Type          string   `json:"type" binding:"required,oneof=domestic international"`
-	CargoName     *string  `json:"cargo_name"`
-	CargoType     *string  `json:"cargo_type"`
-	IsADR         *bool    `json:"is_adr"`
-	HasTempRegime *bool    `json:"has_temp_regime"`
-	TempMin       *float64 `json:"temp_min"`
-	TempMax       *float64 `json:"temp_max"`
-	WeightTon     *float64 `json:"weight_ton"`
-	VolumeM3      *float64 `json:"volume_m3"`
-	PlacesCount   *int     `json:"places_count"`
-	LengthM       *float64 `json:"length_m"`
-	WidthM        *float64 `json:"width_m"`
-	HeightM       *float64 `json:"height_m"`
-	LoadingType   *string  `json:"loading_type" binding:"omitempty,oneof=ftl ltl partial"`
-	BodyTypes     []string `json:"body_types"`
-	VehicleType   *string  `json:"vehicle_type"`
-	TractorAxles  *int     `json:"tractor_axles"`
-	TrailerAxles  *int     `json:"trailer_axles"`
-	OnlyRecoupling *bool   `json:"only_recoupling"`
+	CompanyID *uuid.UUID `json:"company_id"`
 
-	FromCity      *string    `json:"from_city"`
-	FromCountry   *string    `json:"from_country"`
-	FromDate      *time.Time `json:"from_date"`
-	LoadingMethod *string    `json:"loading_method"`
-	ToCity        *string    `json:"to_city"`
-	ToCountry     *string    `json:"to_country"`
-	ToDate        *time.Time `json:"to_date"`
+	// О товаре
+	CargoName   string  `json:"cargo_name" binding:"required,min=2,max=200"`
+	Category    string  `json:"category" binding:"required,oneof=stroymat food textile metal chemical wood electronics other"`
+	Description *string `json:"description"`
 
-	UnloadingMethod  *string  `json:"unloading_method"`
-	TransitCountries []string `json:"transit_countries"`
-	BorderCrossing   *string  `json:"border_crossing"`
-	CustomsType      *string  `json:"customs_type" binding:"omitempty,oneof=export import transit"`
-	Incoterms        *string  `json:"incoterms"`
-	Permits          []string `json:"permits"`
+	// Объём
+	QuantityAvailable *float64 `json:"quantity_available"`
+	QuantityUnit      *string  `json:"quantity_unit" binding:"omitempty,oneof=ton places pallet m3"`
+	MinOrder          *float64 `json:"min_order"`
+	MinOrderUnit      *string  `json:"min_order_unit" binding:"omitempty,oneof=ton places pallet m3"`
+	Divisibility      *string  `json:"divisibility" binding:"omitempty,oneof=ftl ltl dogruz"`
 
-	RateMode          *string  `json:"rate_mode" binding:"omitempty,oneof=negotiable fixed announcement"`
-	RateAmount        *float64 `json:"rate_amount"`
-	RateCurrency      *string  `json:"rate_currency" binding:"omitempty,oneof=UZS USD"`
-	RateVAT           *bool    `json:"rate_vat"`
-	PaymentTerms      *string  `json:"payment_terms"`
-	PaymentMethod     *string  `json:"payment_method"`
-	PrepaymentPercent *int     `json:"prepayment_percent"`
+	// Упаковка
+	Packaging      *string  `json:"packaging" binding:"omitempty,oneof=bulk pallets bags barrels rolls boxes liquid oversized"`
+	WeightPerPlace *float64 `json:"weight_per_place"`
+	LengthM        *float64 `json:"length_m"`
+	WidthM         *float64 `json:"width_m"`
+	HeightM        *float64 `json:"height_m"`
 
-	DurationHours *int                   `json:"duration_hours"`
-	Notes         *string                `json:"notes"`
-	CompanyID     *uuid.UUID             `json:"company_id"`
-	Waypoints     []CargoWaypointRequest `json:"waypoints"`
+	// Цена
+	PriceMode     *string  `json:"price_mode" binding:"omitempty,oneof=negotiable fixed announcement"`
+	PricePerUnit  *float64 `json:"price_per_unit"`
+	Currency      *string  `json:"currency" binding:"omitempty,oneof=UZS USD"`
+	VatMode       *string  `json:"vat_mode" binding:"omitempty,oneof=yes no unspecified"`
+	PaymentTerms  *string  `json:"payment_terms"`
+	PaymentMethod *string  `json:"payment_method"`
+
+	// Место забора
+	FromCountry    *string        `json:"from_country"`
+	FromCity       *string        `json:"from_city"`
+	PickupAddress  *string        `json:"pickup_address"`
+	Lat            *float64       `json:"lat"`
+	Lng            *float64       `json:"lng"`
+	LoadingMethods []string       `json:"loading_methods"`
+	WorkingHours   datatypes.JSON `json:"working_hours"`
+
+	// Параметры
+	IsADR             *bool    `json:"is_adr"`
+	ADRClass          *int     `json:"adr_class" binding:"omitempty,min=1,max=9"`
+	HasTempRegime     *bool    `json:"has_temp_regime"`
+	TempMin           *float64 `json:"temp_min"`
+	TempMax           *float64 `json:"temp_max"`
+	RequiredBodyTypes []string `json:"required_body_types"`
+
+	// Логистика
+	Incoterms         *string  `json:"incoterms"`
+	DeliveryGeography []string `json:"delivery_geography"`
+	Permits           []string `json:"permits"`
+
+	CommentForCarrier *string `json:"comment_for_carrier"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type SaveTemplateRequest struct {
 	TemplateName string `json:"template_name" binding:"required,min=2,max=100"`
 }
 
+// CargoStatusRequest — статус (active|archived) и/или наличие.
 type CargoStatusRequest struct {
-	Status string `json:"status" binding:"required,oneof=active archived completed"`
+	Status  *string `json:"status" binding:"omitempty,oneof=active archived"`
+	InStock *bool   `json:"in_stock"`
 }
 
 type CargoStatsResponse struct {
@@ -79,6 +89,7 @@ type CargoStatsResponse struct {
 }
 
 type FavoriteUser struct {
-	UserName  *string   `json:"user_name"`
-	AddedAt   time.Time `json:"added_at"`
+	UserName    *string   `json:"user_name"`
+	CompanyName *string   `json:"company_name"`
+	AddedAt     time.Time `json:"added_at"`
 }
