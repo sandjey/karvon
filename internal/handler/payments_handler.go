@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
 	"karvon/internal/dto"
 	"karvon/internal/service"
@@ -61,6 +62,7 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 			FailCode(c, http.StatusNotFound, "NOT_FOUND")
 			return
 		}
+		log.Error().Err(err).Str("pricing_key", req.PricingKey).Str("type", req.PaymentType).Msg("payment create failed")
 		InternalError(c)
 		return
 	}
@@ -92,11 +94,10 @@ func (h *PaymentsHandler) Webhook(c *gin.Context) {
 
 	if err := h.payments.Webhook(c.Request.Context(), orderID, cb.PS, cb.UUID); err != nil {
 		if isErr(err, service.ErrNotFound) {
-			// Неизвестный заказ — не повторять
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
-		// Внутренняя ошибка — Multicard сделает повторную попытку
+		log.Error().Err(err).Str("order_id", cb.StoreInvoiceID).Msg("payment webhook failed")
 		InternalError(c)
 		return
 	}
@@ -149,6 +150,7 @@ func (h *PaymentsHandler) Boost(c *gin.Context) {
 		case isErr(err, service.ErrNotFound):
 			FailCode(c, http.StatusNotFound, "NOT_FOUND")
 		default:
+			log.Error().Err(err).Str("listing_type", c.Param("type")).Str("listing_id", c.Param("id")).Msg("boost payment failed")
 			InternalError(c)
 		}
 		return

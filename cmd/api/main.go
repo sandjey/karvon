@@ -281,26 +281,46 @@ func createEnumTypes(db *gorm.DB) error {
 }
 
 func seedPricingConfig(db *gorm.DB) error {
-	var count int64
-	db.Model(&model.PricingConfig{}).Count(&count)
-	if count > 0 {
-		return nil
+	type priceSeed struct {
+		Key          string
+		Label        string
+		TokensAmount int
+		DurationDays int
+		PriceUZS     float64
+		PriceUSD     float64
 	}
-	seeds := []model.PricingConfig{
+	seeds := []priceSeed{
 		{Key: "tokens_registration", Label: "Бонус при регистрации", TokensAmount: 5},
-		{Key: "tokens_mini", Label: "Мини пакет (5 токенов)", TokensAmount: 5},
-		{Key: "tokens_basic", Label: "Базовый пакет (20 токенов)", TokensAmount: 20},
-		{Key: "tokens_standard", Label: "Стандарт пакет (50 токенов)", TokensAmount: 50},
-		{Key: "tokens_max", Label: "Макс пакет (100 токенов)", TokensAmount: 100},
-		{Key: "sub_week", Label: "Подписка на неделю", DurationDays: 7},
-		{Key: "sub_month", Label: "Подписка на месяц", DurationDays: 30},
-		{Key: "sub_year", Label: "Подписка на год", DurationDays: 365},
-		{Key: "listing_paid", Label: "Платное объявление"},
-		{Key: "boost_1day", Label: "Буст на 1 день", DurationDays: 1},
-		{Key: "boost_3day", Label: "Буст на 3 дня", DurationDays: 3},
-		{Key: "boost_7day", Label: "Буст на 7 дней", DurationDays: 7},
+		{Key: "tokens_mini", Label: "Мини пакет (5 токенов)", TokensAmount: 5, PriceUZS: 15000, PriceUSD: 1.5},
+		{Key: "tokens_basic", Label: "Базовый пакет (20 токенов)", TokensAmount: 20, PriceUZS: 50000, PriceUSD: 5},
+		{Key: "tokens_standard", Label: "Стандарт пакет (50 токенов)", TokensAmount: 50, PriceUZS: 100000, PriceUSD: 9},
+		{Key: "tokens_max", Label: "Макс пакет (100 токенов)", TokensAmount: 100, PriceUZS: 180000, PriceUSD: 16},
+		{Key: "sub_week", Label: "Подписка на неделю", DurationDays: 7, PriceUZS: 50000, PriceUSD: 5},
+		{Key: "sub_month", Label: "Подписка на месяц", DurationDays: 30, PriceUZS: 150000, PriceUSD: 13},
+		{Key: "sub_year", Label: "Подписка на год", DurationDays: 365, PriceUZS: 1000000, PriceUSD: 90},
+		{Key: "listing_paid", Label: "Платное объявление", PriceUZS: 30000, PriceUSD: 3},
+		{Key: "boost_1day", Label: "Буст на 1 день", DurationDays: 1, PriceUZS: 20000, PriceUSD: 2},
+		{Key: "boost_3day", Label: "Буст на 3 дня", DurationDays: 3, PriceUZS: 50000, PriceUSD: 4.5},
+		{Key: "boost_7day", Label: "Буст на 7 дней", DurationDays: 7, PriceUZS: 100000, PriceUSD: 9},
 	}
-	return db.Create(&seeds).Error
+	for _, s := range seeds {
+		var existing model.PricingConfig
+		err := db.Where("key = ?", s.Key).First(&existing).Error
+		if err != nil {
+			// не найден — создаём
+			db.Create(&model.PricingConfig{
+				Key: s.Key, Label: s.Label,
+				TokensAmount: s.TokensAmount, DurationDays: s.DurationDays,
+				PriceUZS: s.PriceUZS, PriceUSD: s.PriceUSD, IsActive: true,
+			})
+		} else if existing.PriceUZS == 0 && s.PriceUZS > 0 {
+			// существует, но цена 0 — проставляем дефолт
+			db.Model(&existing).Updates(map[string]interface{}{
+				"price_uzs": s.PriceUZS, "price_usd": s.PriceUSD,
+			})
+		}
+	}
+	return nil
 }
 
 func requestLogger() gin.HandlerFunc {
