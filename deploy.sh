@@ -12,6 +12,9 @@ echo "[karvon] Building and restarting containers..."
 COMPOSE="docker-compose"
 docker compose version &>/dev/null 2>&1 && COMPOSE="docker compose"
 
+# Clean up stale stopped containers from previous deploys
+docker container prune -f --filter "label=com.docker.compose.project=karvon" 2>/dev/null || true
+
 # Ensure postgres and whatsapp are running (start if not, no recreate)
 $COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
 
