@@ -174,7 +174,7 @@ func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS fl
 		return "", "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Access-Token", token)
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.hc.Do(req)
 	if err != nil {
