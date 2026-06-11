@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { api } from '../api'
 
+function parseJwt(token) {
+  try { return JSON.parse(atob(token.split('.')[1])) } catch { return {} }
+}
+
 export default function Login() {
   const [login, setLogin]       = useState('')
   const [password, setPassword] = useState('')
@@ -18,8 +22,9 @@ export default function Login() {
     try {
       const data = await api.adminLogin(login, password)
       const tokens = data.data
-      doLogin(tokens.access_token, tokens.role, tokens.name || login)
-      navigate(tokens.role === 'super_admin' ? '/dashboard' : '/queue')
+      const payload = parseJwt(tokens.access_token)
+      doLogin(tokens.access_token, payload.role, payload.name || login)
+      navigate(payload.role === 'super_admin' ? '/dashboard' : '/queue')
     } catch (err) {
       setError('Неверный логин или пароль')
     } finally {
