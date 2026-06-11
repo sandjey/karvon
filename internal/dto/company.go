@@ -8,11 +8,11 @@ import (
 
 type CreateCompanyRequest struct {
 	Country    string  `json:"country"     binding:"required,max=100"`
-	OrgType    string  `json:"org_type"    binding:"required,oneof=ooo ao ip ltd gmbh co_ltd"`
+	OrgType    string  `json:"org_type"    binding:"required,max=50"`
 	Name       string  `json:"name"        binding:"required,min=2,max=200"`
-	INN        string  `json:"inn"         binding:"required,min=5,max=30"`
-	Phone      string  `json:"phone"       binding:"required,max=20"`
-	Email      string  `json:"email"       binding:"required,email,max=100"`
+	INN        string  `json:"inn"         binding:"required,min=3,max=30"`
+	Phone      string  `json:"phone"       binding:"required,max=30"`
+	Email      string  `json:"email"       binding:"omitempty,email,max=100"`
 	City       string  `json:"city"        binding:"required,max=100"`
 	Region     *string `json:"region"      binding:"omitempty,max=100"`
 	Street     string  `json:"street"      binding:"required,max=200"`
@@ -22,9 +22,9 @@ type CreateCompanyRequest struct {
 
 type UpdateCompanyRequest struct {
 	Country    *string `json:"country"     binding:"omitempty,max=100"`
-	OrgType    *string `json:"org_type"    binding:"omitempty,oneof=ooo ao ip ltd gmbh co_ltd"`
+	OrgType    *string `json:"org_type"    binding:"omitempty,max=50"`
 	Name       *string `json:"name"        binding:"omitempty,min=2,max=200"`
-	Phone      *string `json:"phone"       binding:"omitempty,max=20"`
+	Phone      *string `json:"phone"       binding:"omitempty,max=30"`
 	Email      *string `json:"email"       binding:"omitempty,email,max=100"`
 	City       *string `json:"city"        binding:"omitempty,max=100"`
 	Region     *string `json:"region"      binding:"omitempty,max=100"`

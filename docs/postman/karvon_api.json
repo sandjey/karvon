@@ -425,10 +425,10 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"country\": \"UZ\",\n  \"org_type\": \"ooo\",\n  \"name\": \"Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 15, офис 3\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\"\n}",
+              "raw": "{\n  \"country\": \"UZ\",\n  \"org_type\": \"mchj\",\n  \"name\": \"Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 15, офис 3\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"https://fan.sarbon.me/uploads/companies/reg_doc.pdf\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "description": "Добавить компанию (отправить на проверку). Статус автоматически = `pending`.\n\n`reg_doc_url` — URL свидетельства из `POST /upload`.\n\n**Обязательны:** country, org_type, name, inn, phone, email, city, street, reg_doc_url.\n**Опциональны:** region, postal_code.\n\n`org_type`: ooo / ao / ip / ltd / gmbh / co_ltd."
+            "description": "Добавить компанию (отправить на проверку). Статус автоматически = `pending`.\n\n`reg_doc_url` — URL документа из `POST /upload`.\n\n**Обязательны:** country, org_type, name, inn, phone, city, street, reg_doc_url.\n**Опциональны:** email, region, postal_code.\n\n`org_type`: любая строка до 50 символов (mchj, ooo, ip, ao, llc, ltd, gmbh, и т.д.)\n`inn`: минимум 3 символа, максимум 30\n`phone`: максимум 30 символов"
           },
           "response": [
             {
@@ -549,7 +549,7 @@
     },
     {
       "name": "Upload",
-      "description": "Загрузка файлов. Поддерживаются изображения (jpg/jpeg/png/gif/webp) и PDF. Максимум 10 МБ.",
+      "description": "Загрузка файлов. Поддерживаются изображения (jpg/jpeg/png/gif/webp/heic/heif/bmp/tiff/svg), документы (pdf/doc/docx/xls/xlsx/csv/txt/odt/ods/rtf) и архивы (zip/rar). Максимум 20 МБ.",
       "item": [
         {
           "name": "POST /upload — Загрузить файл",
@@ -567,11 +567,11 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "file", "type": "file", "src": "", "description": "Файл (PDF или изображение, макс. 10 МБ)" },
+                { "key": "file", "type": "file", "src": "", "description": "Файл (изображение или документ, макс. 20 МБ). Разрешены: jpg/png/pdf/doc/docx/xls/xlsx/zip/heic и др." },
                 { "key": "dir", "value": "companies", "type": "text", "description": "Подпапка: companies / fleet / etc. (опционально, default: uploads)" }
               ]
             },
-            "description": "Загрузить файл и получить URL.\n\nВозвращённый URL используется в `POST /companies` как `reg_doc_url` (свидетельство о регистрации)."
+            "description": "Загрузить файл и получить URL.\n\nВозвращённый URL используется в `POST /companies` как `reg_doc_url` (свидетельство о регистрации).\n\n**Разрешённые форматы:**\n- Изображения: jpg, jpeg, png, gif, webp, heic, heif, bmp, tiff, svg\n- Документы: pdf, doc, docx, xls, xlsx, csv, txt, odt, ods, rtf\n- Архивы: zip, rar\n\n**Максимальный размер: 20 МБ**"
           },
           "response": [
             {
@@ -584,7 +584,7 @@
               "name": "400 — Файл слишком большой (ru)",
               "status": "Bad Request", "code": 400,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"FILE_TOO_LARGE\", \"message\": \"Файл слишком большой. Максимум 10 МБ\" }\n}"
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"FILE_TOO_LARGE\", \"message\": \"Файл слишком большой. Максимум 20 МБ\" }\n}"
             },
             {
               "name": "400 — Тип не разрешён (ru)",

@@ -10,7 +10,8 @@ import (
 )
 
 type Config struct {
-	AppPort string
+	AppPort   string
+	PublicURL string // base URL returned in file upload responses
 
 	DBURL string
 
@@ -54,6 +55,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		AppPort:   getEnv("APP_PORT", "8080"),
+		PublicURL: getEnv("PUBLIC_URL", ""),
 		DBURL:     mustEnv("DB_URL"),
 		JWTSecret: mustEnv("JWT_SECRET"),
 

@@ -145,7 +145,11 @@ func main() {
 	handler.NewAuthHandler(authSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewUserHandler(userSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewCompanyHandler(companySvc).RegisterRoutes(v1, authMiddleware)
-	handler.NewUploadHandler(store, "http://localhost:"+cfg.AppPort).RegisterRoutes(v1, authMiddleware)
+	uploadBaseURL := cfg.PublicURL
+	if uploadBaseURL == "" {
+		uploadBaseURL = "http://localhost:" + cfg.AppPort
+	}
+	handler.NewUploadHandler(store, uploadBaseURL).RegisterRoutes(v1, authMiddleware)
 	handler.NewModeratorHandler(moderatorSvc).RegisterRoutes(v1, authMiddleware, moderatorRoleMiddleware)
 	handler.NewGeoHandler().RegisterRoutes(v1)
 	handler.NewConfigHandler(cfg.MapTilesURL).RegisterRoutes(v1)

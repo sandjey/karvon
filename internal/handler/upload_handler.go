@@ -11,11 +11,19 @@ import (
 	"karvon/pkg/storage"
 )
 
-const maxUploadSize = 10 << 20 // 10 MB
+const maxUploadSize = 20 << 20 // 20 MB
 
 var allowedExtensions = map[string]bool{
-	".jpg": true, ".jpeg": true, ".png": true,
-	".gif": true, ".webp": true, ".pdf": true,
+	// Images
+	".jpg": true, ".jpeg": true, ".png": true, ".gif": true,
+	".webp": true, ".heic": true, ".heif": true, ".bmp": true,
+	".tiff": true, ".tif": true, ".svg": true,
+	// Documents
+	".pdf": true, ".doc": true, ".docx": true,
+	".xls": true, ".xlsx": true, ".csv": true, ".txt": true,
+	".odt": true, ".ods": true, ".odp": true, ".rtf": true,
+	// Archives
+	".zip": true, ".rar": true,
 }
 
 type UploadHandler struct {
