@@ -47,6 +47,19 @@ services:
       postgres:
         condition: service_healthy
 
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://fan.sarbon.me/api/v1}
+    container_name: karvon_admin
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    depends_on:
+      - app
+
   # Своя карта — self-hosted сервер тайлов OpenStreetMap (Leaflet на фронте указывает сюда).
   # Положите регион-экстракт в ./services/tiles/tiles.mbtiles (например Узбекистан+СНГ из openmaptiles/geofabrik),
   # затем запустите: docker compose up -d tiles
