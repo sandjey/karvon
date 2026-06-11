@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import Modal from '../components/Modal'
+import { IcoShield, IcoPlus, IcoTrash } from '../icons'
 
 export default function Moderators() {
   const [moderators, setModerators] = useState([])
@@ -26,9 +27,7 @@ export default function Moderators() {
     setSaving(true)
     try {
       await api.createModerator(form.phone, form.name || undefined)
-      setShowModal(false)
-      setForm({ phone: '', name: '' })
-      load()
+      setShowModal(false); setForm({ phone: '', name: '' }); load()
     } catch (err) {
       setError(err.message || 'Ошибка создания')
     } finally {
@@ -43,52 +42,65 @@ export default function Moderators() {
   }
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Модераторы</h1>
-          <p className="text-sm text-slate-500">Пользователи с доступом к очереди верификации</p>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Модераторы</div>
+          <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Пользователи с доступом к очереди верификации</div>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>+ Добавить модератора</button>
+        <button className="btn-primary" onClick={() => { setShowModal(true); setError('') }}>
+          <IcoPlus size={14} /> Добавить модератора
+        </button>
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#1e3350' }}>Загрузка...</div>
         ) : moderators.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-3">🛡️</div>
-            <div className="text-slate-500 font-medium">Нет модераторов</div>
-            <p className="text-slate-400 text-sm mt-1">Нажмите «Добавить модератора» чтобы создать</p>
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ marginBottom: 12 }}>
+              <IcoShield size={36} style={{ color: '#1e3350', margin: '0 auto', display: 'block' }} />
+            </div>
+            <div style={{ color: '#2d4a6e', fontSize: 14, fontWeight: 600 }}>Нет модераторов</div>
+            <div style={{ color: '#1a2a3d', fontSize: 13, marginTop: 6 }}>Нажмите «Добавить модератора» чтобы создать</div>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <table className="data-table">
             <thead>
-              <tr className="text-left text-slate-500 border-b border-slate-100">
-                <th className="pb-3 font-medium">Модератор</th>
-                <th className="pb-3 font-medium">Телефон</th>
-                <th className="pb-3 font-medium">Дата создания</th>
-                <th className="pb-3 font-medium text-right">Действия</th>
+              <tr>
+                <th style={{ paddingLeft: 20 }}>Модератор</th>
+                <th>Телефон</th><th>Дата добавления</th>
+                <th style={{ paddingRight: 20, textAlign: 'right' }}>Действия</th>
               </tr>
             </thead>
             <tbody>
               {moderators.map(m => (
-                <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50 group">
-                  <td className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-semibold">
-                        {(m.name || m.phone).slice(0,2).toUpperCase()}
+                <tr key={m.id}>
+                  <td style={{ paddingLeft: 20 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                        background: 'rgba(59,127,245,0.12)', color: '#60a5fa',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 12, fontWeight: 700,
+                      }}>
+                        {(m.name || m.phone).slice(0, 2).toUpperCase()}
                       </div>
-                      <div className="font-medium text-slate-800">{m.name || '—'}</div>
+                      <span style={{ color: '#c4d8ef', fontWeight: 600 }}>{m.name || '—'}</span>
                     </div>
                   </td>
-                  <td className="py-3 text-slate-500">{m.phone}</td>
-                  <td className="py-3 text-slate-400 text-xs">{new Date(m.created_at).toLocaleDateString('ru')}</td>
-                  <td className="py-3 text-right">
+                  <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{m.phone}</td>
+                  <td style={{ fontSize: 12 }}>{new Date(m.created_at).toLocaleDateString('ru')}</td>
+                  <td style={{ paddingRight: 20, textAlign: 'right' }}>
                     <button
                       onClick={() => handleDelete(m)}
-                      className="opacity-0 group-hover:opacity-100 transition px-3 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-medium"
-                    >Удалить</button>
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        padding: '4px 10px', fontSize: 12, fontWeight: 600,
+                        background: 'rgba(232,64,64,0.1)', color: '#e84040',
+                        border: '1px solid rgba(232,64,64,0.2)', borderRadius: 6, cursor: 'pointer',
+                      }}
+                    ><IcoTrash size={12} /> Удалить</button>
                   </td>
                 </tr>
               ))}
@@ -99,29 +111,39 @@ export default function Moderators() {
 
       {showModal && (
         <Modal title="Новый модератор" onClose={() => { setShowModal(false); setError('') }}>
-          <div className="space-y-4">
-            {error && <div className="bg-red-50 text-red-600 rounded-lg px-4 py-2.5 text-sm">{error}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {error && (
+              <div style={{ background: 'rgba(232,64,64,0.1)', border: '1px solid rgba(232,64,64,0.2)', color: '#f87171', borderRadius: 8, padding: '10px 14px', fontSize: 13 }}>
+                {error}
+              </div>
+            )}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Телефон <span className="text-red-500">*</span></label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Телефон <span style={{ color: '#e84040' }}>*</span>
+              </label>
               <input
                 className="input" placeholder="998901234567"
                 value={form.phone}
-                onChange={e => setForm(f => ({...f, phone: e.target.value}))}
+                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                 autoFocus
               />
-              <p className="text-xs text-slate-400 mt-1">Формат: 998XXXXXXXXX. Модератор войдёт через OTP-вход.</p>
+              <div style={{ fontSize: 12, color: '#1e3350', marginTop: 6 }}>
+                Формат: 998XXXXXXXXX. Модератор войдёт через OTP-вход.
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Имя (необязательно)</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Имя (необязательно)
+              </label>
               <input
                 className="input" placeholder="Алишер Каримов"
                 value={form.name}
-                onChange={e => setForm(f => ({...f, name: e.target.value}))}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               />
             </div>
-            <div className="flex gap-3 justify-end pt-2">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
               <button className="btn-secondary" onClick={() => setShowModal(false)}>Отмена</button>
-              <button className="btn-primary" onClick={handleCreate} disabled={saving}>
+              <button className="btn-primary" onClick={handleCreate} disabled={saving || !form.phone}>
                 {saving ? 'Создание...' : 'Создать'}
               </button>
             </div>

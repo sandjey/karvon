@@ -3,19 +3,18 @@ import { api } from '../api'
 import Pagination from '../components/Pagination'
 import Modal from '../components/Modal'
 import { statusBadge } from '../components/Badge'
+import { IcoSearch, IcoCoins } from '../icons'
 
 export default function Users() {
-  const [users, setUsers]     = useState([])
-  const [total, setTotal]     = useState(0)
-  const [page, setPage]       = useState(1)
-  const [q, setQ]             = useState('')
-  const [role, setRole]       = useState('')
+  const [users, setUsers]   = useState([])
+  const [total, setTotal]   = useState(0)
+  const [page, setPage]     = useState(1)
+  const [q, setQ]           = useState('')
+  const [role, setRole]     = useState('')
   const [loading, setLoading] = useState(true)
-  const [search, setSearch]   = useState('')
-
+  const [search, setSearch] = useState('')
   const [topupModal, setTopupModal] = useState(null)
   const [topupAmount, setTopupAmount] = useState('')
-  const [selectedUser, setSelectedUser] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -27,11 +26,7 @@ export default function Users() {
 
   useEffect(() => { load() }, [load])
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    setQ(search)
-    setPage(1)
-  }
+  const handleSearch = (e) => { e.preventDefault(); setQ(search); setPage(1) }
 
   const handleBlock = async (user) => {
     if (!confirm(`${user.is_blocked ? 'Разблокировать' : 'Заблокировать'} ${user.phone}?`)) return
@@ -43,32 +38,35 @@ export default function Users() {
     const amount = parseInt(topupAmount)
     if (!amount || amount < 1) return
     await api.topupTokens(topupModal.id, amount)
-    setTopupModal(null)
-    setTopupAmount('')
-    load()
+    setTopupModal(null); setTopupAmount(''); load()
   }
 
   return (
-    <div className="p-6 space-y-5">
-      <div className="flex items-center justify-between">
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Пользователи</h1>
-          <p className="text-sm text-slate-500">Всего: {total}</p>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Пользователи</div>
+          <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Всего: {total}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="card flex flex-wrap gap-3">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-60">
-          <input
-            className="input flex-1"
-            placeholder="Поиск по телефону или имени..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+      <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: 14 }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 240 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
+              <IcoSearch size={14} />
+            </div>
+            <input
+              className="input" style={{ paddingLeft: 32 }}
+              placeholder="Поиск по телефону или имени..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
           <button type="submit" className="btn-primary">Найти</button>
         </form>
-        <select className="input w-44" value={role} onChange={e => { setRole(e.target.value); setPage(1) }}>
+        <select className="input" style={{ width: 180 }} value={role} onChange={e => { setRole(e.target.value); setPage(1) }}>
           <option value="">Все роли</option>
           <option value="user">Пользователь</option>
           <option value="moderator">Модератор</option>
@@ -77,51 +75,59 @@ export default function Users() {
       </div>
 
       {/* Table */}
-      <div className="card overflow-x-auto">
+      <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#1e3350' }}>Загрузка...</div>
         ) : (
-          <>
-            <table className="w-full text-sm">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table" style={{ padding: 0 }}>
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-100">
-                  <th className="pb-3 font-medium">Пользователь</th>
-                  <th className="pb-3 font-medium">Роль</th>
-                  <th className="pb-3 font-medium">Токены</th>
-                  <th className="pb-3 font-medium">Статус</th>
-                  <th className="pb-3 font-medium">Дата</th>
-                  <th className="pb-3 font-medium text-right">Действия</th>
+                <tr>
+                  <th style={{ paddingLeft: 20 }}>Пользователь</th>
+                  <th>Роль</th><th>Токены</th><th>Статус</th><th>Дата</th>
+                  <th style={{ paddingRight: 20, textAlign: 'right' }}>Действия</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-slate-400">Нет пользователей</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: '#1e3350' }}>Нет пользователей</td></tr>
                 ) : users.map(u => (
-                  <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50 group">
-                    <td className="py-3">
-                      <div className="font-medium text-slate-800">{u.name || '—'}</div>
-                      <div className="text-slate-400 text-xs">{u.phone}</div>
+                  <tr key={u.id} style={{ cursor: 'default' }}>
+                    <td style={{ paddingLeft: 20 }}>
+                      <div style={{ color: '#c4d8ef', fontWeight: 600 }}>{u.name || '—'}</div>
+                      <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 2 }}>{u.phone}</div>
                     </td>
-                    <td className="py-3">{statusBadge(u.role)}</td>
-                    <td className="py-3">
-                      <span className="font-semibold text-blue-600">{u.token_balance}</span>
+                    <td>{statusBadge(u.role)}</td>
+                    <td>
+                      <span style={{ color: '#60a5fa', fontWeight: 700 }}>{u.token_balance}</span>
                     </td>
-                    <td className="py-3">
+                    <td>
                       {u.is_blocked
-                        ? <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Заблокирован</span>
-                        : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Активен</span>
+                        ? <span className="badge badge-red">Заблокирован</span>
+                        : <span className="badge badge-green">Активен</span>
                       }
                     </td>
-                    <td className="py-3 text-slate-400 text-xs">{new Date(u.created_at).toLocaleDateString('ru')}</td>
-                    <td className="py-3">
-                      <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition">
+                    <td style={{ fontSize: 12 }}>{new Date(u.created_at).toLocaleDateString('ru')}</td>
+                    <td style={{ paddingRight: 20 }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         <button
                           onClick={() => setTopupModal(u)}
-                          className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-medium"
-                        >+ Токены</button>
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            padding: '4px 10px', fontSize: 12, fontWeight: 600,
+                            background: 'rgba(59,127,245,0.1)', color: '#60a5fa',
+                            border: '1px solid rgba(59,127,245,0.2)', borderRadius: 6, cursor: 'pointer',
+                          }}
+                        ><IcoCoins size={12} /> Токены</button>
                         <button
                           onClick={() => handleBlock(u)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium ${u.is_blocked ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                          style={{
+                            padding: '4px 10px', fontSize: 12, fontWeight: 600,
+                            background: u.is_blocked ? 'rgba(18,198,120,0.1)' : 'rgba(232,64,64,0.1)',
+                            color: u.is_blocked ? '#12c678' : '#e84040',
+                            border: `1px solid ${u.is_blocked ? 'rgba(18,198,120,0.2)' : 'rgba(232,64,64,0.2)'}`,
+                            borderRadius: 6, cursor: 'pointer',
+                          }}
                         >{u.is_blocked ? 'Разблокировать' : 'Заблокировать'}</button>
                       </div>
                     </td>
@@ -129,28 +135,33 @@ export default function Users() {
                 ))}
               </tbody>
             </table>
-            <Pagination page={page} total={total} onChange={setPage} />
-          </>
+            <div style={{ padding: '0 20px 16px' }}>
+              <Pagination page={page} total={total} onChange={setPage} />
+            </div>
+          </div>
         )}
       </div>
 
       {/* Topup Modal */}
       {topupModal && (
         <Modal title={`Пополнить токены — ${topupModal.name || topupModal.phone}`} onClose={() => setTopupModal(null)}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Количество токенов</label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Количество токенов
+              </label>
               <input
                 type="number" min="1" max="10000"
-                className="input"
-                placeholder="Например: 10"
+                className="input" placeholder="Например: 10"
                 value={topupAmount}
                 onChange={e => setTopupAmount(e.target.value)}
                 autoFocus
               />
-              <p className="text-xs text-slate-400 mt-1">Текущий баланс: {topupModal.token_balance} токенов</p>
+              <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 6 }}>
+                Текущий баланс: <span style={{ color: '#60a5fa', fontWeight: 600 }}>{topupModal.token_balance}</span> токенов
+              </div>
             </div>
-            <div className="flex gap-3 justify-end">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn-secondary" onClick={() => setTopupModal(null)}>Отмена</button>
               <button className="btn-primary" onClick={handleTopup}>Пополнить</button>
             </div>

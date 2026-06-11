@@ -2,18 +2,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api'
 import Pagination from '../components/Pagination'
 import { statusBadge } from '../components/Badge'
+import { IcoTrendUp, IcoCard } from '../icons'
 
 const TYPE_LABELS = {
-  tokens: 'Токены',
-  subscription: 'Подписка',
-  listing: 'Объявление',
-  boost: 'Продвижение',
+  tokens: 'Токены', subscription: 'Подписка', listing: 'Объявление', boost: 'Продвижение',
 }
 
 export default function Payments() {
-  const [items, setItems]     = useState([])
-  const [total, setTotal]     = useState(0)
-  const [page, setPage]       = useState(1)
+  const [items, setItems]   = useState([])
+  const [total, setTotal]   = useState(0)
+  const [page, setPage]     = useState(1)
   const [loading, setLoading] = useState(true)
 
   const load = useCallback(() => {
@@ -27,69 +25,76 @@ export default function Payments() {
   useEffect(() => { load() }, [load])
 
   const totalPaid = items.filter(p => p.status === 'paid').reduce((s, p) => s + (p.amount || 0), 0)
+  const paidCount = items.filter(p => p.status === 'paid').length
 
   return (
-    <div className="p-6 space-y-5">
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold text-slate-800">Платежи</h1>
-        <p className="text-sm text-slate-500">Всего: {total}</p>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Платежи</div>
+        <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Всего транзакций: {total}</div>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
         {[
-          { label: 'На этой странице оплачено (UZS)', value: totalPaid.toLocaleString() },
-          { label: 'Всего транзакций', value: total },
-          { label: 'Успешных', value: items.filter(p => p.status === 'paid').length },
-        ].map(s => (
-          <div key={s.label} className="card">
-            <div className="text-lg font-bold text-slate-800">{s.value}</div>
-            <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
+          { label: 'Оплачено на странице (UZS)', value: totalPaid.toLocaleString(), icon: IcoCard, accent: '#60a5fa' },
+          { label: 'Всего транзакций', value: total, icon: IcoTrendUp, accent: '#f59e0b' },
+          { label: 'Успешных на странице', value: paidCount, icon: IcoCard, accent: '#12c678' },
+        ].map((s, i) => (
+          <div key={i} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 9, flexShrink: 0,
+              background: `${s.accent}18`, color: s.accent,
+              border: `1px solid ${s.accent}28`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <s.icon size={18} />
+            </div>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 2 }}>{s.label}</div>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#1e3350' }}>Загрузка...</div>
         ) : (
-          <>
-            <table className="w-full text-sm">
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-100">
-                  <th className="pb-3 font-medium">ID</th>
-                  <th className="pb-3 font-medium">Тип</th>
-                  <th className="pb-3 font-medium">Сумма</th>
-                  <th className="pb-3 font-medium">Статус</th>
-                  <th className="pb-3 font-medium">Способ</th>
-                  <th className="pb-3 font-medium">Дата</th>
-                  <th className="pb-3 font-medium">Оплачено</th>
+                <tr>
+                  <th style={{ paddingLeft: 20 }}>ID</th>
+                  <th>Тип</th><th>Сумма</th><th>Статус</th>
+                  <th>Способ</th><th>Дата</th><th>Оплачено</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-10 text-slate-400">Нет платежей</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#1e3350' }}>Нет платежей</td></tr>
                 ) : items.map(p => (
-                  <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50">
-                    <td className="py-3 font-mono text-xs text-slate-400">{p.id?.slice(0,8)}…</td>
-                    <td className="py-3">
-                      <span className="font-medium text-slate-700">{TYPE_LABELS[p.payment_type] || p.payment_type}</span>
+                  <tr key={p.id}>
+                    <td style={{ paddingLeft: 20 }}>
+                      <code style={{ fontSize: 11, color: '#2d4a6e' }}>{p.id?.slice(0, 8)}…</code>
                     </td>
-                    <td className="py-3 font-semibold">
-                      {p.currency === 'USD' ? '$' : ''}{p.amount?.toLocaleString()}{p.currency === 'UZS' ? ' сум' : ''}
+                    <td style={{ color: '#c4d8ef', fontWeight: 600 }}>{TYPE_LABELS[p.payment_type] || p.payment_type}</td>
+                    <td style={{ color: '#dce8f5', fontWeight: 700 }}>
+                      {p.currency === 'USD' ? '$' : ''}{p.amount?.toLocaleString()}{p.currency === 'UZS' ? ' ₽' : ''}
                     </td>
-                    <td className="py-3">{statusBadge(p.status)}</td>
-                    <td className="py-3 text-slate-500 capitalize">{p.payment_method || '—'}</td>
-                    <td className="py-3 text-slate-400 text-xs">{new Date(p.created_at).toLocaleDateString('ru')}</td>
-                    <td className="py-3 text-slate-400 text-xs">
-                      {p.paid_at ? new Date(p.paid_at).toLocaleDateString('ru') : '—'}
-                    </td>
+                    <td>{statusBadge(p.status)}</td>
+                    <td style={{ textTransform: 'capitalize', fontSize: 12 }}>{p.payment_method || '—'}</td>
+                    <td style={{ fontSize: 12 }}>{new Date(p.created_at).toLocaleDateString('ru')}</td>
+                    <td style={{ fontSize: 12 }}>{p.paid_at ? new Date(p.paid_at).toLocaleDateString('ru') : '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <Pagination page={page} total={total} onChange={setPage} />
-          </>
+            <div style={{ padding: '0 20px 16px' }}>
+              <Pagination page={page} total={total} onChange={setPage} />
+            </div>
+          </div>
         )}
       </div>
     </div>

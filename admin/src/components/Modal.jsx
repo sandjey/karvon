@@ -1,14 +1,54 @@
+import { useEffect } from 'react'
+import { IcoX } from '../icons'
+
 export default function Modal({ title, onClose, children, size = 'md' }) {
-  const widths = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-xl' }
+  const widths = { sm: 380, md: 460, lg: 560, xl: 680 }
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${widths[size]} max-h-[90vh] overflow-y-auto`}>
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-800 text-base">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+    }}>
+      <div
+        style={{ position: 'absolute', inset: 0, background: 'rgba(2,6,15,0.75)' }}
+        onClick={onClose}
+      />
+      <div style={{
+        position: 'relative', width: '100%', maxWidth: widths[size],
+        maxHeight: '90vh', overflowY: 'auto',
+        background: '#0e1a2d',
+        border: '1px solid #1e3050',
+        borderRadius: 14,
+        boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px', borderBottom: '1px solid #19273d',
+        }}>
+          <span style={{ color: '#dce8f5', fontWeight: 600, fontSize: 15 }}>{title}</span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.04)', border: '1px solid #19273d',
+              borderRadius: 7, width: 28, height: 28, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#4d6d90', transition: 'all .13s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(232,64,64,0.1)'; e.currentTarget.style.color='#e84040' }}
+            onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.04)'; e.currentTarget.style.color='#4d6d90' }}
+          >
+            <IcoX size={13} />
+          </button>
         </div>
-        <div className="p-5">{children}</div>
+        {/* Body */}
+        <div style={{ padding: '20px' }}>{children}</div>
       </div>
     </div>
   )

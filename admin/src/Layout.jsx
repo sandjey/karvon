@@ -1,83 +1,119 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import {
+  IcoDashboard, IcoUsers, IcoShield, IcoBuilding, IcoList,
+  IcoCard, IcoTag, IcoInbox, IcoHistory, IcoLogout, IcoUser,
+} from './icons'
 
 const adminNav = [
-  { to: '/dashboard',  label: 'Дашборд',     icon: '📊' },
-  { to: '/users',      label: 'Пользователи', icon: '👥' },
-  { to: '/moderators', label: 'Модераторы',   icon: '🛡️' },
-  { to: '/companies',  label: 'Компании',     icon: '🏢' },
-  { to: '/listings',   label: 'Объявления',   icon: '📋' },
-  { to: '/payments',   label: 'Платежи',      icon: '💳' },
-  { to: '/pricing',    label: 'Тарифы',       icon: '💰' },
+  { to: '/dashboard',  label: 'Дашборд',      Icon: IcoDashboard },
+  { to: '/users',      label: 'Пользователи', Icon: IcoUsers },
+  { to: '/moderators', label: 'Модераторы',   Icon: IcoShield },
+  { to: '/companies',  label: 'Компании',     Icon: IcoBuilding },
+  { to: '/listings',   label: 'Объявления',   Icon: IcoList },
+  { to: '/payments',   label: 'Платежи',      Icon: IcoCard },
+  { to: '/pricing',    label: 'Тарифы',       Icon: IcoTag },
 ]
 
 const modNav = [
-  { to: '/queue',   label: 'Очередь',  icon: '📥' },
-  { to: '/history', label: 'История',  icon: '📜' },
+  { to: '/queue',   label: 'Очередь',  Icon: IcoInbox },
+  { to: '/history', label: 'История',  Icon: IcoHistory },
 ]
 
 export default function Layout() {
   const { name, role, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  const navItems = isAdmin ? [...adminNav, ...modNav] : modNav
+  const handleLogout = () => { logout(); navigate('/login') }
+  const initials = (name || 'KA').slice(0, 2).toUpperCase()
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-60 bg-navy-800 flex flex-col flex-shrink-0" style={{background:'#122035'}}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#070c17' }}>
+
+      {/* ── Sidebar ── */}
+      <aside style={{
+        width: 228, flexShrink: 0, display: 'flex', flexDirection: 'column',
+        background: '#060b15', borderRight: '1px solid #141f33',
+      }}>
+
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">CL</div>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '20px 16px 18px', borderBottom: '1px solid #141f33',
+        }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 8,
+            background: 'linear-gradient(135deg,#1d56d4,#2563eb)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </div>
           <div>
-            <div className="text-white font-bold text-sm leading-tight">CargoLink</div>
-            <div className="text-slate-400 text-xs">{isAdmin ? 'Super Admin' : 'Moderator'}</div>
+            <div style={{ color: '#dce8f5', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>KARVON</div>
+            <div style={{ color: '#2d4a6e', fontSize: 11, fontWeight: 500, marginTop: 1 }}>
+              {isAdmin ? 'Администрация' : 'Модерация'}
+            </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* Navigation */}
+        <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {isAdmin && (
-            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider px-2 pb-2">Администрация</div>
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#1e3350', letterSpacing: '.1em', textTransform: 'uppercase', padding: '8px 10px 4px' }}>
+                Управление
+              </div>
+              {adminNav.map(({ to, label, Icon }) => (
+                <NavLink key={to} to={to} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+                  <Icon size={15} style={{ flexShrink: 0 }} />
+                  {label}
+                </NavLink>
+              ))}
+              <div style={{ height: 1, background: '#10192b', margin: '8px 0' }} />
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#1e3350', letterSpacing: '.1em', textTransform: 'uppercase', padding: '0 10px 4px' }}>
+                Модерация
+              </div>
+            </>
           )}
-          {(isAdmin ? adminNav : []).map(item => (
-            <NavLink key={item.to} to={item.to} className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-              <span>{item.icon}</span> {item.label}
-            </NavLink>
-          ))}
-
-          {isAdmin && (
-            <div className="text-slate-500 text-xs font-semibold uppercase tracking-wider px-2 pt-4 pb-2">Модерация</div>
-          )}
-          {modNav.map(item => (
-            <NavLink key={item.to} to={item.to} className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-              <span>{item.icon}</span> {item.label}
+          {modNav.map(({ to, label, Icon }) => (
+            <NavLink key={to} to={to} className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}>
+              <Icon size={15} style={{ flexShrink: 0 }} />
+              {label}
             </NavLink>
           ))}
         </nav>
 
-        {/* User */}
-        <div className="px-4 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-              {name.slice(0,2).toUpperCase()}
+        {/* User footer */}
+        <div style={{ padding: '12px 10px', borderTop: '1px solid #141f33' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+              background: '#1d3a5c',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#60a5fa', fontSize: 12, fontWeight: 700,
+            }}>{initials}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: '#c4d8ef', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name || 'Admin'}</div>
+              <div style={{ color: '#2d4a6e', fontSize: 11, marginTop: 1 }}>{role?.replace('_', ' ') || 'user'}</div>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-white text-sm font-medium truncate">{name}</div>
-              <div className="text-slate-400 text-xs capitalize">{role?.replace('_',' ')}</div>
-            </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-red-400 transition text-lg" title="Выйти">⏻</button>
+            <button
+              onClick={handleLogout}
+              title="Выйти"
+              style={{ color: '#2d4a6e', background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 5, display: 'flex', transition: 'color .13s' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#e84040'}
+              onMouseLeave={e => e.currentTarget.style.color = '#2d4a6e'}
+            >
+              <IcoLogout size={15} />
+            </button>
           </div>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto bg-slate-100">
+      {/* ── Main content ── */}
+      <main style={{ flex: 1, overflowY: 'auto', background: '#070c17' }}>
         <Outlet />
       </main>
     </div>

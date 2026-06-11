@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { api } from '../api'
+import { IcoUser, IcoLock } from '../icons'
 
 function parseJwt(token) {
   try { return JSON.parse(atob(token.split('.')[1])) } catch { return {} }
@@ -25,7 +26,7 @@ export default function Login() {
       const payload = parseJwt(tokens.access_token)
       doLogin(tokens.access_token, payload.role, payload.name || login)
       navigate(payload.role === 'super_admin' ? '/dashboard' : '/queue')
-    } catch (err) {
+    } catch {
       setError('Неверный логин или пароль')
     } finally {
       setLoading(false)
@@ -33,59 +34,106 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{background:'#0d1b2e'}}>
-      <div className="w-full max-w-sm">
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#070c17', padding: 16,
+    }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
-            <span className="text-white font-bold text-xl">CL</span>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 13, margin: '0 auto 14px',
+            background: 'linear-gradient(135deg,#1d56d4,#2563eb)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 32px rgba(29,86,212,0.35)',
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
           </div>
-          <h1 className="text-white text-2xl font-bold">CargoLink Admin</h1>
-          <p className="text-slate-400 text-sm mt-1">Панель управления</p>
+          <div style={{ color: '#dce8f5', fontSize: 22, fontWeight: 800, letterSpacing: '.02em' }}>KARVON</div>
+          <div style={{ color: '#2d4a6e', fontSize: 13, marginTop: 4 }}>Панель администратора</div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        {/* Form card */}
+        <div style={{
+          background: '#0c1526', border: '1px solid #19273d',
+          borderRadius: 14, padding: 28,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        }}>
+
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg px-4 py-3 text-sm">
-              {error}
-            </div>
+            <div style={{
+              background: 'rgba(232,64,64,0.1)', border: '1px solid rgba(232,64,64,0.2)',
+              color: '#f87171', borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, marginBottom: 18,
+            }}>{error}</div>
           )}
 
-          <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1.5">Логин</label>
-            <input
-              className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="karvonadmin"
-              value={login}
-              onChange={e => setLogin(e.target.value)}
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Login field */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                Логин
+              </label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
+                  <IcoUser size={14} />
+                </div>
+                <input
+                  className="input"
+                  style={{ paddingLeft: 34 }}
+                  placeholder="admin"
+                  value={login}
+                  onChange={e => setLogin(e.target.value)}
+                  autoFocus
+                  autoComplete="username"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-slate-300 text-sm font-medium mb-1.5">Пароль</label>
-            <input
-              type="password"
-              className="w-full bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-          </div>
+            {/* Password field */}
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                Пароль
+              </label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
+                  <IcoLock size={14} />
+                </div>
+                <input
+                  type="password"
+                  className="input"
+                  style={{ paddingLeft: 34 }}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition text-sm mt-2"
-          >
-            {loading ? 'Вход...' : 'Войти'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading || !login || !password}
+              style={{
+                marginTop: 8, width: '100%', padding: '11px',
+                background: loading ? '#132b5a' : '#1d56d4',
+                color: loading ? '#2d4a6e' : '#fff',
+                border: 'none', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer',
+                fontSize: 14, fontWeight: 700, letterSpacing: '.02em',
+                transition: 'all .15s',
+              }}
+            >
+              {loading ? 'Вход...' : 'Войти'}
+            </button>
+          </form>
+        </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          Модераторы входят через этот же экран
-        </p>
+        <div style={{ textAlign: 'center', marginTop: 20, color: '#19273d', fontSize: 12 }}>
+          KARVON Admin Panel v1.0
+        </div>
       </div>
     </div>
   )

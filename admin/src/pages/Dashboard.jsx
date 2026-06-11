@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
+import { IcoUsers, IcoList, IcoBuilding, IcoCard, IcoInbox, IcoCoins, IcoPackage, IcoWarehouse } from '../icons'
 
-function StatCard({ label, value, sub, color = 'blue', icon }) {
-  const colors = {
-    blue:   'bg-blue-50 text-blue-600',
-    green:  'bg-emerald-50 text-emerald-600',
-    orange: 'bg-orange-50 text-orange-600',
-    purple: 'bg-purple-50 text-purple-600',
-  }
+function StatCard({ label, value, sub, icon: Ico, accent = '#60a5fa' }) {
   return (
-    <div className="card flex items-start gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${colors[color]}`}>
-        {icon}
+    <div className="card" style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+        background: `${accent}18`,
+        border: `1px solid ${accent}28`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: accent,
+      }}>
+        <Ico size={18} />
       </div>
       <div>
-        <div className="text-2xl font-bold text-slate-800">{value ?? '—'}</div>
-        <div className="text-sm font-medium text-slate-600 mt-0.5">{label}</div>
-        {sub && <div className="text-xs text-slate-400 mt-1">{sub}</div>}
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#dce8f5', lineHeight: 1.1 }}>{value ?? '—'}</div>
+        <div style={{ fontSize: 13, color: '#4d6d90', marginTop: 3 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11.5, color: '#2d4a6e', marginTop: 2 }}>{sub}</div>}
       </div>
     </div>
   )
@@ -37,73 +38,78 @@ export default function Dashboard() {
 
   const d = data || {}
 
+  const periodBtn = (p) => ({
+    padding: '5px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+    border: 'none', transition: 'all .13s', fontFamily: 'inherit',
+    background: period === p ? '#1d56d4' : 'transparent',
+    color: period === p ? '#fff' : '#334d6e',
+  })
+
   return (
-    <div className="p-6 space-y-6">
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">Дашборд</h1>
-          <p className="text-sm text-slate-500">Общая статистика платформы</p>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Дашборд</div>
+          <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Статистика платформы</div>
         </div>
-        <div className="flex gap-1 bg-white rounded-lg border border-slate-200 p-1">
-          {['7d','30d','90d'].map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${period === p ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-            >{p}</button>
+        <div style={{
+          display: 'flex', gap: 2, background: '#0c1526',
+          border: '1px solid #19273d', borderRadius: 8, padding: 3,
+        }}>
+          {['7d', '30d', '90d'].map(p => (
+            <button key={p} style={periodBtn(p)} onClick={() => setPeriod(p)}>{p}</button>
           ))}
         </div>
       </div>
 
       {loading ? (
-        <div className="text-center py-20 text-slate-400">Загрузка...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#1e3350' }}>Загрузка данных...</div>
       ) : (
         <>
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard icon="👥" label="Пользователей" value={d.total_users?.toLocaleString()} sub={`+${d.new_users || 0} за период`} color="blue" />
-            <StatCard icon="📋" label="Объявлений" value={d.total_listings?.toLocaleString()} sub={`Активных: ${d.active_listings || 0}`} color="green" />
-            <StatCard icon="🏢" label="Компаний" value={d.total_companies?.toLocaleString()} sub={`Верифицированных: ${d.verified_companies || 0}`} color="orange" />
-            <StatCard icon="💳" label="Платежей (UZS)" value={d.total_revenue_uzs ? (d.total_revenue_uzs / 1000000).toFixed(1) + ' млн' : '0'} sub={`Всего: ${d.total_payments || 0}`} color="purple" />
+          {/* Main stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            <StatCard icon={IcoUsers}    label="Пользователей"  value={d.total_users?.toLocaleString()}  sub={`+${d.new_users||0} за период`} accent="#60a5fa" />
+            <StatCard icon={IcoList}     label="Объявлений"     value={d.total_listings?.toLocaleString()} sub={`Активных: ${d.active_listings||0}`} accent="#34d399" />
+            <StatCard icon={IcoBuilding} label="Компаний"       value={d.total_companies?.toLocaleString()} sub={`Верифицировано: ${d.verified_companies||0}`} accent="#f59e0b" />
+            <StatCard icon={IcoCard}     label="Выручка (млн ₽)"  value={d.total_revenue_uzs ? (d.total_revenue_uzs/1000000).toFixed(1)+' млн' : '0'} sub={`Транзакций: ${d.total_payments||0}`} accent="#a78bfa" />
           </div>
 
-          {/* Second row */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard icon="📥" label="Ожидают модерации" value={d.pending_companies} color="orange" />
-            <StatCard icon="🪙" label="Токенов выдано" value={d.tokens_issued?.toLocaleString()} color="blue" />
-            <StatCard icon="📦" label="Грузов" value={d.cargo_count?.toLocaleString()} color="green" />
-            <StatCard icon="🏭" label="Складов" value={d.warehouse_count?.toLocaleString()} color="purple" />
+          {/* Secondary stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            <StatCard icon={IcoInbox}    label="Ожидают модерации"  value={d.pending_companies}           accent="#f59e0b" />
+            <StatCard icon={IcoCoins}    label="Токенов выдано"     value={d.tokens_issued?.toLocaleString()} accent="#60a5fa" />
+            <StatCard icon={IcoPackage}  label="Грузов"             value={d.cargo_count?.toLocaleString()} accent="#34d399" />
+            <StatCard icon={IcoWarehouse} label="Складов"           value={d.warehouse_count?.toLocaleString()} accent="#a78bfa" />
           </div>
 
-          {/* Recent activity placeholder */}
+          {/* Recent users */}
           <div className="card">
-            <h2 className="font-semibold text-slate-700 mb-4">Последние регистрации</h2>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#dce8f5', marginBottom: 16 }}>
+              Последние регистрации
+            </div>
             {d.recent_users?.length ? (
-              <table className="w-full text-sm">
+              <table className="data-table">
                 <thead>
-                  <tr className="text-left text-slate-500 border-b border-slate-100">
-                    <th className="pb-2 font-medium">Имя</th>
-                    <th className="pb-2 font-medium">Телефон</th>
-                    <th className="pb-2 font-medium">Роль</th>
-                    <th className="pb-2 font-medium">Токены</th>
-                    <th className="pb-2 font-medium">Дата</th>
+                  <tr>
+                    <th>Имя</th><th>Телефон</th><th>Роль</th><th>Токены</th><th>Дата</th>
                   </tr>
                 </thead>
                 <tbody>
                   {d.recent_users.map(u => (
-                    <tr key={u.id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-2.5">{u.name || '—'}</td>
-                      <td className="py-2.5 text-slate-500">{u.phone}</td>
-                      <td className="py-2.5">{u.role}</td>
-                      <td className="py-2.5">{u.token_balance}</td>
-                      <td className="py-2.5 text-slate-400">{new Date(u.created_at).toLocaleDateString('ru')}</td>
+                    <tr key={u.id}>
+                      <td style={{ color: '#c4d8ef' }}>{u.name || '—'}</td>
+                      <td>{u.phone}</td>
+                      <td>{u.role}</td>
+                      <td style={{ color: '#60a5fa', fontWeight: 600 }}>{u.token_balance}</td>
+                      <td style={{ fontSize: 12 }}>{new Date(u.created_at).toLocaleDateString('ru')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <div className="text-center py-8 text-slate-400 text-sm">Нет данных</div>
+              <div style={{ textAlign: 'center', padding: '28px 0', color: '#1e3350', fontSize: 13 }}>Нет данных</div>
             )}
           </div>
         </>

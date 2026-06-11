@@ -18,7 +18,8 @@ async function request(method, path, body) {
   if (res.status === 401) {
     localStorage.removeItem('admin_token')
     localStorage.removeItem('admin_role')
-    window.location.href = '/login'
+    const base = import.meta.env.BASE_URL || '/'
+    window.location.href = base + 'login'
     return
   }
 
