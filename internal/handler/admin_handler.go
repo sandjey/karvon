@@ -278,7 +278,7 @@ func (h *AdminHandler) CreateModerator(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	u, err := h.svc.CreateModerator(c.Request.Context(), req.Phone, req.Name)
+	u, err := h.svc.CreateModerator(c.Request.Context(), req.Phone, req.Name, req.Login, req.Password)
 	if err != nil {
 		InternalError(c)
 		return

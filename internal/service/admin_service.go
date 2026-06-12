@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 
 	"karvon/internal/dto"
 	"karvon/internal/model"
@@ -70,24 +71,36 @@ func (s *AdminService) adminPhone() string {
 	return s.adminLogin
 }
 
-// Login проверяет статик-креды и выдаёт JWT супер-админу (без OTP).
+// Login проверяет статик-креды супер-админа, затем ищет модератора в БД.
 func (s *AdminService) Login(ctx context.Context, login, password string) (*dto.TokenPair, error) {
-	if login != s.adminLogin || password != s.adminPassword {
-		return nil, ErrInvalidCredentials
+	// 1. Super admin (env credentials)
+	if login == s.adminLogin && password == s.adminPassword {
+		u, err := s.users.FindByPhone(ctx, s.adminPhone())
+		if err != nil {
+			return nil, err
+		}
+		if u == nil {
+			if err := s.SeedSuperAdmin(ctx); err != nil {
+				return nil, err
+			}
+			u, err = s.users.FindByPhone(ctx, s.adminPhone())
+			if err != nil || u == nil {
+				return nil, ErrNotFound
+			}
+		}
+		return s.issueTokens(ctx, u)
 	}
-	u, err := s.users.FindByPhone(ctx, s.adminPhone())
+
+	// 2. Moderator (admin_login + bcrypt password)
+	u, err := s.users.FindByAdminLogin(ctx, login)
 	if err != nil {
 		return nil, err
 	}
-	if u == nil {
-		// на случай если seed не отработал
-		if err := s.SeedSuperAdmin(ctx); err != nil {
-			return nil, err
-		}
-		u, err = s.users.FindByPhone(ctx, s.adminPhone())
-		if err != nil || u == nil {
-			return nil, ErrNotFound
-		}
+	if u == nil || u.AdminPasswordHash == nil {
+		return nil, ErrInvalidCredentials
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(*u.AdminPasswordHash), []byte(password)); err != nil {
+		return nil, ErrInvalidCredentials
 	}
 	return s.issueTokens(ctx, u)
 }
@@ -107,21 +120,41 @@ func (s *AdminService) issueTokens(ctx context.Context, u *model.User) (*dto.Tok
 	return &dto.TokenPair{AccessToken: access, RefreshToken: refresh}, nil
 }
 
-// CreateModerator создаёт нового модератора или повышает существующего пользователя.
-func (s *AdminService) CreateModerator(ctx context.Context, phone string, name *string) (*model.User, error) {
+// CreateModerator создаёт нового модератора с логином/паролем для входа в панель.
+func (s *AdminService) CreateModerator(ctx context.Context, phone string, name *string, adminLogin, adminPassword string) (*model.User, error) {
 	phone = normalizeAdminPhone(phone)
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(adminPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	hashStr := string(hash)
+
 	existing, err := s.users.FindByPhone(ctx, phone)
 	if err != nil {
 		return nil, err
 	}
 	if existing != nil {
-		if err := s.users.UpdateProfile(ctx, existing.ID, map[string]interface{}{"role": "moderator"}); err != nil {
+		updates := map[string]interface{}{
+			"role":                "moderator",
+			"admin_login":         adminLogin,
+			"admin_password_hash": hashStr,
+		}
+		if err := s.users.UpdateProfile(ctx, existing.ID, updates); err != nil {
 			return nil, err
 		}
 		existing.Role = "moderator"
+		existing.AdminLogin = &adminLogin
 		return existing, nil
 	}
-	u := &model.User{ID: uuid.New(), Phone: phone, Name: name, Role: "moderator"}
+	u := &model.User{
+		ID:                uuid.New(),
+		Phone:             phone,
+		Name:              name,
+		Role:              "moderator",
+		AdminLogin:        &adminLogin,
+		AdminPasswordHash: &hashStr,
+	}
 	if err := s.users.Create(ctx, u); err != nil {
 		return nil, err
 	}

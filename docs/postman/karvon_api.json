@@ -1367,8 +1367,8 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
             "url": { "raw": "{{base_url}}/api/v1/admin/moderators", "host": ["{{base_url}}"], "path": ["api","v1","admin","moderators"] },
-            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"name\": \"Модератор Иван\"\n}", "options": { "raw": { "language": "json" } } },
-            "description": "Создаёт нового пользователя с ролью moderator или повышает существующего по телефону. Модератор затем входит обычным OTP."
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"name\": \"Модератор Иван\",\n  \"login\": \"moderator1\",\n  \"password\": \"secret123\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Создаёт нового пользователя с ролью moderator. Обязательны: phone, login (мин 3 символа), password (мин 6 символов). Модератор входит через тот же эндпоинт POST /admin/login, используя login + password (не OTP)."
           },
           "response": []
         },

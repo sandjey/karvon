@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Phone        string    `gorm:"type:varchar(20);uniqueIndex;not null"`
+	Phone        string    `gorm:"type:varchar(30);uniqueIndex;not null"`
 	Name         *string   `gorm:"type:varchar(100)"`
 	Email        *string   `gorm:"type:varchar(100)"`
 	WhatsApp     *string   `gorm:"type:varchar(20);column:whatsapp"`
@@ -18,8 +18,11 @@ type User struct {
 	TokenBalance int       `gorm:"not null;default:5"`
 	Role         string    `gorm:"type:user_role;not null;default:'user'"`
 	IsBlocked    bool      `gorm:"not null;default:false"`
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	// Admin panel credentials (moderators only)
+	AdminLogin        *string `gorm:"type:varchar(100);uniqueIndex"`
+	AdminPasswordHash *string `gorm:"type:varchar(200)"`
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 type OTPCode struct {

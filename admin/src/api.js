@@ -49,7 +49,7 @@ export const api = {
   topupTokens: (id, amount) => post(`/admin/users/${id}/topup`, { amount }),
 
   // Moderators
-  createModerator: (phone, name) => post('/admin/moderators', { phone, name }),
+  createModerator: (phone, name, login, password) => post('/admin/moderators', { phone, name, login, password }),
   deleteModerator: (id) => del(`/admin/moderators/${id}`),
 
   // Listings

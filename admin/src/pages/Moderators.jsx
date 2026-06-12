@@ -7,7 +7,7 @@ export default function Moderators() {
   const [moderators, setModerators] = useState([])
   const [loading, setLoading]       = useState(true)
   const [showModal, setShowModal]   = useState(false)
-  const [form, setForm]             = useState({ phone: '', name: '' })
+  const [form, setForm]             = useState({ phone: '', name: '', login: '', password: '' })
   const [saving, setSaving]         = useState(false)
   const [error, setError]           = useState('')
 
@@ -22,12 +22,14 @@ export default function Moderators() {
   useEffect(() => { load() }, [])
 
   const handleCreate = async () => {
-    if (!form.phone) return
+    if (!form.phone || !form.login || !form.password) return
     setError('')
     setSaving(true)
     try {
-      await api.createModerator(form.phone, form.name || undefined)
-      setShowModal(false); setForm({ phone: '', name: '' }); load()
+      await api.createModerator(form.phone, form.name || undefined, form.login, form.password)
+      setShowModal(false)
+      setForm({ phone: '', name: '', login: '', password: '' })
+      load()
     } catch (err) {
       setError(err.message || 'Ошибка создания')
     } finally {
@@ -39,6 +41,11 @@ export default function Moderators() {
     if (!confirm(`Удалить модератора ${m.phone}? Он потеряет доступ к панели.`)) return
     await api.deleteModerator(m.id)
     load()
+  }
+
+  const labelStyle = {
+    display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d',
+    marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em',
   }
 
   return (
@@ -69,7 +76,9 @@ export default function Moderators() {
             <thead>
               <tr>
                 <th style={{ paddingLeft: 20 }}>Модератор</th>
-                <th>Телефон</th><th>Дата добавления</th>
+                <th>Логин</th>
+                <th>Телефон</th>
+                <th>Дата добавления</th>
                 <th style={{ paddingRight: 20, textAlign: 'right' }}>Действия</th>
               </tr>
             </thead>
@@ -88,6 +97,11 @@ export default function Moderators() {
                       </div>
                       <span style={{ color: '#c4d8ef', fontWeight: 600 }}>{m.name || '—'}</span>
                     </div>
+                  </td>
+                  <td>
+                    <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#60a5fa' }}>
+                      {m.admin_login || '—'}
+                    </span>
                   </td>
                   <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{m.phone}</td>
                   <td style={{ fontSize: 12 }}>{new Date(m.created_at).toLocaleDateString('ru')}</td>
@@ -117,33 +131,58 @@ export default function Moderators() {
                 {error}
               </div>
             )}
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Телефон <span style={{ color: '#e84040' }}>*</span>
-              </label>
-              <input
-                className="input" placeholder="998901234567"
-                value={form.phone}
-                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                autoFocus
-              />
-              <div style={{ fontSize: 12, color: '#1e3350', marginTop: 6 }}>
-                Формат: 998XXXXXXXXX. Модератор войдёт через OTP-вход.
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Телефон <span style={{ color: '#e84040' }}>*</span></label>
+                <input
+                  className="input" placeholder="998901234567"
+                  value={form.phone}
+                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Имя</label>
+                <input
+                  className="input" placeholder="Алишер Каримов"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                />
               </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Имя (необязательно)
-              </label>
-              <input
-                className="input" placeholder="Алишер Каримов"
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              />
+
+            <div style={{ height: 1, background: '#19273d' }} />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Логин <span style={{ color: '#e84040' }}>*</span></label>
+                <input
+                  className="input" placeholder="moderator1"
+                  value={form.login}
+                  onChange={e => setForm(f => ({ ...f, login: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Пароль <span style={{ color: '#e84040' }}>*</span></label>
+                <input
+                  className="input" type="password" placeholder="Минимум 6 символов"
+                  value={form.password}
+                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                />
+              </div>
             </div>
+            <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: -8 }}>
+              Модератор входит в панель через тот же экран, что и супер-админ: логин + пароль.
+            </div>
+
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
               <button className="btn-secondary" onClick={() => setShowModal(false)}>Отмена</button>
-              <button className="btn-primary" onClick={handleCreate} disabled={saving || !form.phone}>
+              <button
+                className="btn-primary"
+                onClick={handleCreate}
+                disabled={saving || !form.phone || !form.login || !form.password}
+              >
                 {saving ? 'Создание...' : 'Создать'}
               </button>
             </div>

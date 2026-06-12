@@ -6,8 +6,10 @@ type AdminLoginRequest struct {
 }
 
 type CreateModeratorRequest struct {
-	Phone string  `json:"phone" binding:"required"`
-	Name  *string `json:"name" binding:"omitempty,max=100"`
+	Phone    string  `json:"phone"    binding:"required"`
+	Name     *string `json:"name"     binding:"omitempty,max=100"`
+	Login    string  `json:"login"    binding:"required,min=3,max=50"`
+	Password string  `json:"password" binding:"required,min=6,max=100"`
 }
 
 type TopupRequest struct {

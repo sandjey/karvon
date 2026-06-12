@@ -96,6 +96,15 @@ func (r *UserRepo) DashboardEvents(ctx context.Context, userID uuid.UUID, limit 
 	return events, err
 }
 
+func (r *UserRepo) FindByAdminLogin(ctx context.Context, login string) (*model.User, error) {
+	var u model.User
+	err := r.db.WithContext(ctx).Where("admin_login = ?", login).First(&u).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &u, err
+}
+
 func (r *UserRepo) CreditTokens(ctx context.Context, userID uuid.UUID, amount int, reason string) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user model.User
