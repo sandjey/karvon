@@ -21,6 +21,9 @@ type CargoFilter struct {
 	Category      string
 	FromCity      string
 	FromCountry   string
+	ToCity        string
+	ToCountry     string
+	BodyType      string // tent|ref|board|iso|tank — значение должно быть в массиве body_types
 	Divisibility  string
 	Packaging     string
 	MinOrderMax   *float64
@@ -84,6 +87,15 @@ func (r *CargoRepo) List(ctx context.Context, f CargoFilter) ([]model.CargoListi
 	}
 	if f.FromCountry != "" {
 		q = q.Where("from_country ILIKE ?", "%"+f.FromCountry+"%")
+	}
+	if f.ToCity != "" {
+		q = q.Where("to_city ILIKE ?", "%"+f.ToCity+"%")
+	}
+	if f.ToCountry != "" {
+		q = q.Where("to_country ILIKE ?", "%"+f.ToCountry+"%")
+	}
+	if f.BodyType != "" {
+		q = q.Where("? = ANY(body_types)", f.BodyType)
 	}
 	if f.Divisibility != "" {
 		q = q.Where("divisibility = ?", f.Divisibility)

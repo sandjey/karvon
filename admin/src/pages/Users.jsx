@@ -5,21 +5,23 @@ import Modal from '../components/Modal'
 import { statusBadge } from '../components/Badge'
 import { IcoSearch, IcoCoins } from '../icons'
 
+const lbl = { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }
+
 export default function Users() {
-  const [users, setUsers]   = useState([])
-  const [total, setTotal]   = useState(0)
-  const [page, setPage]     = useState(1)
-  const [q, setQ]           = useState('')
-  const [role, setRole]     = useState('')
+  const [users, setUsers]     = useState([])
+  const [total, setTotal]     = useState(0)
+  const [page, setPage]       = useState(1)
+  const [q, setQ]             = useState('')
+  const [role, setRole]       = useState('')
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [topupModal, setTopupModal] = useState(null)
+  const [search, setSearch]   = useState('')
+  const [topupModal, setTopupModal]   = useState(null)
   const [topupAmount, setTopupAmount] = useState('')
 
   const load = useCallback(() => {
     setLoading(true)
     api.users(q, role, page)
-      .then(r => { setUsers(r?.data?.items || []); setTotal(r?.data?.total || 0) })
+      .then(r => { setUsers(r?.data || []); setTotal(r?.meta?.total || 0) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [q, role, page])
@@ -45,8 +47,8 @@ export default function Users() {
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Пользователи</div>
-          <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Всего: {total}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Пользователи</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>Всего: {total}</div>
         </div>
       </div>
 
@@ -54,12 +56,12 @@ export default function Users() {
       <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: 14 }}>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 240 }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }}>
               <IcoSearch size={14} />
             </div>
             <input
               className="input" style={{ paddingLeft: 32 }}
-              placeholder="Поиск по телефону или имени..."
+              placeholder="Телефон или имя..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -77,10 +79,10 @@ export default function Users() {
       {/* Table */}
       <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#1e3350' }}>Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>Загрузка...</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ padding: 0 }}>
+            <table className="data-table">
               <thead>
                 <tr>
                   <th style={{ paddingLeft: 20 }}>Пользователь</th>
@@ -90,16 +92,16 @@ export default function Users() {
               </thead>
               <tbody>
                 {users.length === 0 ? (
-                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: '#1e3350' }}>Нет пользователей</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>Нет пользователей</td></tr>
                 ) : users.map(u => (
-                  <tr key={u.id} style={{ cursor: 'default' }}>
+                  <tr key={u.id}>
                     <td style={{ paddingLeft: 20 }}>
-                      <div style={{ color: '#c4d8ef', fontWeight: 600 }}>{u.name || '—'}</div>
-                      <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 2 }}>{u.phone}</div>
+                      <div style={{ color: '#0f172a', fontWeight: 600 }}>{u.name || '—'}</div>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2, fontFamily: 'monospace' }}>{u.phone}</div>
                     </td>
                     <td>{statusBadge(u.role)}</td>
                     <td>
-                      <span style={{ color: '#60a5fa', fontWeight: 700 }}>{u.token_balance}</span>
+                      <span style={{ color: '#2563eb', fontWeight: 700 }}>{u.token_balance}</span>
                     </td>
                     <td>
                       {u.is_blocked
@@ -115,17 +117,17 @@ export default function Users() {
                           style={{
                             display: 'flex', alignItems: 'center', gap: 4,
                             padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                            background: 'rgba(59,127,245,0.1)', color: '#60a5fa',
-                            border: '1px solid rgba(59,127,245,0.2)', borderRadius: 6, cursor: 'pointer',
+                            background: '#eff6ff', color: '#2563eb',
+                            border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer',
                           }}
                         ><IcoCoins size={12} /> Токены</button>
                         <button
                           onClick={() => handleBlock(u)}
                           style={{
                             padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                            background: u.is_blocked ? 'rgba(18,198,120,0.1)' : 'rgba(232,64,64,0.1)',
-                            color: u.is_blocked ? '#12c678' : '#e84040',
-                            border: `1px solid ${u.is_blocked ? 'rgba(18,198,120,0.2)' : 'rgba(232,64,64,0.2)'}`,
+                            background: u.is_blocked ? '#f0fdf4' : '#fef2f2',
+                            color: u.is_blocked ? '#16a34a' : '#dc2626',
+                            border: `1px solid ${u.is_blocked ? '#bbf7d0' : '#fecaca'}`,
                             borderRadius: 6, cursor: 'pointer',
                           }}
                         >{u.is_blocked ? 'Разблокировать' : 'Заблокировать'}</button>
@@ -142,14 +144,11 @@ export default function Users() {
         )}
       </div>
 
-      {/* Topup Modal */}
       {topupModal && (
         <Modal title={`Пополнить токены — ${topupModal.name || topupModal.phone}`} onClose={() => setTopupModal(null)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Количество токенов
-              </label>
+              <label style={lbl}>Количество токенов</label>
               <input
                 type="number" min="1" max="10000"
                 className="input" placeholder="Например: 10"
@@ -157,8 +156,8 @@ export default function Users() {
                 onChange={e => setTopupAmount(e.target.value)}
                 autoFocus
               />
-              <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 6 }}>
-                Текущий баланс: <span style={{ color: '#60a5fa', fontWeight: 600 }}>{topupModal.token_balance}</span> токенов
+              <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>
+                Баланс: <span style={{ color: '#2563eb', fontWeight: 600 }}>{topupModal.token_balance}</span> токенов
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

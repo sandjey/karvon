@@ -45,9 +45,11 @@ type CargoUpsertRequest struct {
 	PaymentTerms  *string  `json:"payment_terms"`
 	PaymentMethod *string  `json:"payment_method"`
 
-	// Место забора
+	// Место забора / Направление
 	FromCountry    *string        `json:"from_country"`
 	FromCity       *string        `json:"from_city"`
+	ToCountry      *string        `json:"to_country"`
+	ToCity         *string        `json:"to_city"`
 	PickupAddress  *string        `json:"pickup_address"`
 	Lat            *float64       `json:"lat"`
 	Lng            *float64       `json:"lng"`

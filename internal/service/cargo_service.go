@@ -334,6 +334,8 @@ func applyCargo(req *dto.CargoUpsertRequest, m *model.CargoListing) {
 	m.PaymentMethod = req.PaymentMethod
 	m.FromCountry = req.FromCountry
 	m.FromCity = req.FromCity
+	m.ToCountry = req.ToCountry
+	m.ToCity = req.ToCity
 	m.PickupAddress = req.PickupAddress
 	m.Lat = req.Lat
 	m.Lng = req.Lng

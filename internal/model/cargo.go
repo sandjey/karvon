@@ -47,6 +47,8 @@ type CargoListing struct {
 	// ── Место забора ──────────────────────────────────────────
 	FromCountry    *string        `gorm:"type:varchar(100)" json:"from_country"`
 	FromCity       *string        `gorm:"type:varchar(100);index" json:"from_city"`
+	ToCountry      *string        `gorm:"type:varchar(100)" json:"to_country"`
+	ToCity         *string        `gorm:"type:varchar(100);index" json:"to_city"`
 	PickupAddress  *string        `gorm:"type:text" json:"pickup_address"`
 	Lat            *float64       `gorm:"type:decimal" json:"lat"`
 	Lng            *float64       `gorm:"type:decimal" json:"lng"`

@@ -12,7 +12,7 @@ export default function History() {
   const load = useCallback(() => {
     setLoading(true)
     api.history(page)
-      .then(r => { setItems(r?.data?.items || []); setTotal(r?.data?.total || 0) })
+      .then(r => { setItems(r?.data || []); setTotal(r?.meta?.total || 0) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [page])
@@ -20,56 +20,58 @@ export default function History() {
   useEffect(() => { load() }, [load])
 
   return (
-    <div className="p-6 space-y-5">
+    <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <h1 className="text-xl font-bold text-slate-800">История модерации</h1>
-        <p className="text-sm text-slate-500">Ваши прошлые решения по компаниям</p>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>История модерации</div>
+        <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>Ваши прошлые решения по компаниям</div>
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>Загрузка...</div>
         ) : items.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-3">📜</div>
-            <div className="text-slate-500 font-medium">История пуста</div>
-            <p className="text-slate-400 text-sm mt-1">Здесь будут отображаться ваши решения</p>
+          <div style={{ textAlign: 'center', padding: '60px 0' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>📜</div>
+            <div style={{ color: '#64748b', fontWeight: 600 }}>История пуста</div>
+            <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 6 }}>Здесь будут ваши решения</div>
           </div>
         ) : (
           <>
-            <table className="w-full text-sm">
+            <table className="data-table">
               <thead>
-                <tr className="text-left text-slate-500 border-b border-slate-100">
-                  <th className="pb-3 font-medium">Компания</th>
-                  <th className="pb-3 font-medium">Владелец</th>
-                  <th className="pb-3 font-medium">Страна</th>
-                  <th className="pb-3 font-medium">Статус</th>
-                  <th className="pb-3 font-medium">Дата</th>
-                  <th className="pb-3 font-medium">Примечание</th>
+                <tr>
+                  <th style={{ paddingLeft: 20 }}>Компания</th>
+                  <th>Владелец</th>
+                  <th>Страна</th>
+                  <th>Статус</th>
+                  <th>Дата</th>
+                  <th style={{ paddingRight: 20 }}>Примечание</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map(item => (
-                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50">
-                    <td className="py-3">
-                      <div className="font-medium text-slate-800">{item.company_name}</div>
-                      <div className="text-xs text-slate-400">{item.org_type?.toUpperCase()} · {item.inn}</div>
+                  <tr key={item.id}>
+                    <td style={{ paddingLeft: 20 }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a' }}>{item.company_name}</div>
+                      <div style={{ fontSize: 12, color: '#94a3b8' }}>{item.org_type?.toUpperCase()} · {item.inn}</div>
                     </td>
-                    <td className="py-3">
-                      <div className="text-slate-700">{item.user_name || '—'}</div>
-                      <div className="text-xs text-slate-400">{item.user_phone}</div>
+                    <td>
+                      <div style={{ color: '#334155' }}>{item.user_name || '—'}</div>
+                      <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace' }}>{item.user_phone}</div>
                     </td>
-                    <td className="py-3 text-slate-500">{item.country}</td>
-                    <td className="py-3">{statusBadge(item.status)}</td>
-                    <td className="py-3 text-slate-400 text-xs">{new Date(item.created_at).toLocaleDateString('ru', { day:'numeric', month:'short', year:'numeric' })}</td>
-                    <td className="py-3 text-slate-500 text-xs max-w-xs">
+                    <td style={{ color: '#64748b' }}>{item.country}</td>
+                    <td>{statusBadge(item.status)}</td>
+                    <td style={{ fontSize: 12, color: '#94a3b8' }}>{new Date(item.created_at).toLocaleDateString('ru', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                    <td style={{ fontSize: 12, color: '#64748b', paddingRight: 20, maxWidth: 200 }}>
                       {item.rejection_reason || item.docs_request_note || '—'}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <Pagination page={page} total={total} onChange={setPage} />
+            <div style={{ padding: '0 20px 16px' }}>
+              <Pagination page={page} total={total} onChange={setPage} />
+            </div>
           </>
         )}
       </div>

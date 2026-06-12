@@ -16,38 +16,36 @@ export default function Modal({ title, onClose, children, size = 'md' }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }}>
       <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(2,6,15,0.75)' }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,.45)', backdropFilter: 'blur(2px)' }}
         onClick={onClose}
       />
       <div style={{
         position: 'relative', width: '100%', maxWidth: widths[size],
         maxHeight: '90vh', overflowY: 'auto',
-        background: '#0e1a2d',
-        border: '1px solid #1e3050',
-        borderRadius: 14,
-        boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 16,
+        boxShadow: '0 20px 60px rgba(15,23,42,.15)',
       }}>
-        {/* Header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 20px', borderBottom: '1px solid #19273d',
+          padding: '16px 20px', borderBottom: '1px solid #f1f5f9',
         }}>
-          <span style={{ color: '#dce8f5', fontWeight: 600, fontSize: 15 }}>{title}</span>
+          <span style={{ color: '#0f172a', fontWeight: 700, fontSize: 15 }}>{title}</span>
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(255,255,255,0.04)', border: '1px solid #19273d',
+              background: 'none', border: '1px solid #e2e8f0',
               borderRadius: 7, width: 28, height: 28, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#4d6d90', transition: 'all .13s',
+              color: '#94a3b8', transition: 'all .12s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background='rgba(232,64,64,0.1)'; e.currentTarget.style.color='#e84040' }}
-            onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.04)'; e.currentTarget.style.color='#4d6d90' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.borderColor = '#fecaca'; e.currentTarget.style.color = '#dc2626' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#94a3b8' }}
           >
             <IcoX size={13} />
           </button>
         </div>
-        {/* Body */}
         <div style={{ padding: '20px' }}>{children}</div>
       </div>
     </div>

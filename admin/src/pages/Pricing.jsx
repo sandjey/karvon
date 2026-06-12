@@ -11,21 +11,19 @@ const GROUPS = [
   { key: 'other',   label: 'Прочее' },
 ]
 
+const lbl = { display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 7 }
+
 function PricingForm({ form, setForm, isCreate }) {
   const field = (label, name, type = 'text', placeholder = '') => (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</label>
+      <label style={lbl}>{label}</label>
       <input
         type={type} className="input" placeholder={placeholder}
         value={form[name] ?? ''}
-        onChange={e => setForm(f => ({
-          ...f,
-          [name]: type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value
-        }))}
+        onChange={e => setForm(f => ({ ...f, [name]: type === 'number' ? (parseFloat(e.target.value) || 0) : e.target.value }))}
       />
     </div>
   )
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {isCreate && field('Ключ *', 'key', 'text', 'tokens_premium')}
@@ -38,24 +36,23 @@ function PricingForm({ form, setForm, isCreate }) {
       </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
         <input
-          type="checkbox"
-          checked={form.is_active !== false}
+          type="checkbox" checked={form.is_active !== false}
           onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
-          style={{ width: 16, height: 16 }}
+          style={{ width: 16, height: 16, accentColor: '#2563eb' }}
         />
-        <span style={{ fontSize: 13, color: '#7393b5' }}>Активен</span>
+        <span style={{ fontSize: 13, color: '#374151' }}>Активен</span>
       </label>
     </div>
   )
 }
 
 export default function Pricing() {
-  const [items, setItems]       = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [editItem, setEditItem] = useState(null)
+  const [items, setItems]           = useState([])
+  const [loading, setLoading]       = useState(true)
+  const [editItem, setEditItem]     = useState(null)
   const [showCreate, setShowCreate] = useState(false)
-  const [form, setForm]         = useState({})
-  const [saving, setSaving]     = useState(false)
+  const [form, setForm]             = useState({})
+  const [saving, setSaving]         = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -88,8 +85,7 @@ export default function Pricing() {
 
   const handleDelete = async (item) => {
     if (!confirm(`Удалить тариф "${item.label}"?`)) return
-    await api.deletePricing(item.key)
-    load()
+    await api.deletePricing(item.key); load()
   }
 
   const grouped = GROUPS.map(g => ({
@@ -103,8 +99,8 @@ export default function Pricing() {
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Тарифы</div>
-          <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Цены и пакеты платформы</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Тарифы</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>Цены и пакеты платформы</div>
         </div>
         <button className="btn-primary" onClick={() => { setShowCreate(true); setForm({ is_active: true }) }}>
           <IcoPlus size={14} /> Новый тариф
@@ -112,17 +108,22 @@ export default function Pricing() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#1e3350' }}>Загрузка...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>Загрузка...</div>
+      ) : grouped.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
+          <IcoTag size={36} style={{ margin: '0 auto 12px', display: 'block', color: '#e2e8f0' }} />
+          <div style={{ fontWeight: 600, color: '#64748b' }}>Нет тарифов</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>Нажмите «Новый тариф» чтобы добавить</div>
+        </div>
       ) : (
         grouped.map(group => (
           <div key={group.key}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <IcoTag size={13} style={{ color: '#2d4a6e' }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#2d4a6e', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+              <IcoTag size={13} style={{ color: '#94a3b8' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '.08em' }}>
                 {group.label}
               </span>
             </div>
-
             <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <table className="data-table">
                 <thead>
@@ -136,11 +137,13 @@ export default function Pricing() {
                 <tbody>
                   {group.items.map(item => (
                     <tr key={item.key}>
-                      <td style={{ paddingLeft: 20, color: '#c4d8ef', fontWeight: 600 }}>{item.label}</td>
-                      <td><code style={{ fontSize: 11.5, color: '#3d5575', background: 'rgba(255,255,255,0.04)', padding: '2px 6px', borderRadius: 4 }}>{item.key}</code></td>
-                      <td style={{ color: '#dce8f5', fontWeight: 600 }}>{item.price_uzs ? item.price_uzs.toLocaleString() + ' ₽' : '—'}</td>
+                      <td style={{ paddingLeft: 20, color: '#0f172a', fontWeight: 600 }}>{item.label}</td>
+                      <td>
+                        <code style={{ fontSize: 11.5, color: '#64748b', background: '#f8fafc', padding: '2px 6px', borderRadius: 4, border: '1px solid #e2e8f0' }}>{item.key}</code>
+                      </td>
+                      <td style={{ color: '#0f172a', fontWeight: 600 }}>{item.price_uzs ? item.price_uzs.toLocaleString() + ' сум' : '—'}</td>
                       <td>{item.price_usd ? '$' + item.price_usd : '—'}</td>
-                      <td style={{ color: '#60a5fa', fontWeight: 600 }}>{item.tokens_amount || '—'}</td>
+                      <td style={{ color: '#2563eb', fontWeight: 600 }}>{item.tokens_amount || '—'}</td>
                       <td>{item.duration_days || '—'}</td>
                       <td>
                         {item.is_active
@@ -155,8 +158,8 @@ export default function Pricing() {
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: 4,
                               padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                              background: 'rgba(59,127,245,0.1)', color: '#60a5fa',
-                              border: '1px solid rgba(59,127,245,0.2)', borderRadius: 6, cursor: 'pointer',
+                              background: '#eff6ff', color: '#2563eb',
+                              border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer',
                             }}
                           ><IcoPencil size={11} /> Изменить</button>
                           <button
@@ -164,8 +167,8 @@ export default function Pricing() {
                             style={{
                               display: 'inline-flex', alignItems: 'center', gap: 4,
                               padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                              background: 'rgba(232,64,64,0.1)', color: '#e84040',
-                              border: '1px solid rgba(232,64,64,0.2)', borderRadius: 6, cursor: 'pointer',
+                              background: '#fef2f2', color: '#dc2626',
+                              border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer',
                             }}
                           ><IcoTrash size={11} /> Удалить</button>
                         </div>

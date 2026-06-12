@@ -8,6 +8,24 @@ const TYPE_LABELS = {
   tokens: 'Токены', subscription: 'Подписка', listing: 'Объявление', boost: 'Продвижение',
 }
 
+function SumCard({ label, value, icon: Ico, accent }) {
+  return (
+    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+        background: `${accent}14`, color: accent,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Ico size={20} />
+      </div>
+      <div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 4 }}>{label}</div>
+      </div>
+    </div>
+  )
+}
+
 export default function Payments() {
   const [items, setItems]   = useState([])
   const [total, setTotal]   = useState(0)
@@ -17,50 +35,32 @@ export default function Payments() {
   const load = useCallback(() => {
     setLoading(true)
     api.payments(page)
-      .then(r => { setItems(r?.data?.items || []); setTotal(r?.data?.total || 0) })
+      .then(r => { setItems(r?.data || []); setTotal(r?.meta?.total || 0) })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [page])
 
   useEffect(() => { load() }, [load])
 
-  const totalPaid = items.filter(p => p.status === 'paid').reduce((s, p) => s + (p.amount || 0), 0)
-  const paidCount = items.filter(p => p.status === 'paid').length
+  const totalPaid  = items.filter(p => p.status === 'paid').reduce((s, p) => s + (p.amount || 0), 0)
+  const paidCount  = items.filter(p => p.status === 'paid').length
 
   return (
     <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>Платежи</div>
-        <div style={{ fontSize: 13, color: '#2d4a6e', marginTop: 3 }}>Всего транзакций: {total}</div>
+        <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>Платежи</div>
+        <div style={{ fontSize: 13, color: '#64748b', marginTop: 3 }}>Всего транзакций: {total}</div>
       </div>
 
-      {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-        {[
-          { label: 'Оплачено на странице (UZS)', value: totalPaid.toLocaleString(), icon: IcoCard, accent: '#60a5fa' },
-          { label: 'Всего транзакций', value: total, icon: IcoTrendUp, accent: '#f59e0b' },
-          { label: 'Успешных на странице', value: paidCount, icon: IcoCard, accent: '#12c678' },
-        ].map((s, i) => (
-          <div key={i} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 9, flexShrink: 0,
-              background: `${s.accent}18`, color: s.accent,
-              border: `1px solid ${s.accent}28`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <s.icon size={18} />
-            </div>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dce8f5' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#2d4a6e', marginTop: 2 }}>{s.label}</div>
-            </div>
-          </div>
-        ))}
+        <SumCard label="Оплачено на странице (UZS)" value={totalPaid.toLocaleString()}   icon={IcoCard}     accent="#2563eb" />
+        <SumCard label="Всего транзакций"             value={total}                       icon={IcoTrendUp}  accent="#d97706" />
+        <SumCard label="Успешных на странице"         value={paidCount}                   icon={IcoCard}     accent="#16a34a" />
       </div>
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#1e3350' }}>Загрузка...</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8' }}>Загрузка...</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">
@@ -73,15 +73,15 @@ export default function Payments() {
               </thead>
               <tbody>
                 {items.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#1e3350' }}>Нет платежей</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>Нет платежей</td></tr>
                 ) : items.map(p => (
                   <tr key={p.id}>
                     <td style={{ paddingLeft: 20 }}>
-                      <code style={{ fontSize: 11, color: '#2d4a6e' }}>{p.id?.slice(0, 8)}…</code>
+                      <code style={{ fontSize: 11.5, color: '#94a3b8', background: '#f8fafc', padding: '2px 6px', borderRadius: 4 }}>{p.id?.slice(0, 8)}…</code>
                     </td>
-                    <td style={{ color: '#c4d8ef', fontWeight: 600 }}>{TYPE_LABELS[p.payment_type] || p.payment_type}</td>
-                    <td style={{ color: '#dce8f5', fontWeight: 700 }}>
-                      {p.currency === 'USD' ? '$' : ''}{p.amount?.toLocaleString()}{p.currency === 'UZS' ? ' ₽' : ''}
+                    <td style={{ color: '#0f172a', fontWeight: 600 }}>{TYPE_LABELS[p.payment_type] || p.payment_type}</td>
+                    <td style={{ color: '#0f172a', fontWeight: 700 }}>
+                      {p.currency === 'USD' ? '$' : ''}{p.amount?.toLocaleString()}{p.currency === 'UZS' ? ' сум' : ''}
                     </td>
                     <td>{statusBadge(p.status)}</td>
                     <td style={{ textTransform: 'capitalize', fontSize: 12 }}>{p.payment_method || '—'}</td>

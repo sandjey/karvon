@@ -8,6 +8,13 @@ function parseJwt(token) {
   try { return JSON.parse(atob(token.split('.')[1])) } catch { return {} }
 }
 
+const TruckSvg = () => (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/>
+    <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+  </svg>
+)
+
 export default function Login() {
   const [login, setLogin]       = useState('')
   const [password, setPassword] = useState('')
@@ -36,77 +43,63 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#070c17', padding: 16,
+      background: 'linear-gradient(135deg, #f0f4ff 0%, #f8fafc 60%, #f0fdf4 100%)',
+      padding: 16,
     }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
-            width: 52, height: 52, borderRadius: 13, margin: '0 auto 14px',
-            background: 'linear-gradient(135deg,#1d56d4,#2563eb)',
+            width: 62, height: 62, borderRadius: 18, margin: '0 auto 16px',
+            background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(29,86,212,0.35)',
+            boxShadow: '0 8px 28px rgba(37,99,235,.3)',
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
+            <TruckSvg />
           </div>
-          <div style={{ color: '#dce8f5', fontSize: 22, fontWeight: 800, letterSpacing: '.02em' }}>KARVON</div>
-          <div style={{ color: '#2d4a6e', fontSize: 13, marginTop: 4 }}>Панель администратора</div>
+          <div style={{ color: '#0f172a', fontSize: 26, fontWeight: 800, letterSpacing: '.01em' }}>KARVON</div>
+          <div style={{ color: '#64748b', fontSize: 13.5, marginTop: 6 }}>Панель управления</div>
         </div>
 
-        {/* Form card */}
         <div style={{
-          background: '#0c1526', border: '1px solid #19273d',
-          borderRadius: 14, padding: 28,
-          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          background: '#ffffff', border: '1px solid #e2e8f0',
+          borderRadius: 16, padding: 32,
+          boxShadow: '0 4px 24px rgba(15,23,42,.08)',
         }}>
-
           {error && (
             <div style={{
-              background: 'rgba(232,64,64,0.1)', border: '1px solid rgba(232,64,64,0.2)',
-              color: '#f87171', borderRadius: 8, padding: '10px 14px',
-              fontSize: 13, marginBottom: 18,
+              background: '#fef2f2', border: '1px solid #fecaca',
+              color: '#dc2626', borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, marginBottom: 20,
             }}>{error}</div>
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* Login field */}
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Логин
-              </label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Логин</label>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
-                  <IcoUser size={14} />
+                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }}>
+                  <IcoUser size={15} />
                 </div>
                 <input
-                  className="input"
-                  style={{ paddingLeft: 34 }}
-                  placeholder="admin"
+                  className="input" style={{ paddingLeft: 36 }}
+                  placeholder="Введите логин"
                   value={login}
                   onChange={e => setLogin(e.target.value)}
-                  autoFocus
-                  autoComplete="username"
+                  autoFocus autoComplete="username"
                 />
               </div>
             </div>
 
-            {/* Password field */}
             <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#3d5a7d', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Пароль
-              </label>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Пароль</label>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#2d4a6e', pointerEvents: 'none' }}>
-                  <IcoLock size={14} />
+                <div style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', pointerEvents: 'none' }}>
+                  <IcoLock size={15} />
                 </div>
                 <input
-                  type="password"
-                  className="input"
-                  style={{ paddingLeft: 34 }}
-                  placeholder="••••••••"
+                  type="password" className="input" style={{ paddingLeft: 36 }}
+                  placeholder="Введите пароль"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   autoComplete="current-password"
@@ -117,21 +110,15 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading || !login || !password}
-              style={{
-                marginTop: 8, width: '100%', padding: '11px',
-                background: loading ? '#132b5a' : '#1d56d4',
-                color: loading ? '#2d4a6e' : '#fff',
-                border: 'none', borderRadius: 9, cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: 14, fontWeight: 700, letterSpacing: '.02em',
-                transition: 'all .15s',
-              }}
+              className="btn-primary"
+              style={{ marginTop: 8, width: '100%', padding: '12px', fontSize: 14, justifyContent: 'center', borderRadius: 10 }}
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? 'Вход...' : 'Войти в систему'}
             </button>
           </form>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 20, color: '#19273d', fontSize: 12 }}>
+        <div style={{ textAlign: 'center', marginTop: 20, color: '#94a3b8', fontSize: 12 }}>
           KARVON Admin Panel v1.0
         </div>
       </div>
