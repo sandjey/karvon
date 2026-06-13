@@ -105,6 +105,9 @@ func (s *CargoService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*mo
 	if c == nil {
 		return nil, ErrListingNotFound
 	}
+	if c.IsAdminBlocked && c.UserID != viewerID {
+		return nil, ErrListingNotFound
+	}
 	if c.UserID != viewerID {
 		_ = s.repo.IncrementViews(ctx, id)
 	}
@@ -159,11 +162,15 @@ func (s *CargoService) Update(ctx context.Context, id, userID uuid.UUID, req dto
 }
 
 func (s *CargoService) SetStatus(ctx context.Context, id, userID uuid.UUID, status *string, inStock *bool) error {
-	if _, err := s.ownedListing(ctx, id, userID); err != nil {
+	c, err := s.ownedListing(ctx, id, userID)
+	if err != nil {
 		return err
 	}
 	fields := map[string]interface{}{}
 	if status != nil {
+		if c.IsAdminBlocked && *status == "active" {
+			return ErrListingNotFound
+		}
 		fields["status"] = *status
 	}
 	if inStock != nil {

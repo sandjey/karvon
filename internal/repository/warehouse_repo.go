@@ -92,8 +92,13 @@ func (r *WarehouseRepo) IncrementContactsBought(ctx context.Context, id uuid.UUI
 		UpdateColumn("contacts_bought_count", gorm.Expr("contacts_bought_count + 1")).Error
 }
 
+func (r *WarehouseRepo) UpdateFields(ctx context.Context, id uuid.UUID, fields map[string]interface{}) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).Updates(fields).Error
+}
+
 func (r *WarehouseRepo) List(ctx context.Context, f WarehouseFilter) ([]model.WarehouseListing, int64, error) {
-	q := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).Where("status = 'active'")
+	q := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).Where("status = 'active' AND is_admin_blocked = false")
 	if f.Region != "" {
 		q = q.Where("region ILIKE ?", "%"+f.Region+"%")
 	}

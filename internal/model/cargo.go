@@ -76,9 +76,10 @@ type CargoListing struct {
 	IsTemplate   bool    `gorm:"not null;default:false" json:"is_template"`
 	TemplateName *string `gorm:"type:varchar(100)" json:"template_name"`
 
-	IsBoosted      bool       `gorm:"not null;default:false" json:"is_boosted"`
-	BoostExpiresAt *time.Time `json:"boost_expires_at"`
-	IsPaid         bool       `gorm:"not null;default:false" json:"is_paid"`
+	IsBoosted       bool       `gorm:"not null;default:false" json:"is_boosted"`
+	BoostExpiresAt  *time.Time `json:"boost_expires_at"`
+	IsPaid          bool       `gorm:"not null;default:false" json:"is_paid"`
+	IsAdminBlocked  bool       `gorm:"not null;default:false;column:is_admin_blocked" json:"is_admin_blocked,omitempty"`
 
 	ViewsCount          int `gorm:"not null;default:0" json:"views_count"`
 	ContactsBoughtCount int `gorm:"not null;default:0" json:"contacts_bought_count"`

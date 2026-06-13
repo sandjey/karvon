@@ -301,6 +301,12 @@ func createEnumTypes(db *gorm.DB) error {
 		"ALTER TYPE payment_status_enum ADD VALUE IF NOT EXISTS 'reverted'",
 		"ALTER TYPE token_reason_enum ADD VALUE IF NOT EXISTS 'revert'",
 		"ALTER TYPE currency_enum ADD VALUE IF NOT EXISTS 'KZT'",
+		// Uzbek org types
+		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'mchj'",
+		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'xk'",
+		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'oaj'",
+		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'yat'",
+		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'qmj'",
 	}
 	for _, a := range alters {
 		if err := db.Exec(a).Error; err != nil {

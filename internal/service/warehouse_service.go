@@ -121,6 +121,9 @@ func (s *WarehouseService) GetByID(ctx context.Context, id, viewerID uuid.UUID) 
 	if w == nil {
 		return nil, ErrListingNotFound
 	}
+	if w.IsAdminBlocked && w.UserID != viewerID {
+		return nil, ErrListingNotFound
+	}
 	if w.UserID != viewerID {
 		_ = s.repo.IncrementViews(ctx, id)
 	}

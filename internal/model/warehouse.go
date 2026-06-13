@@ -48,10 +48,11 @@ type WarehouseListing struct {
 	Services       pq.StringArray `gorm:"type:text[]" json:"services"`
 	WorkingHours   datatypes.JSON `gorm:"type:jsonb" json:"working_hours,omitempty"`
 
-	IsBoosted           bool       `gorm:"not null;default:false" json:"is_boosted"`
-	BoostExpiresAt      *time.Time `json:"boost_expires_at"`
-	IsPaid              bool       `gorm:"not null;default:false" json:"is_paid"`
-	Status              string     `gorm:"type:warehouse_status_enum;not null;default:'active';index" json:"status"`
+	IsBoosted          bool       `gorm:"not null;default:false" json:"is_boosted"`
+	BoostExpiresAt     *time.Time `json:"boost_expires_at"`
+	IsPaid             bool       `gorm:"not null;default:false" json:"is_paid"`
+	IsAdminBlocked     bool       `gorm:"not null;default:false;column:is_admin_blocked" json:"is_admin_blocked,omitempty"`
+	Status             string     `gorm:"type:warehouse_status_enum;not null;default:'active';index" json:"status"`
 	ViewsCount          int        `gorm:"not null;default:0" json:"views_count"`
 	ContactsBoughtCount int        `gorm:"not null;default:0" json:"contacts_bought_count"`
 	CreatedAt      time.Time  `json:"created_at"`

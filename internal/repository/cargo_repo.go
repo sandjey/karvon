@@ -77,7 +77,7 @@ func (r *CargoRepo) Delete(ctx context.Context, id uuid.UUID) error {
 // List — активные не-шаблонные карточки товаров. Boosted — сверху.
 func (r *CargoRepo) List(ctx context.Context, f CargoFilter) ([]model.CargoListing, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.CargoListing{}).
-		Where("status = 'active' AND is_template = false")
+		Where("status = 'active' AND is_template = false AND is_admin_blocked = false")
 
 	if f.Category != "" {
 		q = q.Where("category = ?", f.Category)
