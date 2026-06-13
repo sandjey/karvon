@@ -117,86 +117,133 @@
   @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
 
   /* ── Postman Runner ──────────────────────────────────────────── */
-  .pm-wrap{margin:-28px -28px -48px;height:calc(100vh - 54px);display:flex;flex-direction:column;background:#f0f4f8}
-  /* vars bar */
-  .pm-vbar{background:#1e293b;color:#e2e8f0;flex-shrink:0;border-bottom:1px solid #0f172a}
-  .pm-vbar-hdr{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;user-select:none}
-  .pm-vbar-hdr:hover{background:#0f172a80}
-  .pm-vbar-title{font-size:12px;font-weight:700;letter-spacing:.05em;color:#94a3b8}
-  .pm-vbar-body{border-top:1px solid #334155}
-  .pm-vars-inputs{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px}
+  .pm-wrap{margin:-28px -28px -48px;height:calc(100vh - 54px);display:flex;flex-direction:column}
+  /* vars toolbar */
+  .pm-vbar{background:#2b2b2b;flex-shrink:0;border-bottom:1px solid #1a1a1a}
+  .pm-vbar-hdr{display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;user-select:none}
+  .pm-vbar-hdr:hover{background:#232323}
+  .pm-vbar-title{font-size:11px;font-weight:700;letter-spacing:.08em;color:#888;text-transform:uppercase}
+  .pm-vbar-body{border-top:1px solid #1f1f1f}
+  .pm-vars-inputs{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px}
   .pm-var-item{display:flex;align-items:center;gap:5px}
-  .pm-var-item label{font-size:10px;color:#94a3b8;font-family:monospace;white-space:nowrap}
-  .pm-var-item input{background:#0f172a;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:3px 8px;font-size:11px;width:160px;font-family:monospace;outline:none}
-  .pm-var-item input:focus{border-color:#3b82f6}
-  .pm-btn-sm{background:#334155;border:none;color:#94a3b8;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
-  .pm-btn-sm:hover{background:#475569;color:#e2e8f0}
+  .pm-var-item label{font-size:10px;color:#888;font-family:monospace;white-space:nowrap}
+  .pm-var-item input{background:#1a1a1a;border:1px solid #3a3a3a;border-radius:4px;color:#e0e0e0;padding:3px 8px;font-size:11px;width:155px;font-family:monospace;outline:none}
+  .pm-var-item input:focus{border-color:#ff6c37;box-shadow:0 0 0 2px rgba(255,108,55,.15)}
+  .pm-btn-sm{background:#3a3a3a;border:1px solid #4a4a4a;color:#aaa;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;font-weight:500}
+  .pm-btn-sm:hover{background:#4a4a4a;color:#fff;border-color:#555}
   /* split */
   .pm-split{display:flex;flex:1;overflow:hidden}
-  /* sidebar */
-  .pm-sidebar{width:270px;flex-shrink:0;background:#fff;border-right:1px solid #e4e9f0;display:flex;flex-direction:column;overflow:hidden}
-  .pm-sidebar-search{padding:10px;border-bottom:1px solid #f1f5f9;flex-shrink:0}
-  .pm-sidebar-search input{width:100%;border:1px solid #e4e9f0;border-radius:6px;padding:5px 10px;font-size:12px;outline:none;background:#f8fafc}
-  .pm-sidebar-search input:focus{border-color:#3b82f6;background:#fff}
-  .pm-tree{flex:1;overflow-y:auto;padding:6px 0}
-  .pm-tree-loading{padding:20px;text-align:center;color:#94a3b8;font-size:13px}
-  .pm-folder-hdr{display:flex;align-items:center;gap:7px;padding:6px 12px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none}
-  .pm-folder-hdr:hover{background:#f8fafc}
-  .pm-folder-arrow{font-size:10px;color:#94a3b8;flex-shrink:0;width:10px}
-  .pm-folder-count{font-size:10px;background:#f1f5f9;color:#94a3b8;border-radius:8px;padding:1px 6px;margin-left:auto}
-  .pm-req-row{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 26px;font-size:12px;cursor:pointer;color:#475569;transition:background .1s}
-  .pm-req-row:hover{background:#eff6ff;color:#1d4ed8}
-  .pm-req-row.active{background:#dbeafe;color:#1d4ed8;font-weight:500}
-  .pm-req-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pm-m{font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px;flex-shrink:0;width:40px;text-align:center;font-family:monospace}
-  .pm-m-GET{background:#dcfce7;color:#166534}.pm-m-POST{background:#dbeafe;color:#1e40af}
-  .pm-m-PUT{background:#fef3c7;color:#92400e}.pm-m-PATCH{background:#e0e7ff;color:#3730a3}
-  .pm-m-DELETE{background:#fee2e2;color:#991b1b}
+  /* sidebar — dark */
+  .pm-sidebar{width:265px;flex-shrink:0;background:#252525;border-right:1px solid #1a1a1a;display:flex;flex-direction:column;overflow:hidden}
+  .pm-sidebar-search{padding:8px 10px;border-bottom:1px solid #1a1a1a;flex-shrink:0}
+  .pm-sidebar-search input{width:100%;border:1px solid #3a3a3a;border-radius:5px;padding:6px 10px;font-size:12px;outline:none;background:#1a1a1a;color:#e0e0e0}
+  .pm-sidebar-search input::placeholder{color:#555}
+  .pm-sidebar-search input:focus{border-color:#ff6c37}
+  .pm-tree{flex:1;overflow-y:auto;padding:4px 0}
+  .pm-tree::-webkit-scrollbar{width:4px}
+  .pm-tree::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:2px}
+  .pm-tree-loading{padding:20px;text-align:center;color:#555;font-size:12px}
+  .pm-folder-hdr{display:flex;align-items:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:600;color:#bbb;cursor:pointer;user-select:none}
+  .pm-folder-hdr:hover{background:#2f2f2f}
+  .pm-folder-arrow{font-size:9px;color:#666;flex-shrink:0;width:10px}
+  .pm-folder-count{font-size:10px;background:#333;color:#777;border-radius:8px;padding:1px 6px;margin-left:auto;font-weight:400}
+  .pm-req-row{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 26px;font-size:12px;cursor:pointer;color:#999;border-left:2px solid transparent}
+  .pm-req-row:hover{background:#2f2f2f;color:#ddd}
+  .pm-req-row.active{background:#ff6c3715;color:#ffb899;border-left-color:#ff6c37}
+  .pm-req-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .pm-m{font-size:9px;font-weight:800;padding:2px 4px;border-radius:3px;flex-shrink:0;width:42px;text-align:center;font-family:monospace;letter-spacing:.03em}
+  .pm-m-GET{background:#0d2e1a;color:#4ade80}
+  .pm-m-POST{background:#0d1e3a;color:#60a5fa}
+  .pm-m-PUT{background:#2e1a00;color:#fb923c}
+  .pm-m-PATCH{background:#1a0d3a;color:#c084fc}
+  .pm-m-DELETE{background:#2e0d0d;color:#f87171}
   /* right panel */
   .pm-right{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff}
-  .pm-nosel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px;font-size:14px}
-  .pm-nosel-icon{font-size:48px}
+  .pm-nosel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;background:#fafafa}
+  .pm-nosel-icon{font-size:52px;opacity:.4}
+  .pm-nosel p{font-size:13px;color:#aaa;font-weight:500}
+  /* request wrap */
   .pm-req-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
   /* url bar */
-  .pm-urlbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #e4e9f0;flex-shrink:0;background:#fff}
-  .pm-method-sel{border:1px solid #e4e9f0;border-radius:6px;padding:6px 8px;font-size:12px;font-weight:700;background:#f8fafc;cursor:pointer;outline:none;min-width:72px}
-  .pm-url-inp{flex:1;border:1px solid #e4e9f0;border-radius:6px;padding:7px 10px;font-size:12px;font-family:monospace;outline:none}
-  .pm-url-inp:focus{border-color:#3b82f6}
-  .pm-send-btn{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
-  .pm-send-btn:hover{background:#1d4ed8}
-  .pm-send-btn:disabled{background:#94a3b8;cursor:default}
-  .pm-curl-btn{background:#f1f5f9;border:1px solid #e4e9f0;color:#475569;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;flex-shrink:0;font-weight:600}
-  .pm-curl-btn:hover{background:#e2e8f0}
+  .pm-urlbar{display:flex;align-items:center;gap:7px;padding:11px 16px;border-bottom:1px solid #eee;flex-shrink:0;background:#f7f7f7}
+  .pm-method-sel{border:none;border-radius:5px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;outline:none;min-width:80px;letter-spacing:.04em}
+  .pm-url-inp{flex:1;border:1px solid #ddd;border-radius:5px;padding:7px 12px;font-size:13px;font-family:'JetBrains Mono','Courier New',monospace;outline:none;background:#fff;color:#222}
+  .pm-url-inp:focus{border-color:#ff6c37;box-shadow:0 0 0 3px rgba(255,108,55,.12)}
+  .pm-send-btn{background:linear-gradient(135deg,#ff6c37,#e85a25);color:#fff;border:none;border-radius:5px;padding:7px 22px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;letter-spacing:.02em;box-shadow:0 2px 6px rgba(255,108,55,.3)}
+  .pm-send-btn:hover{background:linear-gradient(135deg,#e85a25,#d44d1a)}
+  .pm-send-btn:disabled{background:#ccc;cursor:default;box-shadow:none}
+  .pm-curl-btn{background:#fff;border:1px solid #ddd;color:#666;border-radius:5px;padding:7px 11px;font-size:11px;cursor:pointer;flex-shrink:0;font-weight:600}
+  .pm-curl-btn:hover{background:#f5f5f5}
   /* req tabs */
-  .pm-rtabs{display:flex;padding:0 14px;border-bottom:1px solid #e4e9f0;flex-shrink:0;background:#fafbfc}
-  .pm-rtab{padding:8px 12px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;transition:all .15s}
-  .pm-rtab:hover{color:#334155}
-  .pm-rtab.active{color:#2563eb;border-bottom-color:#2563eb}
+  .pm-rtabs{display:flex;padding:0 16px;border-bottom:1px solid #eee;flex-shrink:0;background:#fff}
+  .pm-rtab{padding:9px 13px;font-size:12px;font-weight:500;color:#888;cursor:pointer;border:none;border-bottom:2px solid transparent;background:none}
+  .pm-rtab:hover{color:#333}
+  .pm-rtab.active{color:#ff6c37;border-bottom-color:#ff6c37;font-weight:600}
   /* tab content */
-  .pm-rcon{flex:1;overflow-y:auto;padding:10px 14px;min-height:0}
+  .pm-rcon{flex:1;overflow-y:auto;padding:12px 16px;min-height:0;background:#fff}
+  .pm-rcon::-webkit-scrollbar{width:4px}
+  .pm-rcon::-webkit-scrollbar-thumb{background:#eee;border-radius:2px}
+  /* headers table */
   .pm-headers-tbl{width:100%;border-collapse:collapse;font-size:12px}
-  .pm-headers-tbl th{text-align:left;padding:5px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid #f1f5f9}
-  .pm-headers-tbl td{padding:3px 4px;border-bottom:1px solid #f8fafc}
-  .pm-headers-tbl td input{width:100%;border:1px solid #e4e9f0;border-radius:4px;padding:4px 7px;font-size:12px;outline:none;font-family:monospace;background:#fff}
-  .pm-headers-tbl td input:focus{border-color:#3b82f6}
-  .pm-body-ed{width:100%;min-height:130px;border:1px solid #e4e9f0;border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;outline:none;background:#f8fafc}
-  .pm-body-ed:focus{border-color:#3b82f6;background:#fff}
-  .pm-example{border:1px solid #e4e9f0;border-radius:8px;overflow:hidden;margin-bottom:8px}
-  .pm-ex-hdr{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;user-select:none}
-  .pm-ex-hdr:hover{opacity:.85}
-  .pm-ex-2xx{background:#f0fdf4;color:#166534}.pm-ex-4xx{background:#fef2f2;color:#991b1b}.pm-ex-5xx{background:#fffbeb;color:#92400e}
-  .pm-ex-code{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.08)}
-  .pm-ex-body{padding:10px 12px;background:#0f172a;margin:0;font-family:monospace;font-size:11.5px;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
-  /* response */
-  .pm-resp{border-top:2px solid #e4e9f0;flex-shrink:0;display:flex;flex-direction:column;height:260px;background:#fff}
-  .pm-resp-bar{display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid #f1f5f9;flex-shrink:0;background:#fafbfc}
-  .pm-resp-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
-  .pm-status-badge{font-weight:700;padding:2px 8px;border-radius:4px;font-size:11px}
-  .pm-s-2xx{background:#dcfce7;color:#166534}.pm-s-4xx{background:#fee2e2;color:#991b1b}.pm-s-5xx{background:#fef3c7;color:#92400e}
-  .pm-resp-ms{font-size:11px;color:#64748b}
-  .pm-resp-pre{flex:1;overflow:auto;padding:10px 14px;background:#0f172a;font-family:monospace;font-size:11.5px;color:#e2e8f0;margin:0;white-space:pre-wrap;word-break:break-word}
-  /* syntax highlight */
+  .pm-headers-tbl th{text-align:left;padding:6px 8px;color:#bbb;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #f0f0f0}
+  .pm-headers-tbl td{padding:2px 3px;border-bottom:1px solid #f8f8f8}
+  .pm-headers-tbl td input{width:100%;border:1px solid transparent;border-radius:4px;padding:5px 8px;font-size:12px;outline:none;font-family:monospace;background:transparent;color:#333}
+  .pm-headers-tbl td input:hover{border-color:#e0e0e0;background:#fafafa}
+  .pm-headers-tbl td input:focus{border-color:#ff6c37;background:#fff}
+  /* body editor */
+  .pm-body-ed{width:100%;min-height:150px;border:1px solid #e8e8e8;border-radius:6px;padding:10px 12px;font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;resize:vertical;outline:none;background:#fafafa;color:#222;line-height:1.65}
+  .pm-body-ed:focus{border-color:#ff6c37;background:#fff;box-shadow:0 0 0 3px rgba(255,108,55,.08)}
+  /* auth */
+  .pm-auth-block{padding:4px 0}
+  .pm-auth-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f5f5}
+  .pm-auth-row label{font-size:12px;color:#888;width:100px;flex-shrink:0}
+  .pm-auth-row input{flex:1;border:1px solid #e0e0e0;border-radius:4px;padding:6px 10px;font-size:12px;font-family:monospace;outline:none}
+  .pm-auth-row input:focus{border-color:#ff6c37}
+  .pm-auth-hint{font-size:11px;color:#bbb;margin-top:10px;line-height:1.6}
+  /* examples */
+  .pm-example{border:1px solid #eee;border-radius:8px;overflow:hidden;margin-bottom:8px}
+  .pm-ex-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;font-weight:500;cursor:pointer;user-select:none}
+  .pm-ex-hdr:hover{filter:brightness(.97)}
+  .pm-ex-2xx{background:#f0fdf4;color:#166534}
+  .pm-ex-4xx{background:#fef2f2;color:#991b1b}
+  .pm-ex-5xx{background:#fffbeb;color:#92400e}
+  .pm-ex-code{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(0,0,0,.1);font-family:monospace}
+  .pm-ex-body{padding:12px;background:#181818;margin:0;font-family:monospace;font-size:12px;color:#ddd;white-space:pre-wrap;word-break:break-word;max-height:240px;overflow-y:auto}
+
+  /* ══ RESPONSE CONSOLE ══ */
+  .pm-resize-handle{height:4px;background:#1e1e1e;cursor:row-resize;flex-shrink:0}
+  .pm-resize-handle:hover,.pm-resize-handle:active{background:#ff6c37}
+  .pm-console{flex-shrink:0;display:flex;flex-direction:column;background:#1a1a1a;overflow:hidden}
+  .pm-console-bar{display:flex;align-items:stretch;background:#222;border-bottom:1px solid #111;flex-shrink:0;min-height:36px}
+  .pm-console-label{padding:0 14px;font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;border-right:1px solid #111}
+  .pm-ctabs{display:flex}
+  .pm-ctab{padding:0 13px;font-size:12px;font-weight:500;color:#666;cursor:pointer;border:none;border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:none;transition:color .15s}
+  .pm-ctab:hover{color:#ccc}
+  .pm-ctab.active{color:#ff6c37;border-bottom-color:#ff6c37}
+  .pm-console-meta{margin-left:auto;display:flex;align-items:center;gap:10px;padding:0 14px}
+  .pm-status-badge{font-weight:800;padding:3px 10px;border-radius:4px;font-size:11px;font-family:monospace;letter-spacing:.03em}
+  .pm-s-2xx{background:#0a2e14;color:#4ade80;border:1px solid #1a4a24}
+  .pm-s-4xx{background:#2e0a0a;color:#f87171;border:1px solid #4a1a1a}
+  .pm-s-5xx{background:#2e1a0a;color:#fb923c;border:1px solid #4a2a1a}
+  .pm-resp-ms{color:#555;font-size:11px;font-family:monospace}
+  .pm-resp-size{color:#555;font-size:11px;font-family:monospace}
+  .pm-console-copy{background:#2e2e2e;border:1px solid #3a3a3a;color:#888;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:500}
+  .pm-console-copy:hover{background:#3a3a3a;color:#fff}
+  .pm-console-body{flex:1;overflow:auto;margin:0;padding:14px 18px;background:#1a1a1a;font-family:'JetBrains Mono','Courier New',monospace;font-size:12.5px;color:#ccc;white-space:pre-wrap;word-break:break-word;line-height:1.7}
+  .pm-console-body::-webkit-scrollbar{width:6px;height:6px}
+  .pm-console-body::-webkit-scrollbar-track{background:#1a1a1a}
+  .pm-console-body::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:3px}
+  .pm-console-body::-webkit-scrollbar-thumb:hover{background:#4a4a4a}
+  .pm-idle{display:flex;align-items:center;justify-content:center;gap:8px;color:#3a3a3a;font-size:13px;font-family:Inter,sans-serif;height:100%}
+  .pm-resp-htbl{width:100%;border-collapse:collapse}
+  .pm-resp-htbl td{padding:5px 10px;border-bottom:1px solid #222;font-family:monospace;font-size:12px}
+  .pm-resp-htbl td:first-child{color:#7dd3fc;width:40%}
+  .pm-resp-htbl td:last-child{color:#a0a0a0}
+  /* syntax */
   .hl-key{color:#7dd3fc}.hl-str{color:#86efac}.hl-num{color:#fbbf24}.hl-bool{color:#f472b6}.hl-null{color:#94a3b8}
+  /* loading spinner */
+  @keyframes pm-spin{to{transform:rotate(360deg)}}
+  .pm-spinner{display:inline-block;width:14px;height:14px;border:2px solid #3a3a3a;border-top-color:#ff6c37;border-radius:50%;animation:pm-spin .7s linear infinite;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -938,66 +985,91 @@ sequenceDiagram
 <!-- ═══════════════════════════════════════════════════════ RUNNER -->
 <div id="tab-postman" class="section pm-wrap">
 
+  <!-- Variables toolbar -->
   <div class="pm-vbar">
     <div class="pm-vbar-hdr" onclick="toggleVarsPanel()">
-      <span class="pm-vbar-title">⚙ ПЕРЕМЕННЫЕ КОЛЛЕКЦИИ</span>
-      <button class="pm-btn-sm" onclick="event.stopPropagation();loadCollection()" title="Перечитать karvon_api.json с сервера">⟳ Reload</button>
-      <span id="pmCollName" style="font-size:11px;color:#64748b;margin-left:8px"></span>
-      <span id="pmVarsToggleArrow" style="margin-left:auto;font-size:11px;color:#64748b">▼</span>
+      <span class="pm-vbar-title">Variables</span>
+      <span id="pmCollName" style="font-size:11px;color:#666;margin-left:6px"></span>
+      <button class="pm-btn-sm" onclick="event.stopPropagation();loadCollection()" style="margin-left:12px">⟳ Reload collection</button>
+      <span id="pmVarsToggleArrow" style="margin-left:auto;font-size:10px;color:#555">▼</span>
     </div>
     <div class="pm-vbar-body" id="pmVarsBody">
       <div id="pmVarsInputs" class="pm-vars-inputs"></div>
     </div>
   </div>
 
+  <!-- Main split -->
   <div class="pm-split">
 
+    <!-- Sidebar -->
     <div class="pm-sidebar">
       <div class="pm-sidebar-search">
-        <input type="search" id="pmSearch" placeholder="🔍 Поиск запросов..." oninput="filterPm(this.value)">
+        <input type="search" id="pmSearch" placeholder="Search requests..." oninput="filterPm(this.value)">
       </div>
       <div id="pmTree" class="pm-tree">
-        <div class="pm-tree-loading">Выберите вкладку Runner для загрузки...</div>
+        <div class="pm-tree-loading">Click Runner tab to load...</div>
       </div>
     </div>
 
+    <!-- Right -->
     <div class="pm-right">
+
+      <!-- Empty state -->
       <div id="pmNoSel" class="pm-nosel">
-        <div class="pm-nosel-icon">📡</div>
-        <div>Выберите запрос из списка слева</div>
+        <div class="pm-nosel-icon">⚡</div>
+        <p>Select a request from the collection</p>
       </div>
 
+      <!-- Request + Console -->
       <div id="pmReqWrap" class="pm-req-wrap" style="display:none">
+
+        <!-- URL bar -->
         <div class="pm-urlbar">
           <select id="pmMethodSel" class="pm-method-sel" onchange="updateMethodColor()">
             <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
           </select>
-          <input id="pmUrlInp" class="pm-url-inp" type="text" placeholder="URL">
+          <input id="pmUrlInp" class="pm-url-inp" type="text" placeholder="Enter URL or paste text">
           <button class="pm-send-btn" onclick="sendPm()" id="pmSendBtn">Send</button>
-          <button class="pm-curl-btn" onclick="copyCurl()">cURL</button>
+          <button class="pm-curl-btn" onclick="copyCurl()" title="Copy as cURL">cURL</button>
         </div>
 
+        <!-- Request tabs -->
         <div class="pm-rtabs">
           <button class="pm-rtab active" data-tab="Headers" onclick="switchPmTab(this)">Headers</button>
           <button class="pm-rtab" data-tab="Body" onclick="switchPmTab(this)">Body</button>
+          <button class="pm-rtab" data-tab="Auth" onclick="switchPmTab(this)">Authorization</button>
           <button class="pm-rtab" data-tab="Examples" onclick="switchPmTab(this)">Examples</button>
         </div>
 
-        <div id="pmTabHeaders" class="pm-rcon"></div>
-        <div id="pmTabBody"    class="pm-rcon" style="display:none"></div>
+        <div id="pmTabHeaders"  class="pm-rcon"></div>
+        <div id="pmTabBody"     class="pm-rcon" style="display:none"></div>
+        <div id="pmTabAuth"     class="pm-rcon" style="display:none"></div>
         <div id="pmTabExamples" class="pm-rcon" style="display:none"></div>
 
-        <div class="pm-resp">
-          <div class="pm-resp-bar">
-            <span class="pm-resp-label">Ответ</span>
-            <span id="pmRespMeta"></span>
-            <button class="pm-btn-sm" onclick="copyResp()" style="margin-left:auto">Copy</button>
+        <!-- Resize handle -->
+        <div class="pm-resize-handle" id="pmResizeHandle"></div>
+
+        <!-- CONSOLE -->
+        <div class="pm-console" id="pmConsole" style="height:300px">
+          <div class="pm-console-bar">
+            <span class="pm-console-label">Response</span>
+            <div class="pm-ctabs">
+              <button class="pm-ctab active" data-ctab="pretty" onclick="switchConsoleTab(this)">Pretty</button>
+              <button class="pm-ctab" data-ctab="raw"    onclick="switchConsoleTab(this)">Raw</button>
+              <button class="pm-ctab" data-ctab="headers" onclick="switchConsoleTab(this)">Headers</button>
+            </div>
+            <div class="pm-console-meta">
+              <span id="pmRespMeta"></span>
+              <button class="pm-console-copy" onclick="copyResp()">Copy</button>
+            </div>
           </div>
-          <pre id="pmRespPre" class="pm-resp-pre">Нажмите Send для отправки запроса</pre>
+          <pre id="pmConsolePretty" class="pm-console-body"><span class="pm-idle">Hit Send to get a response</span></pre>
+          <pre id="pmConsoleRaw"    class="pm-console-body" style="display:none"></pre>
+          <div id="pmConsoleHeaders" class="pm-console-body" style="display:none;padding:0"><table class="pm-resp-htbl" id="pmRespHeadersTbl"></table></div>
         </div>
+
       </div>
     </div>
-
   </div>
 </div>
 
@@ -1182,8 +1254,7 @@ sequenceDiagram
     wrap.style.flexDirection = 'column';
 
     // method
-    const mSel = document.getElementById('pmMethodSel');
-    mSel.value = req.method || 'GET';
+    document.getElementById('pmMethodSel').value = req.method || 'GET';
     updateMethodColor();
 
     // url
@@ -1194,7 +1265,10 @@ sequenceDiagram
 
     // body
     document.getElementById('pmTabBody').innerHTML =
-      '<textarea class="pm-body-ed" id="pmBodyEd" rows="8">' + escH(req.body?.raw || '') + '</textarea>';
+      '<textarea class="pm-body-ed" id="pmBodyEd">' + escH(req.body?.raw || '') + '</textarea>';
+
+    // auth
+    renderPmAuth();
 
     // examples
     renderPmExamples(item.response || []);
@@ -1202,13 +1276,37 @@ sequenceDiagram
     // switch to headers tab
     document.querySelectorAll('.pm-rtab').forEach(t => t.classList.remove('active'));
     document.querySelector('.pm-rtab[data-tab="Headers"]').classList.add('active');
-    document.getElementById('pmTabHeaders').style.display = 'block';
-    document.getElementById('pmTabBody').style.display = 'none';
-    document.getElementById('pmTabExamples').style.display = 'none';
+    ['Headers','Body','Auth','Examples'].forEach(t => {
+      document.getElementById('pmTab'+t).style.display = t === 'Headers' ? 'block' : 'none';
+    });
 
-    // clear response
-    document.getElementById('pmRespPre').textContent = 'Нажмите Send для отправки запроса';
+    // clear console
+    document.getElementById('pmConsolePretty').innerHTML = '<span class="pm-idle">Hit Send to get a response</span>';
+    document.getElementById('pmConsoleRaw').textContent = '';
+    document.getElementById('pmRespHeadersTbl').innerHTML = '';
     document.getElementById('pmRespMeta').innerHTML = '';
+  }
+
+  function renderPmAuth() {
+    document.getElementById('pmTabAuth').innerHTML =
+      '<div class="pm-auth-block">'
+      + '<div class="pm-auth-row"><label>Type</label><input value="Bearer Token" readonly style="color:#888;background:#fafafa"></div>'
+      + '<div class="pm-auth-row"><label>Token</label>'
+      + '<input id="pmAuthToken" type="password" placeholder="{{access_token}} or paste token" value="' + escH(pmVars['access_token']||'') + '" oninput="pmVars[\'access_token\']=this.value;syncVarInput(\'access_token\',this.value)">'
+      + '</div>'
+      + '<div class="pm-auth-hint">Token will be added as <code>Authorization: Bearer &lt;token&gt;</code> header automatically when sending.</div>'
+      + '</div>';
+  }
+
+  function syncVarInput(key, val) {
+    pmVars[key] = val;
+    const inputs = document.querySelectorAll('#pmVarsInputs .pm-var-item');
+    inputs.forEach(item => {
+      if (item.querySelector('label').textContent === '{{' + key + '}}') {
+        const inp = item.querySelector('input');
+        if (inp && inp !== document.activeElement) inp.value = val;
+      }
+    });
   }
 
   function renderPmHeaders(headers) {
@@ -1265,9 +1363,18 @@ sequenceDiagram
     document.querySelectorAll('.pm-rtab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     const tab = btn.dataset.tab;
-    ['Headers','Body','Examples'].forEach(t => {
+    ['Headers','Body','Auth','Examples'].forEach(t => {
       document.getElementById('pmTab' + t).style.display = t === tab ? 'block' : 'none';
     });
+  }
+
+  function switchConsoleTab(btn) {
+    document.querySelectorAll('.pm-ctab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.ctab;
+    document.getElementById('pmConsolePretty').style.display = tab === 'pretty' ? 'block' : 'none';
+    document.getElementById('pmConsoleRaw').style.display    = tab === 'raw'    ? 'block' : 'none';
+    document.getElementById('pmConsoleHeaders').style.display = tab === 'headers' ? 'block' : 'none';
   }
 
   function updateMethodColor() {
@@ -1282,12 +1389,14 @@ sequenceDiagram
 
   async function sendPm() {
     const btn = document.getElementById('pmSendBtn');
-    const pre = document.getElementById('pmRespPre');
+    const pretty = document.getElementById('pmConsolePretty');
+    const raw = document.getElementById('pmConsoleRaw');
     const meta = document.getElementById('pmRespMeta');
+    const hdrTbl = document.getElementById('pmRespHeadersTbl');
     const method = document.getElementById('pmMethodSel').value;
     const url = resolveVars(document.getElementById('pmUrlInp').value);
 
-    // collect headers
+    // headers from table
     const headers = {};
     document.querySelectorAll('#pmTabHeaders .pm-hk').forEach(k => {
       const v = k.closest('tr').querySelector('.pm-hv');
@@ -1295,11 +1404,26 @@ sequenceDiagram
       if (kk && vv) headers[kk] = vv;
     });
 
+    // auth token
+    const token = pmVars['access_token'] || '';
+    if (token && !headers['Authorization'] && !headers['authorization'])
+      headers['Authorization'] = 'Bearer ' + token;
+
     const bodyRaw = resolveVars(document.getElementById('pmBodyEd')?.value || '');
 
-    btn.disabled = true; btn.textContent = '...';
-    pre.textContent = 'Отправка...';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="pm-spinner"></span>';
+    pretty.innerHTML = '<span class="pm-idle">Sending...</span>';
+    raw.textContent = '';
     meta.innerHTML = '';
+    hdrTbl.innerHTML = '';
+
+    // switch to pretty tab
+    document.querySelectorAll('.pm-ctab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.pm-ctab[data-ctab="pretty"]').classList.add('active');
+    document.getElementById('pmConsolePretty').style.display = 'block';
+    document.getElementById('pmConsoleRaw').style.display = 'none';
+    document.getElementById('pmConsoleHeaders').style.display = 'none';
 
     const t0 = performance.now();
     try {
@@ -1312,14 +1436,29 @@ sequenceDiagram
       const resp = await fetch(url, opts);
       const ms = Math.round(performance.now() - t0);
       const text = await resp.text();
+      const size = new Blob([text]).size;
+      const sizeStr = size > 1024 ? (size/1024).toFixed(1)+' KB' : size+' B';
       const cls = resp.status >= 500 ? 'pm-s-5xx' : resp.status >= 400 ? 'pm-s-4xx' : 'pm-s-2xx';
+
       meta.innerHTML = '<span class="pm-status-badge ' + cls + '">' + resp.status + ' ' + resp.statusText + '</span>'
-                     + ' <span class="pm-resp-ms">' + ms + 'ms</span>';
-      pre.innerHTML = syntaxHL(fmtJson(text));
+                     + '<span class="pm-resp-ms">' + ms + ' ms</span>'
+                     + '<span class="pm-resp-size">' + sizeStr + '</span>';
+
+      const fmt = fmtJson(text);
+      pretty.innerHTML = syntaxHL(fmt);
+      raw.textContent = text;
+
+      // response headers
+      let hdrHtml = '';
+      resp.headers.forEach((v, k) => { hdrHtml += '<tr><td>' + escH(k) + '</td><td>' + escH(v) + '</td></tr>'; });
+      hdrTbl.innerHTML = hdrHtml || '<tr><td colspan="2" style="color:#555;padding:12px">No headers</td></tr>';
+
+      window._pmLastRespText = text;
     } catch(e) {
       const ms = Math.round(performance.now() - t0);
-      meta.innerHTML = '<span class="pm-status-badge pm-s-5xx">Error</span> <span class="pm-resp-ms">' + ms + 'ms</span>';
-      pre.textContent = 'Ошибка: ' + e.message + '\n\n(Возможно CORS или сеть недоступна)';
+      meta.innerHTML = '<span class="pm-status-badge pm-s-4xx">Error</span><span class="pm-resp-ms">' + ms + ' ms</span>';
+      pretty.textContent = 'Error: ' + e.message + '\n\nCheck CORS or network connectivity.';
+      window._pmLastRespText = e.message;
     } finally {
       btn.disabled = false; btn.textContent = 'Send';
     }
@@ -1344,12 +1483,40 @@ sequenceDiagram
   }
 
   function copyResp() {
-    const text = document.getElementById('pmRespPre').textContent;
+    const text = window._pmLastRespText || document.getElementById('pmConsolePretty').textContent;
     navigator.clipboard.writeText(text).then(() => {
-      const btns = document.querySelectorAll('.pm-resp-bar .pm-btn-sm');
-      btns.forEach(b => { b.textContent = '✓ Copied'; setTimeout(() => b.textContent = 'Copy', 1500); });
+      const btn = document.querySelector('.pm-console-copy');
+      if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => btn.textContent = 'Copy', 1500); }
     });
   }
+
+  // Resize handle — drag to change console height
+  (function() {
+    let dragging = false, startY, startH;
+    document.addEventListener('mousedown', e => {
+      if (!e.target.closest('#pmResizeHandle')) return;
+      const console = document.getElementById('pmConsole');
+      if (!console) return;
+      dragging = true;
+      startY = e.clientY;
+      startH = console.offsetHeight;
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'row-resize';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const console = document.getElementById('pmConsole');
+      if (!console) return;
+      const delta = startY - e.clientY;
+      const newH = Math.max(120, Math.min(window.innerHeight * .7, startH + delta));
+      console.style.height = newH + 'px';
+    });
+    document.addEventListener('mouseup', () => {
+      dragging = false;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    });
+  })();
 
   function filterPm(q) {
     const query = q.toLowerCase().trim();
