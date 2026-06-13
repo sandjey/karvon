@@ -180,9 +180,10 @@
   .pm-rtab:hover{color:#333}
   .pm-rtab.active{color:#ff6c37;border-bottom-color:#ff6c37;font-weight:600}
   /* tab content */
-  .pm-rcon{flex:1;overflow-y:auto;padding:12px 16px;min-height:0;background:#fff}
-  .pm-rcon::-webkit-scrollbar{width:4px}
-  .pm-rcon::-webkit-scrollbar-thumb{background:#eee;border-radius:2px}
+  .pm-rcon-wrap{flex:1;overflow-y:auto;min-height:0;background:#fff}
+  .pm-rcon-wrap::-webkit-scrollbar{width:4px}
+  .pm-rcon-wrap::-webkit-scrollbar-thumb{background:#eee;border-radius:2px}
+  .pm-rcon{padding:12px 16px}
   /* headers table */
   .pm-headers-tbl{width:100%;border-collapse:collapse;font-size:12px}
   .pm-headers-tbl th{text-align:left;padding:6px 8px;color:#bbb;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #f0f0f0}
@@ -265,7 +266,7 @@
     </button>
     <button class="tab" onclick="showTab('postman',this)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z"/></svg>
-      Runner
+      Swagger
     </button>
   </nav>
 </header>
@@ -1007,7 +1008,7 @@ sequenceDiagram
         <input type="search" id="pmSearch" placeholder="Search requests..." oninput="filterPm(this.value)">
       </div>
       <div id="pmTree" class="pm-tree">
-        <div class="pm-tree-loading">Click Runner tab to load...</div>
+        <div class="pm-tree-loading">Click Swagger tab to load...</div>
       </div>
     </div>
 
@@ -1041,10 +1042,12 @@ sequenceDiagram
           <button class="pm-rtab" data-tab="Examples" onclick="switchPmTab(this)">Examples</button>
         </div>
 
-        <div id="pmTabHeaders"  class="pm-rcon"></div>
-        <div id="pmTabBody"     class="pm-rcon" style="display:none"></div>
-        <div id="pmTabAuth"     class="pm-rcon" style="display:none"></div>
-        <div id="pmTabExamples" class="pm-rcon" style="display:none"></div>
+        <div class="pm-rcon-wrap">
+          <div id="pmTabHeaders"  class="pm-rcon"></div>
+          <div id="pmTabBody"     class="pm-rcon" style="display:none"></div>
+          <div id="pmTabAuth"     class="pm-rcon" style="display:none"></div>
+          <div id="pmTabExamples" class="pm-rcon" style="display:none"></div>
+        </div>
 
         <!-- Resize handle -->
         <div class="pm-resize-handle" id="pmResizeHandle"></div>
@@ -1155,6 +1158,8 @@ sequenceDiagram
   /* ══════════════ POSTMAN RUNNER ══════════════ */
   window.pmCollection = null;
   window.pmVars = {};
+  window.pmReqCache = {};
+  window.pmCurrentReqKey = null;
 
   async function loadCollection() {
     const tree = document.getElementById('pmTree');
@@ -1207,12 +1212,12 @@ sequenceDiagram
         const cnt = countPmReqs(item.item);
         const wrap = document.createElement('div');
         wrap.className = 'pm-folder';
-        wrap.dataset.open = '1';
+        wrap.dataset.open = '0';
         wrap.innerHTML = '<div class="pm-folder-hdr" onclick="togglePmFolder(this)">'
-          + '<span class="pm-folder-arrow">▾</span>'
+          + '<span class="pm-folder-arrow">▸</span>'
           + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escH(item.name) + '</span>'
           + '<span class="pm-folder-count">' + cnt + '</span>'
-          + '</div><div class="pm-folder-body"></div>';
+          + '</div><div class="pm-folder-body" style="display:none"></div>';
         parent.appendChild(wrap);
         renderPmItems(item.item, wrap.querySelector('.pm-folder-body'));
       } else if (item.request) {
@@ -1242,10 +1247,27 @@ sequenceDiagram
     arrow.textContent = open ? '▸' : '▾';
   }
 
+  function savePmReqState() {
+    if (!window.pmCurrentReqKey) return;
+    const methodEl = document.getElementById('pmMethodSel');
+    const urlEl    = document.getElementById('pmUrlInp');
+    const bodyEl   = document.getElementById('pmBodyEd');
+    const hdrsEl   = document.getElementById('pmTabHeaders');
+    pmReqCache[window.pmCurrentReqKey] = {
+      method:      methodEl ? methodEl.value : null,
+      url:         urlEl    ? urlEl.value    : null,
+      body:        bodyEl   ? bodyEl.value   : null,
+      headersHtml: hdrsEl   ? hdrsEl.innerHTML : null,
+    };
+  }
+
   function selectPmReq(item, el) {
+    savePmReqState();
+
     document.querySelectorAll('.pm-req-row').forEach(r => r.classList.remove('active'));
     el.classList.add('active');
     window.pmCurrentReq = item;
+    window.pmCurrentReqKey = item.name;
     const req = item.request;
 
     document.getElementById('pmNoSel').style.display = 'none';
@@ -1272,6 +1294,15 @@ sequenceDiagram
 
     // examples
     renderPmExamples(item.response || []);
+
+    // restore cached edits (user's changes override collection defaults)
+    const cached = pmReqCache[item.name];
+    if (cached) {
+      if (cached.method) { document.getElementById('pmMethodSel').value = cached.method; updateMethodColor(); }
+      if (cached.url)    document.getElementById('pmUrlInp').value = cached.url;
+      if (cached.headersHtml) document.getElementById('pmTabHeaders').innerHTML = cached.headersHtml;
+      if (cached.body) { const b = document.getElementById('pmBodyEd'); if (b) b.value = cached.body; }
+    }
 
     // switch to headers tab
     document.querySelectorAll('.pm-rtab').forEach(t => t.classList.remove('active'));
