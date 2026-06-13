@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"math"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
+	"karvon/internal/dto"
 	"karvon/internal/model"
 	"karvon/internal/repository"
 	"karvon/pkg/rahmat"
@@ -40,6 +43,7 @@ type CreatePaymentInput struct {
 	ListingType string // для listing/boost: cargo|warehouse
 	ListingID   string // для listing/boost
 	Lang        string // ru|uz|en — язык страницы оплаты
+	ReturnURL   string // куда вернуть после оплаты (опционально, переопределяет конфиг)
 }
 
 // Create создаёт платёжный заказ (pending) и возвращает order + checkout_url.
@@ -79,7 +83,7 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 		return nil, "", err
 	}
 
-	invoiceUUID, checkoutURL, err := s.rahmat.CreatePayment(ctx, order.ID.String(), amount, in.Lang, p.Label)
+	invoiceUUID, checkoutURL, err := s.rahmat.CreatePayment(ctx, order.ID.String(), amount, in.Lang, p.Label, in.ReturnURL)
 	if err != nil {
 		return nil, "", err
 	}
@@ -92,9 +96,14 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 	return order, checkoutURL, nil
 }
 
-// Webhook обрабатывает callback от Multicard (идемпотентно).
-// orderID = store_invoice_id из тела callback (наш UUID заказа).
-func (s *PaymentService) Webhook(ctx context.Context, orderID uuid.UUID, paymentMethod, multicardTxnUUID string) error {
+// Webhook обрабатывает полный callback (PaymentModel) от Multicard (идемпотентно).
+// Обрабатывает статусы "success" и "revert"; остальные игнорируются на уровне хэндлера.
+func (s *PaymentService) Webhook(ctx context.Context, cb dto.MulticardCallback) error {
+	orderID, err := uuid.Parse(cb.StoreInvoiceID)
+	if err != nil {
+		return nil // неизвестный store_invoice_id — игнорируем
+	}
+
 	order, err := s.payments.FindByID(ctx, orderID)
 	if err != nil {
 		return err
@@ -102,17 +111,53 @@ func (s *PaymentService) Webhook(ctx context.Context, orderID uuid.UUID, payment
 	if order == nil {
 		return ErrNotFound
 	}
-	if order.Status == "paid" {
-		return nil // идемпотентность
+
+	// Идемпотентность: уже обработанные заказы не трогаем
+	if order.Status == "paid" || order.Status == "reverted" {
+		return nil
 	}
-	if err := s.payments.MarkPaid(ctx, order.ID, paymentMethod); err != nil {
+
+	// Верификация суммы: предупреждение в лог (не блокируем — комиссия может расходиться)
+	if cb.PaymentAmount > 0 {
+		expectedTiyin := int64(math.Round(order.Amount * 100))
+		if cb.PaymentAmount != expectedTiyin {
+			log.Warn().
+				Int64("expected_tiyin", expectedTiyin).
+				Int64("got_tiyin", cb.PaymentAmount).
+				Str("order_id", order.ID.String()).
+				Msg("payment amount mismatch in webhook")
+		}
+	}
+
+	if cb.Status == "revert" {
+		if err := s.payments.MarkReverted(ctx, order.ID); err != nil {
+			return err
+		}
+		log.Info().Str("order_id", order.ID.String()).Str("type", order.PaymentType).Msg("payment reverted")
+		return s.revert(ctx, order)
+	}
+
+	// success
+	if err := s.payments.MarkPaid(ctx, order.ID, cb.PS); err != nil {
 		return err
 	}
-	// Сохраняем UUID транзакции Multicard (если ещё не сохранён из invoice UUID)
-	if multicardTxnUUID != "" {
-		_ = s.payments.SaveInvoiceUUID(ctx, order.ID, multicardTxnUUID)
-	}
+	_ = s.payments.SavePaymentDetails(ctx, order.ID, cb.UUID, cb.Phone, cb.ReceiptURL, cb.TotalAmount, cb.CommissionAmount)
 	return s.apply(ctx, order)
+}
+
+// GetByID возвращает платёжный заказ по ID (для клиентского поллинга статуса).
+func (s *PaymentService) GetByID(ctx context.Context, orderID, userID uuid.UUID) (*model.PaymentOrder, error) {
+	order, err := s.payments.FindByID(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+	if order == nil {
+		return nil, ErrNotFound
+	}
+	if order.UserID != userID {
+		return nil, ErrNotOwner
+	}
+	return order, nil
 }
 
 func (s *PaymentService) apply(ctx context.Context, o *model.PaymentOrder) error {
@@ -169,9 +214,55 @@ func (s *PaymentService) apply(ctx context.Context, o *model.PaymentOrder) error
 
 func (s *PaymentService) markListingPaid(ctx context.Context, lt string, id uuid.UUID) error {
 	if lt == "warehouse" {
-		return s.warehouse.UpdateStatus(ctx, id, "active")
+		return s.warehouse.MarkPaid(ctx, id)
 	}
-	return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_paid": true})
+	return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_paid": true, "status": "active"})
+}
+
+// revert откатывает эффект оплаченного заказа после revert-статуса от Multicard.
+func (s *PaymentService) revert(ctx context.Context, o *model.PaymentOrder) error {
+	key := ""
+	if o.ItemID != nil {
+		key = *o.ItemID
+	}
+	switch o.PaymentType {
+	case "tokens":
+		amount := s.pricing.TokensAmount(ctx, key, 0)
+		if amount > 0 {
+			if err := s.users.DebitTokens(ctx, o.UserID, amount, "revert"); err != nil {
+				log.Error().Err(err).Str("order_id", o.ID.String()).Msg("revert: failed to debit tokens")
+			}
+		}
+	case "subscription":
+		if err := s.payments.DeactivateSubscriptionByOrder(ctx, o.ID); err != nil {
+			log.Error().Err(err).Str("order_id", o.ID.String()).Msg("revert: failed to deactivate subscription")
+		}
+	case "listing":
+		lt, id, _ := parseListingRef(key)
+		if err := s.revertListing(ctx, lt, id); err != nil {
+			log.Error().Err(err).Str("order_id", o.ID.String()).Msg("revert: failed to revert listing")
+		}
+	case "boost":
+		lt, id, _ := parseListingRef(key)
+		if err := s.removeBoost(ctx, lt, id); err != nil {
+			log.Error().Err(err).Str("order_id", o.ID.String()).Msg("revert: failed to remove boost")
+		}
+	}
+	return nil
+}
+
+func (s *PaymentService) revertListing(ctx context.Context, lt string, id uuid.UUID) error {
+	if lt == "warehouse" {
+		return s.warehouse.RevertPaid(ctx, id)
+	}
+	return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_paid": false, "status": "archived"})
+}
+
+func (s *PaymentService) removeBoost(ctx context.Context, lt string, id uuid.UUID) error {
+	if lt == "warehouse" {
+		return s.warehouse.RemoveBoost(ctx, id)
+	}
+	return s.cargo.RemoveBoost(ctx, id)
 }
 
 func (s *PaymentService) History(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.PaymentOrder, int64, error) {
@@ -183,7 +274,7 @@ func (s *PaymentService) ActiveSubscription(ctx context.Context, userID uuid.UUI
 }
 
 // Boost создаёт платёжный заказ на продвижение объявления.
-func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingType, listingID, pricingKey, currency, lang string) (*model.PaymentOrder, string, error) {
+func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingType, listingID, pricingKey, currency, lang, returnURL string) (*model.PaymentOrder, string, error) {
 	if err := s.assertOwner(ctx, userID, listingType, listingID); err != nil {
 		return nil, "", err
 	}
@@ -195,6 +286,7 @@ func (s *PaymentService) Boost(ctx context.Context, userID uuid.UUID, listingTyp
 		ListingType: listingType,
 		ListingID:   listingID,
 		Lang:        lang,
+		ReturnURL:   returnURL,
 	})
 }
 

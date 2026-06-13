@@ -18,13 +18,14 @@ import (
 var adminPhoneRe = regexp.MustCompile(`[^0-9+]`)
 
 type AdminService struct {
-	admin     *repository.AdminRepo
-	users     *repository.UserRepo
-	tokens    *repository.TokenRepo
-	cargo     *repository.CargoRepo
-	warehouse *repository.WarehouseRepo
-	pricing   *PricingService
-	jwtMgr    *jwtpkg.Manager
+	admin      *repository.AdminRepo
+	users      *repository.UserRepo
+	tokens     *repository.TokenRepo
+	cargo      *repository.CargoRepo
+	warehouse  *repository.WarehouseRepo
+	pricing    *PricingService
+	categories *repository.CategoryRepo
+	jwtMgr     *jwtpkg.Manager
 
 	adminLogin    string
 	adminPassword string
@@ -37,12 +38,14 @@ func NewAdminService(
 	cargo *repository.CargoRepo,
 	warehouse *repository.WarehouseRepo,
 	pricing *PricingService,
+	categories *repository.CategoryRepo,
 	jwtMgr *jwtpkg.Manager,
 	adminLogin, adminPassword string,
 ) *AdminService {
 	return &AdminService{
 		admin: admin, users: users, tokens: tokens,
-		cargo: cargo, warehouse: warehouse, pricing: pricing, jwtMgr: jwtMgr,
+		cargo: cargo, warehouse: warehouse, pricing: pricing,
+		categories: categories, jwtMgr: jwtMgr,
 		adminLogin: adminLogin, adminPassword: adminPassword,
 	}
 }
@@ -258,6 +261,55 @@ func (s *AdminService) CreatePricing(ctx context.Context, p *model.PricingConfig
 
 func (s *AdminService) DeletePricing(ctx context.Context, key string) error {
 	return s.pricing.Delete(ctx, key)
+}
+
+func (s *AdminService) ListCategories(ctx context.Context) ([]model.CargoCategory, error) {
+	return s.categories.ListAll(ctx)
+}
+
+func (s *AdminService) CreateCategory(ctx context.Context, req dto.CreateCategoryRequest) (*model.CargoCategory, error) {
+	existing, err := s.categories.FindByKey(ctx, req.Key)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, ErrAlreadyExists
+	}
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+	cat := &model.CargoCategory{
+		Key: req.Key, LabelRu: req.LabelRu, LabelUz: req.LabelUz, LabelEn: req.LabelEn, IsActive: isActive,
+	}
+	if err := s.categories.Create(ctx, cat); err != nil {
+		return nil, err
+	}
+	return cat, nil
+}
+
+func (s *AdminService) UpdateCategory(ctx context.Context, id uuid.UUID, req dto.UpdateCategoryRequest) error {
+	fields := map[string]interface{}{}
+	if req.LabelRu != nil {
+		fields["label_ru"] = *req.LabelRu
+	}
+	if req.LabelUz != nil {
+		fields["label_uz"] = *req.LabelUz
+	}
+	if req.LabelEn != nil {
+		fields["label_en"] = *req.LabelEn
+	}
+	if req.IsActive != nil {
+		fields["is_active"] = *req.IsActive
+	}
+	if len(fields) == 0 {
+		return nil
+	}
+	return s.categories.Update(ctx, id, fields)
+}
+
+func (s *AdminService) DeleteCategory(ctx context.Context, id uuid.UUID) error {
+	return s.categories.Delete(ctx, id)
 }
 
 func normalizeAdminPhone(phone string) string {

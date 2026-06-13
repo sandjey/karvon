@@ -7,6 +7,7 @@ import (
 	"gorm.io/datatypes"
 )
 
+
 type WarehouseUpsertRequest struct {
 	CompanyID *uuid.UUID `json:"company_id"`
 
@@ -34,9 +35,10 @@ type WarehouseUpsertRequest struct {
 	TempMax          *float64 `json:"temp_max"`
 	ColdChamberTypes []string `json:"cold_chamber_types"`
 
-	CustomsLicenseNumber  *string    `json:"customs_license_number"`
-	CustomsLicenseIssued  *time.Time `json:"customs_license_issued"`
-	CustomsLicenseExpires *time.Time `json:"customs_license_expires"`
+	CustomsLicenseNumber   *string    `json:"customs_license_number"`
+	CustomsLicenseIssued   *time.Time `json:"customs_license_issued"`
+	CustomsLicenseExpires  *time.Time `json:"customs_license_expires"`
+	CustomsSpecialServices []string   `json:"customs_special_services"`
 
 	Infrastructure []string       `json:"infrastructure"`
 	Services       []string       `json:"services"`
@@ -47,4 +49,10 @@ type WarehouseUpsertRequest struct {
 
 type WarehouseStatusRequest struct {
 	Status string `json:"status" binding:"required,oneof=active archived"`
+}
+
+type WarehouseStatsResponse struct {
+	ViewsCount          int            `json:"views_count"`
+	ContactsBoughtCount int            `json:"contacts_bought_count"`
+	Favorites           []FavoriteUser `json:"favorites"`
 }

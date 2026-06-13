@@ -58,8 +58,38 @@ func (r *WarehouseRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status s
 		Where("id = ?", id).Update("status", status).Error
 }
 
+// MarkPaid активирует оплаченное объявление (is_paid=true, status=active).
+func (r *WarehouseRepo) MarkPaid(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_paid": true, "status": "active"}).Error
+}
+
+// RevertPaid откатывает оплату (is_paid=false, status=archived).
+func (r *WarehouseRepo) RevertPaid(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_paid": false, "status": "archived"}).Error
+}
+
 func (r *WarehouseRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&model.WarehouseListing{}, "id = ?", id).Error
+}
+
+// CountFreeActive считает активные бесплатные склады пользователя.
+func (r *WarehouseRepo) CountFreeActive(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("user_id = ? AND is_paid = false AND status = 'active'", userID).
+		Count(&count).Error
+	return count, err
+}
+
+// IncrementContactsBought увеличивает счётчик купленных контактов склада.
+func (r *WarehouseRepo) IncrementContactsBought(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).
+		UpdateColumn("contacts_bought_count", gorm.Expr("contacts_bought_count + 1")).Error
 }
 
 func (r *WarehouseRepo) List(ctx context.Context, f WarehouseFilter) ([]model.WarehouseListing, int64, error) {
@@ -109,6 +139,13 @@ func (r *WarehouseRepo) SetBoost(ctx context.Context, id uuid.UUID, until interf
 	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{"is_boosted": true, "boost_expires_at": until}).Error
+}
+
+// RemoveBoost снимает буст (используется при revert-платеже).
+func (r *WarehouseRepo) RemoveBoost(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_boosted": false, "boost_expires_at": nil}).Error
 }
 
 func (r *WarehouseRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.WarehouseListing, int64, error) {

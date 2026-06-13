@@ -24,6 +24,7 @@ import (
 	"karvon/internal/model"
 	"karvon/internal/repository"
 	"karvon/internal/service"
+	"karvon/pkg/email"
 	jwtpkg "karvon/pkg/jwt"
 	"karvon/pkg/notifier"
 	"karvon/pkg/rahmat"
@@ -52,6 +53,10 @@ func main() {
 
 	if err := seedPricingConfig(gormDB); err != nil {
 		log.Warn().Err(err).Msg("pricing config seed warning")
+	}
+
+	if err := seedCategories(gormDB); err != nil {
+		log.Warn().Err(err).Msg("categories seed warning")
 	}
 
 	sqlDB, _ := gormDB.DB()
@@ -84,16 +89,19 @@ func main() {
 	favoriteRepo  := repository.NewFavoriteRepo(gormDB)
 	routeRepo     := repository.NewRouteRepo(gormDB)
 	pricingRepo   := repository.NewPricingRepo(gormDB)
+	categoryRepo  := repository.NewCategoryRepo(gormDB)
 	adminRepo     := repository.NewAdminRepo(gormDB)
 	mediaRepo     := repository.NewMediaRepo(gormDB)
 	paymentRepo   := repository.NewPaymentRepo(gormDB)
 
+	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
+
 	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
 	userSvc      := service.NewUserService(userRepo, companyRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
-	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo)
-	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo)
-	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo)
+	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
+	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo)
+	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo)
 	pricingSvc   := service.NewPricingService(pricingRepo)
 	rahmatClient := rahmat.NewClient(rahmat.Config{
 		BaseURL:     cfg.MulticardBaseURL,
@@ -110,7 +118,7 @@ func main() {
 	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
 	routeSvc     := service.NewRouteService(routeRepo)
 	notifSvc     := service.NewNotificationService(notifRepo)
-	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, pricingSvc, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
+	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
 
 	// Сид скрытого статик-админа
 	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
@@ -127,7 +135,7 @@ func main() {
 	superAdminMiddleware    := middleware.Role("super_admin")
 
 	// Фоновые задачи
-	startBackgroundWorkers(cargoRepo, warehouseRepo, otpRepo)
+	startBackgroundWorkers(cargoRepo, warehouseRepo, otpRepo, paymentRepo, notifRepo)
 
 	// ── HTTP роутер ──────────────────────────────────────────────────────────
 	gin.SetMode(gin.ReleaseMode)
@@ -152,7 +160,7 @@ func main() {
 	handler.NewUploadHandler(store, uploadBaseURL).RegisterRoutes(v1, authMiddleware)
 	handler.NewModeratorHandler(moderatorSvc).RegisterRoutes(v1, authMiddleware, moderatorRoleMiddleware)
 	handler.NewGeoHandler().RegisterRoutes(v1)
-	handler.NewConfigHandler(cfg.MapTilesURL).RegisterRoutes(v1)
+	handler.NewConfigHandler(cfg.MapTilesURL, categoryRepo).RegisterRoutes(v1)
 	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
 	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
 	handler.NewContactHandler(contactSvc, pricingSvc).RegisterRoutes(v1, authMiddleware)
@@ -212,11 +220,27 @@ func runMigrations(db *gorm.DB) error {
 	if err := createEnumTypes(db); err != nil {
 		return fmt.Errorf("create enum types: %w", err)
 	}
+	// Перевод category с enum на varchar (идемпотентно).
+	if err := db.Exec(`
+		DO $$ BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name='cargo_listings' AND column_name='category'
+				  AND udt_name='cargo_category_enum'
+			) THEN
+				ALTER TABLE cargo_listings ALTER COLUMN category TYPE varchar(50) USING category::text;
+			END IF;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("migrate category column: %w", err)
+	}
+
 	return db.AutoMigrate(
 		&model.User{},
 		&model.OTPCode{},
 		&model.RefreshToken{},
 		&model.Company{},
+		&model.CargoCategory{},
 		&model.CargoListing{},
 		&model.FleetVehicle{},
 		&model.TransportListing{},
@@ -238,7 +262,6 @@ func createEnumTypes(db *gorm.DB) error {
 		{"user_role", "'user','moderator','super_admin'"},
 		{"company_status", "'pending','approved','rejected','docs_requested'"},
 		{"company_org_type", "'ooo','ao','ip','ltd','gmbh','co_ltd'"},
-		{"cargo_category_enum", "'stroymat','food','textile','metal','chemical','wood','electronics','other'"},
 		{"quantity_unit_enum", "'ton','places','pallet','m3'"},
 		{"divisibility_enum", "'ftl','ltl','dogruz'"},
 		{"packaging_enum", "'bulk','pallets','bags','barrels','rolls','boxes','liquid','oversized'"},
@@ -275,6 +298,9 @@ func createEnumTypes(db *gorm.DB) error {
 	// Дополнения к существующим enum (идемпотентно).
 	alters := []string{
 		"ALTER TYPE media_file_type_enum ADD VALUE IF NOT EXISTS 'video'",
+		"ALTER TYPE payment_status_enum ADD VALUE IF NOT EXISTS 'reverted'",
+		"ALTER TYPE token_reason_enum ADD VALUE IF NOT EXISTS 'revert'",
+		"ALTER TYPE currency_enum ADD VALUE IF NOT EXISTS 'KZT'",
 	}
 	for _, a := range alters {
 		if err := db.Exec(a).Error; err != nil {
@@ -321,6 +347,34 @@ func seedPricingConfig(db *gorm.DB) error {
 			// существует, но цена 0 — проставляем дефолт
 			db.Model(&existing).Updates(map[string]interface{}{
 				"price_uzs": s.PriceUZS, "price_usd": s.PriceUSD,
+			})
+		}
+	}
+	return nil
+}
+
+func seedCategories(db *gorm.DB) error {
+	type categorySeed struct {
+		Key     string
+		LabelRu string
+		LabelUz string
+		LabelEn string
+	}
+	seeds := []categorySeed{
+		{"stroymat", "Стройматериалы", "Qurilish materiallari", "Construction materials"},
+		{"food", "Питание / Продукты", "Oziq-ovqat", "Food / Groceries"},
+		{"textile", "Текстиль", "To'qimachilik", "Textile"},
+		{"metal", "Металл", "Metall", "Metal"},
+		{"chemical", "Химия", "Kimyo", "Chemical"},
+		{"wood", "Древесина", "Yog'och", "Wood"},
+		{"electronics", "Электроника", "Elektronika", "Electronics"},
+		{"other", "Другое", "Boshqa", "Other"},
+	}
+	for _, s := range seeds {
+		var existing model.CargoCategory
+		if err := db.Where("key = ?", s.Key).First(&existing).Error; err != nil {
+			db.Create(&model.CargoCategory{
+				Key: s.Key, LabelRu: s.LabelRu, LabelUz: s.LabelUz, LabelEn: s.LabelEn, IsActive: true,
 			})
 		}
 	}

@@ -392,7 +392,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"extra_phone\": \"+998901234567\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -711,7 +711,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"extra_phone\": \"+998901234567\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -730,7 +730,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"message\": \"Профиль обновлён\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер Иванов\",\n    \"email\": \"alisher@example.com\",\n    \"whatsapp\": \"+998331108810\",\n    \"telegram\": \"@alisher\",\n    \"city\": \"Ташкент\",\n    \"country\": \"Узбекистан\",\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"message\": \"Профиль обновлён\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер Иванов\",\n    \"email\": \"alisher@example.com\",\n    \"whatsapp\": \"+998331108810\",\n    \"telegram\": \"@alisher\",\n    \"extra_phone\": \"+998901234567\",\n    \"city\": \"Ташкент\",\n    \"country\": \"Узбекистан\",\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
             },
             {
               "name": "200 — uz",
@@ -2006,7 +2006,7 @@
                 }
               }
             },
-            "description": "Карточка ТОВАРА. Требует JWT + approved-компанию. company_id опционален (иначе первая approved). category: stroymat|food|textile|metal|chemical|wood|electronics|other. media: file_type photo|video|document."
+            "description": "Карточка ТОВАРА. Требует JWT + approved-компанию. company_id опционален (иначе первая approved). category: ключ из GET /api/v1/config (admin-managed: stroymat, food, textile, metal, chemical, wood, electronics, other и любые добавленные). currency: UZS|USD|KZT. media: file_type photo|video|document. Если у аккаунта уже есть бесплатное активное объявление (груз или склад) — новое создаётся со status=archived до оплаты."
           },
           "response": []
         },
@@ -2462,7 +2462,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"storage_type\": [\"стеллажное\"],\n  \"infrastructure\": [\"loader\", \"parking_trucks\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" },\n  \"media\": [{ \"file_url\": \"/uploads/wh/wh1.jpg\", \"file_type\": \"photo\" }, { \"file_url\": \"/uploads/wh/tour.mp4\", \"file_type\": \"video\" }]\n}",
+              "raw": "{\n  \"warehouse_type\": \"customs\",\n  \"name\": \"Таможенный склад Ташкент\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"customs_license_number\": \"TL-2024-001\",\n  \"customs_license_issued\": \"2024-01-01\",\n  \"customs_license_expires\": \"2027-01-01\",\n  \"customs_special_services\": [\"oformlenie\", \"strahovanie\"],\n  \"storage_type\": [\"стеллажное\"],\n  \"infrastructure\": [\"loader\", \"parking_trucks\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" },\n  \"media\": [{ \"file_url\": \"/uploads/wh/wh1.jpg\", \"file_type\": \"photo\" }]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2662,6 +2662,33 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "GET /warehouses/:id/stats — статистика объявления",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "warehouses", "{{warehouse_id}}", "stats"]
+            },
+            "description": "Только для владельца объявления. Возвращает просмотры, сколько раз купили контакт, список пользователей добавивших в избранное."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"views_count\": 142,\n    \"contacts_bought_count\": 8,\n    \"favorites\": [\n      {\"user_name\": \"Иван Иванов\", \"company_name\": \"ООО Транзит\", \"added_at\": \"2026-01-15T10:00:00Z\"}\n    ]\n  }\n}"
+            }
+          ]
         }
       ]
     },
@@ -2846,7 +2873,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_basic\",\n  \"currency\": \"UZS\"\n}",
+              "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_basic\",\n  \"currency\": \"UZS\",\n  \"return_url\": \"https://karvon.uz/payment/success\",\n  \"return_error_url\": \"https://karvon.uz/payment/error\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2881,14 +2908,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"store_invoice_id\": \"{{order_id}}\",\n  \"status\": \"success\",\n  \"ps\": \"uzcard\",\n  \"uuid\": \"multicard-transaction-uuid\"\n}",
+              "raw": "{\n  \"uuid\": \"multicard-transaction-uuid\",\n  \"store_invoice_id\": \"{{order_id}}\",\n  \"status\": \"success\",\n  \"ps\": \"uzcard\",\n  \"payment_amount\": 5000000,\n  \"total_amount\": 5150000,\n  \"commission_amount\": 150000,\n  \"card_pan\": \"8600533364****\",\n  \"phone\": \"+998901234567\",\n  \"receipt_url\": \"https://ofd.soliq.uz/check?...\",\n  \"otp_hash\": \"\",\n  \"payment_time\": \"2026-06-12 10:30:00\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Callback от Multicard при успешной оплате инвойса (отправляется системой Multicard автоматически). store_invoice_id = UUID заказа в Karvon. status: success|error|revert. ps: uzcard|humo|visa|mastercard. При status=success активирует эффект платежа (токены/подписка/буст). Идемпотентно."
+            "description": "Полный PaymentModel от Multicard. Обрабатываются статусы: success (зачислить) и revert (откатить). Остальные (draft/progress/billing/error) — квитируются без обработки."
           },
           "response": []
         },
@@ -2924,6 +2951,33 @@
                 }
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /payments/:id — статус заказа",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/payments/{{order_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "payments",
+                "{{order_id}}"
+              ]
+            },
+            "description": "Поллинг статуса платёжного заказа. Возвращает PaymentOrder с полями: id, status (pending/paid/reverted/failed/cancelled), payment_url, amount, currency, receipt_url и др."
           },
           "response": []
         },
@@ -2982,7 +3036,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pricing_key\": \"boost_3day\",\n  \"currency\": \"UZS\"\n}",
+              "raw": "{\n  \"pricing_key\": \"boost_3day\",\n  \"currency\": \"UZS\",\n  \"return_url\": \"https://karvon.uz/payment/success\",\n  \"return_error_url\": \"https://karvon.uz/payment/error\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4301,6 +4355,93 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "GET /admin/categories — список категорий груза",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "categories"]
+            },
+            "description": "Все категории (включая неактивные). Публичный /api/v1/config возвращает только активные."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\"id\": \"...\", \"key\": \"stroymat\", \"label_ru\": \"Стройматериалы\", \"label_uz\": \"Qurilish materiallari\", \"label_en\": \"Construction materials\", \"is_active\": true},\n    {\"id\": \"...\", \"key\": \"food\", \"label_ru\": \"Питание / Продукты\", \"label_uz\": \"Oziq-ovqat\", \"label_en\": \"Food / Groceries\", \"is_active\": true}\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /admin/categories — создать категорию",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"agro\",\n  \"label_ru\": \"Агропродукция\",\n  \"label_uz\": \"Qishloq xo'jaligi\",\n  \"label_en\": \"Agriculture\",\n  \"is_active\": true\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "categories"]
+            },
+            "description": "key — уникальный идентификатор (используется в поле category при создании объявления груза)."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /admin/categories/:id — изменить категорию",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label_ru\": \"Агропродукция (обновлено)\",\n  \"label_uz\": \"Qishloq xo'jaligi\",\n  \"label_en\": \"Agriculture\",\n  \"is_active\": true\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/categories/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "categories", ":id"],
+              "variable": [{"key": "id", "value": ""}]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/categories/:id — удалить категорию",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/categories/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "categories", ":id"],
+              "variable": [{"key": "id", "value": ""}]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -4336,7 +4477,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"map_tiles_url\": \"https://maps.fan.sarbon.me\",\n    \"languages\": [\"ru\", \"uz\"]\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"map_tiles_url\": \"https://maps.fan.sarbon.me\",\n    \"languages\": [\"ru\", \"uz\", \"en\"],\n    \"categories\": [\n      {\"key\": \"stroymat\", \"label\": \"Стройматериалы\"},\n      {\"key\": \"food\", \"label\": \"Питание / Продукты\"},\n      {\"key\": \"textile\", \"label\": \"Текстиль\"},\n      {\"key\": \"metal\", \"label\": \"Металл\"},\n      {\"key\": \"chemical\", \"label\": \"Химия\"},\n      {\"key\": \"wood\", \"label\": \"Древесина\"},\n      {\"key\": \"electronics\", \"label\": \"Электроника\"},\n      {\"key\": \"other\", \"label\": \"Другое\"}\n    ]\n  }\n}"
             }
           ]
         },

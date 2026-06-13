@@ -14,12 +14,13 @@ import (
 )
 
 type CargoService struct {
-	repo      *repository.CargoRepo
-	company   *repository.CompanyRepo
-	routes    *repository.RouteRepo
-	notif     *repository.NotificationRepo
-	favorites *repository.FavoriteRepo
-	media     *repository.MediaRepo
+	repo          *repository.CargoRepo
+	company       *repository.CompanyRepo
+	routes        *repository.RouteRepo
+	notif         *repository.NotificationRepo
+	favorites     *repository.FavoriteRepo
+	media         *repository.MediaRepo
+	warehouseRepo *repository.WarehouseRepo
 }
 
 func NewCargoService(
@@ -29,8 +30,9 @@ func NewCargoService(
 	notif *repository.NotificationRepo,
 	favorites *repository.FavoriteRepo,
 	media *repository.MediaRepo,
+	warehouseRepo *repository.WarehouseRepo,
 ) *CargoService {
-	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media}
+	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media, warehouseRepo: warehouseRepo}
 }
 
 func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -59,11 +61,30 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if err != nil {
 		return nil, err
 	}
+
+	// Проверяем: есть ли уже бесплатное активное объявление (груз или склад).
+	freeCargo, err := s.repo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeWarehouse, err := s.warehouseRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	initialStatus := "active"
+	isPaid := false
+	if freeCargo+freeWarehouse > 0 {
+		// Бесплатный слот занят — объявление ждёт оплаты.
+		initialStatus = "archived"
+		isPaid = false
+	}
+
 	m := &model.CargoListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
-		Status:    "active",
+		Status:    initialStatus,
+		IsPaid:    isPaid,
 		InStock:   true,
 		Type:      "domestic", // legacy NOT NULL
 	}
@@ -167,9 +188,22 @@ func (s *CargoService) Duplicate(ctx context.Context, id, userID uuid.UUID) (*mo
 	if err != nil {
 		return nil, err
 	}
+	freeCargo, err := s.repo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeWarehouse, err := s.warehouseRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	initialStatus := "active"
+	if freeCargo+freeWarehouse > 0 {
+		initialStatus = "archived"
+	}
 	cp := *src
 	cp.ID = uuid.New()
-	cp.Status = "active"
+	cp.Status = initialStatus
+	cp.IsPaid = false
 	cp.InStock = true
 	cp.IsTemplate = false
 	cp.TemplateName = nil
@@ -221,11 +255,24 @@ func (s *CargoService) FromTemplate(ctx context.Context, templateID, userID uuid
 	if src.UserID != userID {
 		return nil, ErrNotOwner
 	}
+	freeCargo, err := s.repo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeWarehouse, err := s.warehouseRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	initialStatus := "active"
+	if freeCargo+freeWarehouse > 0 {
+		initialStatus = "archived"
+	}
 	cp := *src
 	cp.ID = uuid.New()
 	cp.IsTemplate = false
 	cp.TemplateName = nil
-	cp.Status = "active"
+	cp.Status = initialStatus
+	cp.IsPaid = false
 	cp.InStock = true
 	cp.Company = nil
 	cp.User = nil

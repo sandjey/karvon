@@ -12,13 +12,21 @@ import (
 )
 
 type WarehouseService struct {
-	repo    *repository.WarehouseRepo
-	company *repository.CompanyRepo
-	media   *repository.MediaRepo
+	repo      *repository.WarehouseRepo
+	company   *repository.CompanyRepo
+	media     *repository.MediaRepo
+	cargoRepo *repository.CargoRepo
+	favorites *repository.FavoriteRepo
 }
 
-func NewWarehouseService(repo *repository.WarehouseRepo, company *repository.CompanyRepo, media *repository.MediaRepo) *WarehouseService {
-	return &WarehouseService{repo: repo, company: company, media: media}
+func NewWarehouseService(
+	repo *repository.WarehouseRepo,
+	company *repository.CompanyRepo,
+	media *repository.MediaRepo,
+	cargoRepo *repository.CargoRepo,
+	favorites *repository.FavoriteRepo,
+) *WarehouseService {
+	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites}
 }
 
 func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -73,11 +81,29 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	if err != nil {
 		return nil, err
 	}
+
+	// Проверяем: есть ли уже бесплатное активное объявление (груз или склад).
+	freeCargo, err := s.cargoRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeWarehouse, err := s.repo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	initialStatus := "active"
+	isPaid := false
+	if freeCargo+freeWarehouse > 0 {
+		initialStatus = "archived"
+		isPaid = false
+	}
+
 	w := &model.WarehouseListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
-		Status:    "active",
+		Status:    initialStatus,
+		IsPaid:    isPaid,
 	}
 	applyWarehouse(&req, w)
 	if err := s.repo.Create(ctx, w); err != nil {
@@ -173,6 +199,26 @@ func (s *WarehouseService) Delete(ctx context.Context, id, userID uuid.UUID) err
 	return s.repo.Delete(ctx, id)
 }
 
+func (s *WarehouseService) Stats(ctx context.Context, id, userID uuid.UUID) (*dto.WarehouseStatsResponse, error) {
+	w, err := s.owned(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.favorites.UsersByListing(ctx, "warehouse", id)
+	if err != nil {
+		return nil, err
+	}
+	favs := make([]dto.FavoriteUser, len(rows))
+	for i, r := range rows {
+		favs[i] = dto.FavoriteUser{UserName: r.UserName, CompanyName: r.CompanyName, AddedAt: r.CreatedAt}
+	}
+	return &dto.WarehouseStatsResponse{
+		ViewsCount:          w.ViewsCount,
+		ContactsBoughtCount: w.ContactsBoughtCount,
+		Favorites:           favs,
+	}, nil
+}
+
 func applyWarehouse(req *dto.WarehouseUpsertRequest, w *model.WarehouseListing) {
 	w.WarehouseType = req.WarehouseType
 	w.Name = req.Name
@@ -203,6 +249,9 @@ func applyWarehouse(req *dto.WarehouseUpsertRequest, w *model.WarehouseListing) 
 	w.CustomsLicenseNumber = req.CustomsLicenseNumber
 	w.CustomsLicenseIssued = req.CustomsLicenseIssued
 	w.CustomsLicenseExpires = req.CustomsLicenseExpires
+	if req.CustomsSpecialServices != nil {
+		w.CustomsSpecialServices = pq.StringArray(req.CustomsSpecialServices)
+	}
 	if req.Infrastructure != nil {
 		w.Infrastructure = pq.StringArray(req.Infrastructure)
 	}

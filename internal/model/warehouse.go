@@ -39,19 +39,21 @@ type WarehouseListing struct {
 	TempMax          *float64       `gorm:"type:decimal" json:"temp_max"`
 	ColdChamberTypes pq.StringArray `gorm:"type:text[]" json:"cold_chamber_types"`
 
-	CustomsLicenseNumber  *string    `gorm:"type:varchar(100)" json:"customs_license_number"`
-	CustomsLicenseIssued  *time.Time `json:"customs_license_issued"`
-	CustomsLicenseExpires *time.Time `json:"customs_license_expires"`
+	CustomsLicenseNumber   *string        `gorm:"type:varchar(100)" json:"customs_license_number"`
+	CustomsLicenseIssued   *time.Time     `json:"customs_license_issued"`
+	CustomsLicenseExpires  *time.Time     `json:"customs_license_expires"`
+	CustomsSpecialServices pq.StringArray `gorm:"type:text[]" json:"customs_special_services"`
 
 	Infrastructure pq.StringArray `gorm:"type:text[]" json:"infrastructure"`
 	Services       pq.StringArray `gorm:"type:text[]" json:"services"`
 	WorkingHours   datatypes.JSON `gorm:"type:jsonb" json:"working_hours,omitempty"`
 
-	IsBoosted      bool       `gorm:"not null;default:false" json:"is_boosted"`
-	BoostExpiresAt *time.Time `json:"boost_expires_at"`
-	IsPaid         bool       `gorm:"not null;default:false" json:"is_paid"`
-	Status         string     `gorm:"type:warehouse_status_enum;not null;default:'active';index" json:"status"`
-	ViewsCount     int        `gorm:"not null;default:0" json:"views_count"`
+	IsBoosted           bool       `gorm:"not null;default:false" json:"is_boosted"`
+	BoostExpiresAt      *time.Time `json:"boost_expires_at"`
+	IsPaid              bool       `gorm:"not null;default:false" json:"is_paid"`
+	Status              string     `gorm:"type:warehouse_status_enum;not null;default:'active';index" json:"status"`
+	ViewsCount          int        `gorm:"not null;default:0" json:"views_count"`
+	ContactsBoughtCount int        `gorm:"not null;default:0" json:"contacts_bought_count"`
 	CreatedAt      time.Time  `json:"created_at"`
 
 	Media []ListingMedia `gorm:"-" json:"media,omitempty"` // фото/видео (entity=warehouse)

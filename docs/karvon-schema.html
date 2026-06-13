@@ -1,0 +1,940 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARVON — Архитектура системы</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:#f0f4f8;color:#0f172a;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+  /* ── Header ── */
+  header{
+    background:#fff;
+    border-bottom:1px solid #e8ecf3;
+    padding:0 28px;
+    position:sticky;top:0;z-index:100;
+    display:flex;align-items:center;gap:20px;height:54px;
+    box-shadow:0 1px 6px rgba(15,23,42,.06)
+  }
+  .logo{font-size:17px;font-weight:800;color:#1d4ed8;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .logo-badge{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.04em}
+  nav{display:flex;gap:3px;overflow-x:auto;padding:4px 0}
+  .tab{
+    padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;
+    cursor:pointer;border:none;background:transparent;color:#64748b;
+    white-space:nowrap;transition:all .15s;
+    display:flex;align-items:center;gap:7px;line-height:1
+  }
+  .tab:hover{background:#f1f5f9;color:#334155}
+  .tab.active{background:#eff6ff;color:#2563eb;font-weight:600}
+  .tab svg{flex-shrink:0;opacity:.8}
+  .tab.active svg{opacity:1}
+
+  /* ── Layout ── */
+  main{padding:28px 28px 48px;max-width:1400px;margin:0 auto}
+  .section{display:none}
+  .section.active{display:block}
+  .section-title{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:4px;letter-spacing:-.3px}
+  .section-sub{font-size:13.5px;color:#64748b;margin-bottom:24px;line-height:1.5}
+
+  /* ── Cards ── */
+  .card{
+    background:#fff;
+    border:1px solid #e4e9f0;
+    border-radius:16px;
+    padding:28px 28px 32px;
+    margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04)
+  }
+  .card-title{
+    font-size:11px;font-weight:700;color:#94a3b8;
+    text-transform:uppercase;letter-spacing:.1em;
+    margin-bottom:20px;display:flex;align-items:center;gap:8px
+  }
+  .card-title::before{content:'';width:3px;height:14px;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:2px;flex-shrink:0}
+
+  /* ── Mermaid diagrams ── */
+  .mermaid{
+    text-align:center;
+    padding:8px 0 24px;
+    overflow-x:auto;
+    overflow-y:visible
+  }
+  .mermaid svg{max-width:100%;height:auto}
+
+  /* ── Roles ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .role-card{border-radius:12px;padding:18px;border:1px solid}
+  .role-guest{background:#f8fafc;border-color:#e2e8f0}
+  .role-user{background:#f0fdf4;border-color:#bbf7d0}
+  .role-company{background:#eff6ff;border-color:#bfdbfe}
+  .role-mod{background:#fff7ed;border-color:#fed7aa}
+  .role-admin{background:#fdf4ff;border-color:#e9d5ff}
+  .role-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .role-item{font-size:12.5px;color:#475569;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05);display:flex;align-items:center;gap:6px}
+  .role-item:last-child{border-bottom:none}
+  .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+  /* ── API list ── */
+  .ep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .ep-block{background:#f8fafc;border:1px solid #e4e9f0;border-radius:12px;overflow:hidden}
+  .ep-header{padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fff}
+  .ep-item{padding:7px 16px;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace}
+  .ep-item:last-child{border-bottom:none}
+  .method{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;width:46px;text-align:center;font-family:monospace}
+  .GET{background:#dcfce7;color:#166534}
+  .POST{background:#dbeafe;color:#1e40af}
+  .PUT{background:#fef3c7;color:#92400e}
+  .PATCH{background:#e0e7ff;color:#3730a3}
+  .DELETE{background:#fee2e2;color:#991b1b}
+  .auth-badge{font-size:10px;padding:1px 6px;border-radius:4px;background:#f1f5f9;color:#64748b;margin-left:auto;flex-shrink:0;font-weight:600}
+  .auth-badge.req{background:#eff6ff;color:#2563eb}
+  .auth-badge.admin{background:#fdf4ff;color:#7c3aed}
+  .auth-badge.mod{background:#fff7ed;color:#c2410c}
+
+  /* ── Autonumber circles ── */
+  .mermaid circle.labelBox{fill:#1e293b !important;stroke:#0f172a !important}
+  .mermaid text.sequenceNumber{fill:#000000 !important;font-weight:1200 !important;font-size:11px !important}
+  /* fallback via attribute selector */
+  .mermaid [class*="labelBox"]{fill:#1e293b !important;stroke:#0f172a !important}
+  .mermaid [class*="sequenceNumber"]{fill:#fff !important;font-weight:800 !important}
+
+  /* ── Misc ── */
+  pre.mermaid-code{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:11.5px;overflow:auto;margin-top:14px;display:none;line-height:1.6}
+  .toggle-code{margin-top:12px;padding:5px 12px;background:#f8fafc;border:1px solid #e4e9f0;border-radius:6px;font-size:11px;color:#64748b;cursor:pointer;font-weight:500}
+  .toggle-code:hover{background:#eff6ff;color:#2563eb;border-color:#bfdbfe}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
+  .badge-blue{background:#eff6ff;color:#2563eb}
+  .badge-green{background:#f0fdf4;color:#16a34a}
+  .badge-amber{background:#fffbeb;color:#d97706}
+  .badge-red{background:#fef2f2;color:#dc2626}
+  @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-badge">KARVON</span> Schema</div>
+  <nav>
+    <button class="tab active" onclick="showTab('roles',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Роли
+    </button>
+    <button class="tab" onclick="showTab('api',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      API
+    </button>
+    <button class="tab" onclick="showTab('flows',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Потоки
+    </button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ РОЛИ -->
+<div id="tab-roles" class="section active">
+  <div class="section-title">Роли и разрешения</div>
+  <div class="section-sub">Что может делать каждая роль в системе</div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">Матрица доступа</div>
+    <div class="mermaid">
+sequenceDiagram
+    participant G as Гость
+    participant U as Польз-ль
+    participant C as Компания
+    participant M as Модератор
+    participant A as Админ
+    Note over G: грузы, склады, поиск
+    G->>U: /auth/verify-otp
+    Note over U: профиль, токены, подписка
+    U->>C: POST /companies
+    Note over C: грузы, склады, boost
+    A->>M: POST /admin/moderators
+    Note over M: очередь верификации
+    Note over A: платежи, тарифы, модераторы
+    </div>
+    <button class="toggle-code" onclick="toggleCode(this)">Показать Mermaid-код</button>
+    <pre class="mermaid-code">graph TB
+    GUEST["Гость"]
+    USER["Пользователь"]
+    COMP["Компания верифицирована"]
+    MOD["Модератор"]
+    ADMIN["Супер Админ"]
+
+    GUEST -->|"регистрация"| USER
+    USER -->|"верификация"| COMP
+    ADMIN -->|"назначает"| MOD
+
+    GUEST --- G1["Просмотр грузов/складов/поиск"]
+    USER --- U1["Профиль, компании, токены, подписка, контакты, избранное"]
+    COMP --- C1["Создавать грузы и склады, boost, шаблоны, статистика"]
+    MOD --- M1["Очередь верификации: одобрить/отклонить/запросить доки"]
+    ADMIN --- A1["Всё: пользователи, платежи, тарифы, модераторы, блокировки"]</pre>
+  </div>
+
+  <div class="grid3">
+    <div class="role-card role-guest">
+      <div class="role-title">🚶 Гость</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /listings/cargo</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /warehouses</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /search</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /geo/cities</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /config</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>POST /auth/send-otp</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>POST /auth/verify-otp</div>
+      <div class="role-item"><span class="dot" style="background:#94a3b8"></span>GET /payments/packages</div>
+    </div>
+
+    <div class="role-card role-user">
+      <div class="role-title">👤 Пользователь</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>Всё что Гость</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>GET/PUT /users/me</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>POST /companies</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>POST /contacts/view</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>POST /payments/create</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>GET /subscriptions/active</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>POST/DELETE /favorites</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>GET /notifications</div>
+      <div class="role-item"><span class="dot" style="background:#16a34a"></span>POST /routes</div>
+    </div>
+
+    <div class="role-card role-company">
+      <div class="role-title">🏢 Верифицированная компания</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>Всё что Пользователь</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>POST /listings/cargo</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>POST /warehouses</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>POST /listings/cargo/:id/duplicate</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>POST /listings/cargo/:id/template</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>POST /listings/:type/:id/boost</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>GET /listings/cargo/:id/stats</div>
+      <div class="role-item"><span class="dot" style="background:#2563eb"></span>GET /warehouses/:id/stats</div>
+      <div style="font-size:11px;color:#1e40af;margin-top:8px;padding-top:8px;border-top:1px solid #bfdbfe">
+        ⚠️ 1 бесплатное активное объявление на аккаунт (груз + склад). Второе — archived до оплаты.
+      </div>
+    </div>
+
+    <div class="role-card role-mod">
+      <div class="role-title">🔎 Модератор</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>POST /admin/login</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>GET /moderator/queue</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>POST /moderator/queue/:id/approve</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>POST /moderator/queue/:id/reject</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>POST /moderator/queue/:id/request-docs</div>
+      <div class="role-item"><span class="dot" style="background:#d97706"></span>GET /moderator/history</div>
+      <div style="font-size:11px;color:#92400e;margin-top:8px;padding-top:8px;border-top:1px solid #fed7aa">
+        ⚠️ Нет доступа к финансам и статистике платформы
+      </div>
+    </div>
+
+    <div class="role-card role-admin" style="grid-column:span 2">
+      <div class="role-title">⚙️ Супер Админ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET /admin/dashboard</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET /admin/users</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>PATCH /admin/users/:id/block</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>POST /admin/users/:id/topup</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET /admin/companies</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET /admin/payments</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET/POST/PUT/DELETE /admin/pricing</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET/POST/PUT/DELETE /admin/categories</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>POST /admin/moderators</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>DELETE /admin/moderators/:id</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>GET /admin/listings</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>PATCH /admin/listings/:type/:id/block</div>
+        <div class="role-item"><span class="dot" style="background:#7c3aed"></span>DELETE /admin/listings/:type/:id</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ API -->
+<div id="tab-api" class="section">
+  <div class="section-title">Карта API эндпоинтов</div>
+  <div class="section-sub">Все эндпоинты по модулям. Базовый путь: <code>/api/v1</code></div>
+
+  <div class="ep-grid">
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#2563eb">🔐 Аутентификация</div>
+      <div class="ep-item"><span class="method POST">POST</span>/auth/send-otp<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/auth/verify-otp<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/auth/complete-registration<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/auth/refresh<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/auth/logout<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#0891b2">👤 Пользователи</div>
+      <div class="ep-item"><span class="method GET">GET</span>/users/me<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PUT">PUT</span>/users/me<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/users/me/stats<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/users/me/events<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/users/me/tokens<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#0369a1">🏢 Компании</div>
+      <div class="ep-item"><span class="method POST">POST</span>/companies<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/companies<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/companies/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PUT">PUT</span>/companies/:id<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#16a34a">📦 Грузы</div>
+      <div class="ep-item"><span class="method GET">GET</span>/listings/cargo<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/listings/cargo/:id<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/listings/cargo<span class="auth-badge req">+Verified</span></div>
+      <div class="ep-item"><span class="method PUT">PUT</span>/listings/cargo/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PATCH">PATCH</span>/listings/cargo/:id/status<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method DELETE">DELETE</span>/listings/cargo/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/listings/cargo/:id/duplicate<span class="auth-badge req">+Verified</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/listings/cargo/:id/template<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/listings/cargo/templates<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/listings/cargo/from-template/:id<span class="auth-badge req">+Verified</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/listings/cargo/:id/stats<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#0d9488">🏭 Склады</div>
+      <div class="ep-item"><span class="method GET">GET</span>/warehouses<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/warehouses/:id<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/warehouses<span class="auth-badge req">+Verified</span></div>
+      <div class="ep-item"><span class="method PUT">PUT</span>/warehouses/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PATCH">PATCH</span>/warehouses/:id/status<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method DELETE">DELETE</span>/warehouses/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/warehouses/:id/stats<span class="auth-badge req">JWT (owner)</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#7c3aed">🪙 Контакты и Токены</div>
+      <div class="ep-item"><span class="method POST">POST</span>/contacts/view<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/contacts/history<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/users/me/tokens<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#be185d">💳 Платежи</div>
+      <div class="ep-item"><span class="method GET">GET</span>/payments/packages<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/payments/create<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/payments/webhook<span class="auth-badge">webhook</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/payments/history<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/payments/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/subscriptions/active<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/listings/:type/:id/boost<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#d97706">❤️ Избранное</div>
+      <div class="ep-item"><span class="method POST">POST</span>/favorites<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method DELETE">DELETE</span>/favorites<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/favorites<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#0891b2">🗺 Маршруты</div>
+      <div class="ep-item"><span class="method POST">POST</span>/routes<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/routes<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method DELETE">DELETE</span>/routes/:id<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PATCH">PATCH</span>/routes/:id/notifications<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#475569">🔔 Уведомления</div>
+      <div class="ep-item"><span class="method GET">GET</span>/notifications<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/notifications/unread-count<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PATCH">PATCH</span>/notifications/:id/read<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method PATCH">PATCH</span>/notifications/read-all<span class="auth-badge req">JWT</span></div>
+    </div>
+
+    <div class="ep-block">
+      <div class="ep-header" style="background:#334155">🔍 Поиск и Гео</div>
+      <div class="ep-item"><span class="method GET">GET</span>/search?type=cargo<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/search?type=warehouse<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/search/cities<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/geo/countries<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/geo/cities<span class="auth-badge">публичный</span></div>
+      <div class="ep-item"><span class="method POST">POST</span>/upload<span class="auth-badge req">JWT</span></div>
+      <div class="ep-item"><span class="method GET">GET</span>/config<span class="auth-badge">публичный</span></div>
+    </div>
+
+    <div class="ep-block" style="grid-column:span 2">
+      <div class="ep-header" style="background:#1e1b4b">🔎 Модерация</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div class="ep-item"><span class="method GET">GET</span>/moderator/queue<span class="auth-badge mod">moderator+</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/moderator/queue/:id<span class="auth-badge mod">moderator+</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/moderator/queue/:id/approve<span class="auth-badge mod">moderator+</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/moderator/queue/:id/reject<span class="auth-badge mod">moderator+</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/moderator/queue/:id/request-docs<span class="auth-badge mod">moderator+</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/moderator/history<span class="auth-badge mod">moderator+</span></div>
+      </div>
+    </div>
+
+    <div class="ep-block" style="grid-column:span 2">
+      <div class="ep-header" style="background:#581c87">⚙️ Администрирование (super_admin)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div class="ep-item"><span class="method POST">POST</span>/admin/login<span class="auth-badge">публичный</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/dashboard?period=7d|30d<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/users<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/users/:id<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method PATCH">PATCH</span>/admin/users/:id/block<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/admin/users/:id/topup<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/companies<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/payments<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/pricing<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/admin/pricing<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method PUT">PUT</span>/admin/pricing/:key<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method DELETE">DELETE</span>/admin/pricing/:key<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/admin/moderators<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method DELETE">DELETE</span>/admin/moderators/:id<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/listings?type=cargo|warehouse<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method PATCH">PATCH</span>/admin/listings/:type/:id/block<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method DELETE">DELETE</span>/admin/listings/:type/:id<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method GET">GET</span>/admin/categories<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method POST">POST</span>/admin/categories<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method PUT">PUT</span>/admin/categories/:id<span class="auth-badge admin">super_admin</span></div>
+        <div class="ep-item"><span class="method DELETE">DELETE</span>/admin/categories/:id<span class="auth-badge admin">super_admin</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ ПОТОКИ -->
+<div id="tab-flows" class="section">
+  <div class="section-title">Бизнес-потоки</div>
+  <div class="section-sub">12 ключевых сценариев платформы KARVON по актуальному ТЗ v3.2</div>
+
+  <!-- FLOW 1 - sequenceDiagram (works fine) -->
+  <div class="card">
+    <div class="card-title">1. Регистрация и вход (OTP)</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant GW as GW
+    participant DB as DB
+    U->>API: POST /auth/send-otp
+    API->>DB: OTP (TTL 5м)
+    API->>GW: отправить код
+    GW-->>U: код
+    U->>API: POST /auth/verify-otp
+    API->>DB: проверить OTP
+    alt новый
+        API->>DB: User (tokens=5)
+        API-->>U: 201 is_new=true
+        U->>API: POST /auth/complete-reg
+        API-->>U: 200 OK
+    else известный
+        API-->>U: 200 is_new=false
+    end
+    API-->>U: access+refresh
+    </div>
+  </div>
+
+  <!-- FLOW 2 -->
+  <div class="card">
+    <div class="card-title">2. Верификация компании</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    participant SMTP as SMTP
+    actor M as Модератор
+    U->>API: POST /companies
+    API->>DB: status=pending
+    M->>API: GET /moderator/queue
+    alt approve
+        M->>API: POST /queue/:id/approve
+        API->>DB: status=approved
+        API->>DB: notification: approved
+        API->>SMTP: Email
+        API-->>U: In-app notif
+    else reject
+        M->>API: POST /queue/:id/reject
+        API->>DB: status=rejected
+        API->>DB: notification: rejected
+        API->>SMTP: Email
+        U->>API: Исправить и подать снова
+    else request-docs
+        M->>API: POST /queue/:id/request-docs
+        API->>DB: status=docs_requested
+        API->>DB: notification: docs
+        API->>SMTP: Email
+        U->>API: Обновить → pending
+        API->>DB: status=pending
+    end
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534">
+        <b>approved</b><br>In-app уведомление<br>Email на company.email<br>1 бесплатное активное объявление на аккаунт
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px;font-size:12px;color:#991b1b">
+        <b>rejected</b><br>rejection_reason в БД<br>In-app + Email уведомление<br>Можно подать снова после исправления
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;font-size:12px;color:#1e40af">
+        <b>docs_requested</b><br>docs_request_note в БД<br>In-app + Email уведомление<br>После обновления → pending
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e">
+      📧 SMTP опционален: если SMTP_HOST не задан в .env — email-отправка отключена (no-op), in-app уведомления работают всегда.
+    </div>
+  </div>
+
+  <!-- FLOW 3 -->
+  <div class="card">
+    <div class="card-title">3. Создание объявления — квота и оплата</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    participant R as Rahmat
+    U->>API: POST /listings/cargo
+    alt не авторизован
+        API-->>U: 401
+    else нет компании
+        API-->>U: 403
+    end
+    API->>DB: COUNT free_active cargo+warehouse
+    alt COUNT = 0
+        API->>DB: status=active, is_paid=false
+        API-->>U: 201 active (бесплатно)
+    else COUNT > 0
+        API->>DB: status=archived, is_paid=false
+        API-->>U: 201 archived (квота занята)
+        Note over U,R: оплата активирует
+        U->>API: POST /payments/create
+        API->>R: create invoice
+        R-->>U: checkout_url
+        U->>R: Оплатить
+        R->>API: webhook success
+        API->>DB: is_paid=true, status=active
+        API-->>U: объявление активно
+    end
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534">
+        <b>Первое объявление (бесплатно)</b><br>1 объявление на аккаунт — бесплатно.<br>Считаются оба типа: cargo + warehouse вместе.<br>status=active сразу.
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#92400e">
+        <b>Второе и последующие</b><br>Создаются с status=archived (скрыто).<br>Оплата через /payments/create (type=listing)<br>→ is_paid=true, status=active.
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW 4 -->
+  <div class="card">
+    <div class="card-title">4. Просмотр контакта — токены и подписка</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    actor O as Владелец
+    U->>API: POST /contacts/view/:id
+    alt не авторизован
+        API-->>U: 401
+    else своё объявление
+        API-->>U: 200 free
+    else повтор 30д
+        API-->>U: 200 free
+    else активная подписка
+        API->>DB: ContactView
+        API-->>U: 200 sub
+    else нет токенов
+        API-->>U: 402
+    else есть токены
+        API->>DB: token_balance - 1
+        API->>DB: ContactView + TokenTx
+        API-->>U: 200 контакт
+        API-->>O: notif
+    end
+    </div>
+  </div>
+
+  <!-- FLOW 5 -->
+  <div class="card">
+    <div class="card-title">5. Платёжный поток (Rahmat/Multicard)</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    participant R as Rahmat
+    U->>API: POST /payments/create
+    API->>DB: PricingConfig
+    API->>DB: PaymentOrder (pending)
+    API->>R: POST /payment/invoice
+    R-->>API: invoice_uuid + url
+    API-->>U: 200 checkout_url
+    U->>R: оплатить
+    R-->>API: webhook (PaymentModel)
+    API->>DB: найти по store_invoice_id
+    alt success
+        API->>DB: status=paid
+        alt tokens
+            API->>DB: balance += N
+        else subscription
+            API->>DB: is_active=true
+        else boost
+            API->>DB: is_boosted=true
+        else listing
+            API->>DB: is_paid=true
+        end
+    else revert
+        API->>DB: status=reverted
+        alt tokens
+            API->>DB: balance -= N
+        else subscription
+            API->>DB: is_active=false
+        else boost
+            API->>DB: is_boosted=false
+        else listing
+            API->>DB: is_paid=false
+        end
+    end
+    U->>API: GET /payments/:id
+    API-->>U: status, receipt_url
+    </div>
+  </div>
+
+  <!-- FLOW 6 -->
+  <div class="card">
+    <div class="card-title">6. Boost объявления</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    participant R as Rahmat
+    participant JOB as JOB
+    U->>API: POST /payments/create (boost)
+    API->>DB: PaymentOrder (pending)
+    API->>R: создать инвойс
+    R-->>U: checkout_url
+    U->>R: оплатить
+    R->>API: webhook success
+    API->>DB: is_boosted=true, expires_at
+    API-->>U: 200 в топе
+    loop каждый час
+        JOB->>DB: boost_expires_at < now()
+        DB-->>JOB: истёкшие
+        JOB->>DB: is_boosted=false
+    end
+    </div>
+  </div>
+
+  <!-- FLOW 7 -->
+  <div class="card">
+    <div class="card-title">7. Статусы объявления — груз и склад</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    alt первое (квота свободна)
+        U->>API: POST /listings/cargo
+        API->>DB: status=active, is_paid=false
+    else квота занята
+        U->>API: POST /listings/cargo
+        API->>DB: status=archived, is_paid=false
+        Note over U,DB: оплата → active
+        API->>DB: is_paid=true, status=active
+    end
+    U->>API: PATCH /:id/status
+    API->>DB: in_stock=false
+    U->>API: PATCH /:id/status archived
+    API->>DB: status=archived
+    U->>API: PATCH /:id/status active
+    API->>DB: status=active
+    U->>API: DELETE /:id
+    API->>DB: delete
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534">
+        <b>active</b><br>Видно в поиске<br>is_boosted=true → вверху листинга
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#92400e">
+        <b>in_stock=false</b><br>Видно в поиске<br>Помечено как недоступное
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:12px;color:#64748b">
+        <b>archived</b><br>Скрыто из поиска<br>Хранится в истории владельца
+      </div>
+      <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:12px;color:#6b21a8">
+        <b>archived + is_paid=false</b><br>Создан при занятой квоте<br>После оплаты → active
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW 8 -->
+  <div class="card">
+    <div class="card-title">8. Поиск и фильтрация грузов</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    U->>API: GET /listings/cargo
+    API->>DB: WHERE active + фильтры
+    DB-->>API: ORDER BY boosted
+    API-->>U: 200 items
+    </div>
+  </div>
+
+  <!-- FLOW 9 -->
+  <div class="card">
+    <div class="card-title">9. Уведомления — триггеры и каналы</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant SYS as СИС
+    participant DB as DB
+    participant SMTP as SMTP
+    actor U as Польз-ль
+    participant API as API
+    Note over SYS,SMTP: In-App триггеры
+    SYS->>DB: verification_approved
+    SYS->>SMTP: Email (approved)
+    SYS->>DB: verification_rejected
+    SYS->>SMTP: Email (rejected)
+    SYS->>DB: docs_requested
+    SYS->>SMTP: Email (docs)
+    SYS->>DB: contact_view
+    Note over SYS,DB: Воркер 00:00
+    SYS->>DB: expires_at в окне [+3д,+4д]
+    SYS->>DB: notif: sub_expiring
+    Note over U,API: чтение уведомлений
+    U->>API: GET /notifications
+    API-->>U: список
+    U->>API: GET /notifications/unread-count
+    API-->>U: count
+    U->>API: PATCH /notifications/:id/read
+    API-->>U: is_read=true
+    U->>API: PATCH /notifications/read-all
+    API-->>U: all read
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-size:12px;color:#334155">
+        <b>In-App типы уведомлений</b><br>
+        verification_approved · verification_rejected<br>
+        docs_requested · contact_view<br>
+        subscription_expiring · new_cargo_match
+      </div>
+      <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px;font-size:12px;color:#92400e">
+        <b>Email (SMTP, опционально)</b><br>
+        Компания одобрена / отклонена / нужны доки<br>
+        Отправляется на company.email<br>
+        Если SMTP не настроен — только in-app
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW 10 (moved to 12 slot logically) placeholder stays -->
+  <!-- FLOW 11 NEW — Dynamic Categories -->
+  <div class="card">
+    <div class="card-title">11. Динамические категории грузов</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor A as Админ
+    participant API as API
+    participant DB as DB
+    actor U as Польз-ль
+    Note over A,DB: управление категориями
+    A->>API: POST /admin/categories
+    API->>DB: INSERT cargo_categories
+    API-->>A: 201 CATEGORY_CREATED
+    A->>API: PUT /admin/categories/:id
+    API->>DB: UPDATE cargo_categories
+    Note over U,DB: получение категорий
+    U->>API: GET /config
+    API->>DB: SELECT is_active=true
+    API-->>U: categories[key,label]
+    Note over U,DB: создание объявления
+    U->>API: POST /listings/cargo
+    API->>DB: validate category 1-50
+    API->>DB: INSERT category=varchar(50)
+    API-->>U: 201 Created
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:12px;color:#6b21a8">
+        <b>Таблица cargo_categories</b><br>key (unique) · label_ru · label_uz · label_en · is_active<br><br>
+        Дефолтные ключи: stroymat · food · textile · metal · chemical · wood · electronics · other
+      </div>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;font-size:12px;color:#1e40af">
+        <b>GET /config ответ (мультиязычный)</b><br>
+        languages: [ru, uz, en]<br>
+        categories: [{key, label}] — label на языке Accept-Language / ?lang=<br>
+        map_tiles_url: строка
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOW 12 NEW — Warehouse Stats -->
+  <div class="card">
+    <div class="card-title">12. Статистика склада</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor O as Владелец
+    actor B as Покупатель
+    participant API as API
+    participant DB as DB
+    Note over B,DB: покупка контакта
+    B->>API: POST /contacts/view
+    API->>DB: token_balance - 1
+    API->>DB: INSERT contact_views
+    API->>DB: contacts_bought_count += 1
+    API-->>B: 200 phone/whatsapp/tg
+    Note over O,DB: статистика (owner only)
+    O->>API: GET /warehouses/:id/stats
+    API->>DB: проверить owner
+    API->>DB: SELECT favorites
+    API-->>O: views_count, contacts, favs[]
+    </div>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:12px;color:#166534;margin-top:16px">
+      <b>Ответ GET /warehouses/:id/stats</b><br>
+      views_count — счётчик просмотров карточки<br>
+      contacts_bought_count — сколько раз открыли контакт за токены<br>
+      favorites — [{user_name, company_name, added_at}] — кто добавил в избранное
+    </div>
+  </div>
+
+  <!-- FLOW 10 original — Subscription lifecycle -->
+  <div class="card">
+    <div class="card-title">10. Жизненный цикл подписки</div>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor U as Польз-ль
+    participant API as API
+    participant DB as DB
+    participant R as Rahmat
+    participant JOB as JOB
+    U->>API: POST /payments/create
+    API->>R: создать инвойс
+    R-->>U: checkout_url
+    U->>R: оплатить
+    R->>API: webhook success
+    API->>DB: is_active=true
+    loop 00:00 ежедневно
+        JOB->>DB: expires_at ∈ [+3д,+4д]
+        JOB->>DB: notif: SUB_EXPIRING
+        JOB->>DB: expires_at < now()
+        JOB->>DB: is_active=false
+        API-->>U: In-app истечение
+        U->>API: купить снова
+    end
+    </div>
+  </div>
+
+</div>
+
+
+
+</main>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#3b82f6',
+      primaryTextColor: '#0f172a',
+      primaryBorderColor: '#93c5fd',
+      lineColor: '#475569',
+      secondaryColor: '#f1f5f9',
+      tertiaryColor: '#f8fafc',
+      background: '#ffffff',
+      nodeBorder: '#cbd5e1',
+      clusterBkg: '#f8fafc',
+      titleColor: '#1e3a5f',
+      edgeLabelBackground: '#ffffff',
+      fontSize: '13px',
+      noteBkgColor: '#fef9c3',
+      noteTextColor: '#713f12',
+      noteBorderColor: '#fde047',
+      activationBorderColor: '#3b82f6',
+      activationBkgColor: '#eff6ff',
+      sequenceNumberColor: '#ffffff',
+      labelBoxBkgColor: '#1e293b',
+      labelBoxBorderColor: '#1e293b',
+    },
+    flowchart: { curve: 'basis', htmlLabels: false },
+    sequence: {
+      actorMargin: 60,
+      messageMargin: 30,
+      boxMargin: 8,
+      mirrorActors: false,
+      wrap: true,
+      width: 140,
+      noteMargin: 10,
+      useMaxWidth: true,
+    },
+  });
+
+  // Force autonumber circle styling after Mermaid renders
+  window.addEventListener('load', function() {
+    function styleNumbers() {
+      document.querySelectorAll('.mermaid circle').forEach(function(el) {
+        if (el.getAttribute('class') && (el.getAttribute('class').includes('label') || el.getAttribute('r') === '13' || parseFloat(el.getAttribute('r')) >= 10)) {
+          el.style.fill = '#1e293b';
+          el.style.stroke = '#0f172a';
+        }
+      });
+      document.querySelectorAll('.mermaid text').forEach(function(el) {
+        if (el.getAttribute('class') && el.getAttribute('class').includes('sequenceNumber')) {
+          el.style.fill = '#ffffff';
+          el.style.fontWeight = '800';
+        }
+      });
+    }
+    setTimeout(styleNumbers, 300);
+    setTimeout(styleNumbers, 800);
+    setTimeout(styleNumbers, 1500);
+  });
+
+  function showTab(name, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.closest('.tab').classList.add('active');
+    // Re-apply number circle styles after tab render
+    setTimeout(function() {
+      document.querySelectorAll('.mermaid circle').forEach(function(c) {
+        if (parseFloat(c.getAttribute('r')) >= 10) { c.style.fill='#1e293b'; c.style.stroke='#0f172a'; }
+      });
+      document.querySelectorAll('.mermaid text').forEach(function(t) {
+        if ((t.getAttribute('class')||'').includes('sequenceNumber')) { t.style.fill='#fff'; t.style.fontWeight='800'; }
+      });
+    }, 100);
+  }
+
+  function toggleCode(btn) {
+    const pre = btn.nextElementSibling;
+    const visible = pre.style.display === 'block';
+    pre.style.display = visible ? 'none' : 'block';
+    btn.textContent = visible ? 'Показать Mermaid-код' : 'Скрыть код';
+  }
+</script>
+</body>
+</html>

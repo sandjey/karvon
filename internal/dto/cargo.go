@@ -20,7 +20,7 @@ type CargoUpsertRequest struct {
 
 	// О товаре
 	CargoName   string  `json:"cargo_name" binding:"required,min=2,max=200"`
-	Category    string  `json:"category" binding:"required,oneof=stroymat food textile metal chemical wood electronics other"`
+	Category    string  `json:"category" binding:"required,min=1,max=50"`
 	Description *string `json:"description"`
 
 	// Объём
@@ -40,7 +40,7 @@ type CargoUpsertRequest struct {
 	// Цена
 	PriceMode     *string  `json:"price_mode" binding:"omitempty,oneof=negotiable fixed announcement"`
 	PricePerUnit  *float64 `json:"price_per_unit"`
-	Currency      *string  `json:"currency" binding:"omitempty,oneof=UZS USD"`
+	Currency      *string  `json:"currency" binding:"omitempty,oneof=UZS USD KZT"`
 	VatMode       *string  `json:"vat_mode" binding:"omitempty,oneof=yes no unspecified"`
 	PaymentTerms  *string  `json:"payment_terms"`
 	PaymentMethod *string  `json:"payment_method"`

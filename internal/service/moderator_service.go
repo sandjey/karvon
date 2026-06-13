@@ -5,19 +5,39 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
 	"karvon/internal/model"
 	"karvon/internal/repository"
+	"karvon/pkg/email"
 )
+
+type EmailSender interface {
+	Send(to, subject, body string) error
+	Enabled() bool
+}
 
 type ModeratorService struct {
 	companyRepo *repository.CompanyRepo
 	notifRepo   *repository.NotificationRepo
+	mailer      EmailSender
 }
 
-func NewModeratorService(companyRepo *repository.CompanyRepo, notifRepo *repository.NotificationRepo) *ModeratorService {
-	return &ModeratorService{companyRepo: companyRepo, notifRepo: notifRepo}
+func NewModeratorService(companyRepo *repository.CompanyRepo, notifRepo *repository.NotificationRepo, mailer EmailSender) *ModeratorService {
+	return &ModeratorService{companyRepo: companyRepo, notifRepo: notifRepo, mailer: mailer}
 }
+
+func (s *ModeratorService) sendEmail(to, subject, body string) {
+	if s.mailer == nil || !s.mailer.Enabled() || to == "" {
+		return
+	}
+	if err := s.mailer.Send(to, subject, body); err != nil {
+		log.Warn().Err(err).Str("to", to).Msg("failed to send email")
+	}
+}
+
+// ensure *email.Sender satisfies EmailSender
+var _ EmailSender = (*email.Sender)(nil)
 
 func (s *ModeratorService) GetQueue(ctx context.Context, status string, page, perPage int) ([]model.Company, int64, error) {
 	if status == "" {
@@ -39,7 +59,7 @@ func (s *ModeratorService) GetQueueItem(ctx context.Context, id uuid.UUID) (*mod
 }
 
 func (s *ModeratorService) Approve(ctx context.Context, moderatorID, companyID uuid.UUID) error {
-	c, err := s.companyRepo.FindByID(ctx, companyID)
+	c, err := s.companyRepo.FindByIDWithUser(ctx, companyID)
 	if err != nil {
 		return err
 	}
@@ -61,11 +81,15 @@ func (s *ModeratorService) Approve(ctx context.Context, moderatorID, companyID u
 		Title:  "Компания одобрена",
 		Body:   &body,
 	})
+	s.sendEmail(c.Email,
+		"Компания одобрена — KARVON",
+		"Ваша компания «"+c.Name+"» прошла проверку и одобрена. Теперь вы можете публиковать объявления.",
+	)
 	return nil
 }
 
 func (s *ModeratorService) Reject(ctx context.Context, moderatorID, companyID uuid.UUID, reason string) error {
-	c, err := s.companyRepo.FindByID(ctx, companyID)
+	c, err := s.companyRepo.FindByIDWithUser(ctx, companyID)
 	if err != nil {
 		return err
 	}
@@ -86,11 +110,15 @@ func (s *ModeratorService) Reject(ctx context.Context, moderatorID, companyID uu
 		Title:  "Компания отклонена",
 		Body:   &body,
 	})
+	s.sendEmail(c.Email,
+		"Компания отклонена — KARVON",
+		"Ваша компания «"+c.Name+"» отклонена.\nПричина: "+reason+"\n\nПодайте заявку повторно с исправленными данными.",
+	)
 	return nil
 }
 
 func (s *ModeratorService) RequestDocs(ctx context.Context, moderatorID, companyID uuid.UUID, message string) error {
-	c, err := s.companyRepo.FindByID(ctx, companyID)
+	c, err := s.companyRepo.FindByIDWithUser(ctx, companyID)
 	if err != nil {
 		return err
 	}
@@ -110,6 +138,11 @@ func (s *ModeratorService) RequestDocs(ctx context.Context, moderatorID, company
 		Title:  "Требуются документы",
 		Body:   &message,
 	})
+	s.sendEmail(c.Email,
+		"Требуются дополнительные документы — KARVON",
+		"По компании «"+c.Name+"» запрошены дополнительные документы.\n\n"+message+
+			"\n\nОтправьте документы через Telegram на аккаунт поддержки.",
+	)
 	return nil
 }
 

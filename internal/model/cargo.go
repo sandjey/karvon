@@ -19,7 +19,7 @@ type CargoListing struct {
 
 	// ── О товаре ──────────────────────────────────────────────
 	CargoName   string  `gorm:"type:varchar(200);not null" json:"cargo_name"`             // Наименование товара
-	Category    string  `gorm:"type:cargo_category_enum;not null;index" json:"category"` // Категория товара
+	Category    string  `gorm:"type:varchar(50);not null;index" json:"category"` // Категория из таблицы cargo_categories
 	Description *string `gorm:"type:text" json:"description"`                            // Описание/состав/характеристики
 
 	// ── Объём ─────────────────────────────────────────────────

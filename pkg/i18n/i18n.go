@@ -70,7 +70,14 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Тариф обновлён",
 		"LISTING_DELETED":       "Объявление удалено",
 		"LISTING_BLOCK_UPDATED": "Статус объявления обновлён",
-		"PAYMENT_CREATED":       "Платёж создан",
+		"PAYMENT_CREATED":          "Платёж создан",
+		"PAYMENT_REVERTED":         "Платёж возвращён",
+		"CATEGORY_CREATED":         "Категория создана",
+		"CATEGORY_UPDATED":         "Категория обновлена",
+		"CATEGORY_DELETED":         "Категория удалена",
+		"WAREHOUSE_STATUS_UPDATED": "Статус склада обновлён",
+		"SUBSCRIPTION_EXPIRING":    "Ваша подписка истекает через 3 дня",
+		"EMAIL_VERIFICATION_SENT":  "Уведомление отправлено на email",
 	},
 	"uz": {
 		// errors
@@ -136,7 +143,14 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Tarif yangilandi",
 		"LISTING_DELETED":       "E'lon o'chirildi",
 		"LISTING_BLOCK_UPDATED": "E'lon holati yangilandi",
-		"PAYMENT_CREATED":       "To'lov yaratildi",
+		"PAYMENT_CREATED":          "To'lov yaratildi",
+		"PAYMENT_REVERTED":         "To'lov qaytarildi",
+		"CATEGORY_CREATED":         "Kategoriya yaratildi",
+		"CATEGORY_UPDATED":         "Kategoriya yangilandi",
+		"CATEGORY_DELETED":         "Kategoriya o'chirildi",
+		"WAREHOUSE_STATUS_UPDATED": "Ombor holati yangilandi",
+		"SUBSCRIPTION_EXPIRING":    "Obunangiz 3 kundan keyin tugaydi",
+		"EMAIL_VERIFICATION_SENT":  "Email ga xabar yuborildi",
 	},
 	"en": {
 		// errors
@@ -202,7 +216,14 @@ var messages = map[string]map[string]string{
 		"PRICING_UPDATED":       "Pricing updated",
 		"LISTING_DELETED":       "Listing deleted",
 		"LISTING_BLOCK_UPDATED": "Listing block status updated",
-		"PAYMENT_CREATED":       "Payment created",
+		"PAYMENT_CREATED":          "Payment created",
+		"PAYMENT_REVERTED":         "Payment reverted",
+		"CATEGORY_CREATED":         "Category created",
+		"CATEGORY_UPDATED":         "Category updated",
+		"CATEGORY_DELETED":         "Category deleted",
+		"WAREHOUSE_STATUS_UPDATED": "Warehouse status updated",
+		"SUBSCRIPTION_EXPIRING":    "Your subscription expires in 3 days",
+		"EMAIL_VERIFICATION_SENT":  "Notification sent to email",
 	},
 }
 

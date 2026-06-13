@@ -41,6 +41,10 @@ func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.
 	g.DELETE("/pricing/:key", h.DeletePricing)
 	g.POST("/moderators", h.CreateModerator)
 	g.DELETE("/moderators/:id", h.DeleteModerator)
+	g.GET("/categories", h.ListCategories)
+	g.POST("/categories", h.CreateCategory)
+	g.PUT("/categories/:id", h.UpdateCategory)
+	g.DELETE("/categories/:id", h.DeleteCategory)
 }
 
 func (h *AdminHandler) Login(c *gin.Context) {
@@ -297,4 +301,62 @@ func (h *AdminHandler) DeleteModerator(c *gin.Context) {
 		return
 	}
 	OKMsg(c, nil, "MODERATOR_DELETED")
+}
+
+func (h *AdminHandler) ListCategories(c *gin.Context) {
+	list, err := h.svc.ListCategories(c.Request.Context())
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	OK(c, list)
+}
+
+func (h *AdminHandler) CreateCategory(c *gin.Context) {
+	var req dto.CreateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
+		return
+	}
+	cat, err := h.svc.CreateCategory(c.Request.Context(), req)
+	if err != nil {
+		if isErr(err, service.ErrAlreadyExists) {
+			FailCode(c, http.StatusConflict, "ALREADY_EXISTS")
+			return
+		}
+		InternalError(c)
+		return
+	}
+	CreatedMsg(c, cat, "CATEGORY_CREATED")
+}
+
+func (h *AdminHandler) UpdateCategory(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	var req dto.UpdateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
+		return
+	}
+	if err := h.svc.UpdateCategory(c.Request.Context(), id, req); err != nil {
+		InternalError(c)
+		return
+	}
+	OKMsg(c, nil, "CATEGORY_UPDATED")
+}
+
+func (h *AdminHandler) DeleteCategory(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	if err := h.svc.DeleteCategory(c.Request.Context(), id); err != nil {
+		InternalError(c)
+		return
+	}
+	OKMsg(c, nil, "CATEGORY_DELETED")
 }

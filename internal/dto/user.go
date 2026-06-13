@@ -7,12 +7,13 @@ import (
 )
 
 type UpdateProfileRequest struct {
-	Name     *string `json:"name"     binding:"omitempty,min=2,max=100"`
-	Email    *string `json:"email"    binding:"omitempty,email"`
-	WhatsApp *string `json:"whatsapp" binding:"omitempty,max=20"`
-	Telegram *string `json:"telegram" binding:"omitempty,max=50"`
-	City     *string `json:"city"     binding:"omitempty,max=100"`
-	Country  *string `json:"country"  binding:"omitempty,max=100"`
+	Name       *string `json:"name"        binding:"omitempty,min=2,max=100"`
+	Email      *string `json:"email"       binding:"omitempty,email"`
+	ExtraPhone *string `json:"extra_phone" binding:"omitempty,max=30"`
+	WhatsApp   *string `json:"whatsapp"    binding:"omitempty,max=20"`
+	Telegram   *string `json:"telegram"    binding:"omitempty,max=50"`
+	City       *string `json:"city"        binding:"omitempty,max=100"`
+	Country    *string `json:"country"     binding:"omitempty,max=100"`
 }
 
 type ProfileResponse struct {
@@ -20,6 +21,7 @@ type ProfileResponse struct {
 	Phone        string    `json:"phone"`
 	Name         *string   `json:"name"`
 	Email        *string   `json:"email"`
+	ExtraPhone   *string   `json:"extra_phone"`
 	WhatsApp     *string   `json:"whatsapp"`
 	Telegram     *string   `json:"telegram"`
 	City         *string   `json:"city"`

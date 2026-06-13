@@ -126,3 +126,27 @@ func (r *UserRepo) CreditTokens(ctx context.Context, userID uuid.UUID, amount in
 		}).Error
 	})
 }
+
+// DebitTokens списывает токены у пользователя (используется при revert-платеже).
+// Баланс может стать отрицательным — намеренно, чтобы учитывать долг.
+func (r *UserRepo) DebitTokens(ctx context.Context, userID uuid.UUID, amount int, reason string) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var user model.User
+		if err := tx.Clauses().Where("id = ?", userID).First(&user).Error; err != nil {
+			return err
+		}
+
+		newBalance := user.TokenBalance - amount
+		if err := tx.Model(&user).Update("token_balance", newBalance).Error; err != nil {
+			return err
+		}
+
+		return tx.Create(&model.TokenTransaction{
+			UserID:       userID,
+			Type:         "debit",
+			Amount:       amount,
+			Reason:       reason,
+			BalanceAfter: newBalance,
+		}).Error
+	})
+}

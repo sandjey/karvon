@@ -11,6 +11,7 @@ type User struct {
 	Phone        string    `gorm:"type:varchar(30);uniqueIndex;not null"`
 	Name         *string   `gorm:"type:varchar(100)"`
 	Email        *string   `gorm:"type:varchar(100)"`
+	ExtraPhone   *string   `gorm:"type:varchar(30);column:extra_phone"`
 	WhatsApp     *string   `gorm:"type:varchar(20);column:whatsapp"`
 	Telegram     *string   `gorm:"type:varchar(50)"`
 	City         *string   `gorm:"type:varchar(100)"`

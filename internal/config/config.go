@@ -48,6 +48,13 @@ type Config struct {
 	// Скрытый статик-админ для входа в админку
 	AdminLogin    string
 	AdminPassword string
+
+	// SMTP для email-уведомлений (опционально)
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUser     string
+	SMTPPassword string
+	SMTPFrom     string
 }
 
 func Load() (*Config, error) {
@@ -83,6 +90,12 @@ func Load() (*Config, error) {
 
 		AdminLogin:    getEnv("ADMIN_LOGIN", "superadmin"),
 		AdminPassword: getEnv("ADMIN_PASSWORD", "karvon_admin_2026"),
+
+		SMTPHost:     os.Getenv("SMTP_HOST"),
+		SMTPPort:     getEnv("SMTP_PORT", "587"),
+		SMTPUser:     os.Getenv("SMTP_USER"),
+		SMTPPassword: os.Getenv("SMTP_PASSWORD"),
+		SMTPFrom:     getEnv("SMTP_FROM", os.Getenv("SMTP_USER")),
 	}
 
 	var err error

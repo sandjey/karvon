@@ -38,6 +38,9 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID uuid.UUID, req d
 	if req.Email != nil {
 		fields["email"] = *req.Email
 	}
+	if req.ExtraPhone != nil {
+		fields["extra_phone"] = *req.ExtraPhone
+	}
 	if req.WhatsApp != nil {
 		fields["whatsapp"] = *req.WhatsApp
 	}

@@ -25,6 +25,7 @@ func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gi
 	g := rg.Group("/warehouses")
 	g.GET("", h.List)
 	g.GET("/:id", h.GetOne)
+	g.GET("/:id/stats", auth, h.Stats)
 	g.POST("", auth, verified, h.Create)
 	g.PUT("/:id", auth, h.Update)
 	g.PATCH("/:id/status", auth, h.SetStatus)
@@ -176,6 +177,21 @@ func (h *WarehouseHandler) Delete(c *gin.Context) {
 		return
 	}
 	OKMsg(c, nil, "WAREHOUSE_DELETED")
+}
+
+func (h *WarehouseHandler) Stats(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	userID := c.MustGet("user_id").(uuid.UUID)
+	stats, err := h.svc.Stats(c.Request.Context(), id, userID)
+	if err != nil {
+		handleWarehouseErr(c, err)
+		return
+	}
+	OK(c, stats)
 }
 
 func handleWarehouseErr(c *gin.Context, err error) {

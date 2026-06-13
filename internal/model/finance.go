@@ -18,17 +18,24 @@ type TokenTransaction struct {
 }
 
 type PaymentOrder struct {
-	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	UserID        uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
-	PaymentType   string     `gorm:"type:payment_type_enum;not null" json:"payment_type"`
-	ItemID        *string    `gorm:"type:varchar(100)" json:"item_id"`
-	Amount        float64    `gorm:"type:decimal;not null" json:"amount"`
-	Currency      string     `gorm:"type:payment_currency_enum;not null;default:'UZS'" json:"currency"`
-	Status        string     `gorm:"type:payment_status_enum;not null;default:'pending';index" json:"status"`
-	RahmatOrderID *string    `gorm:"type:varchar(200);index" json:"rahmat_order_id"`
-	PaymentMethod *string    `gorm:"type:varchar(50)" json:"payment_method"`
-	PaidAt        *time.Time `json:"paid_at"`
-	CreatedAt     time.Time  `json:"created_at"`
+	ID               uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID           uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
+	PaymentType      string     `gorm:"type:payment_type_enum;not null" json:"payment_type"`
+	ItemID           *string    `gorm:"type:varchar(100)" json:"item_id"`
+	Amount           float64    `gorm:"type:decimal;not null" json:"amount"`
+	Currency         string     `gorm:"type:payment_currency_enum;not null;default:'UZS'" json:"currency"`
+	Status           string     `gorm:"type:payment_status_enum;not null;default:'pending';index" json:"status"`
+	// RahmatOrderID хранит UUID инвойса Multicard (возвращается при создании инвойса)
+	RahmatOrderID    *string    `gorm:"type:varchar(200);index" json:"rahmat_order_id"`
+	// PaymentUUID хранит UUID транзакции Multicard из webhook-callback
+	PaymentUUID      *string    `gorm:"type:varchar(200)" json:"payment_uuid,omitempty"`
+	PaymentMethod    *string    `gorm:"type:varchar(50)" json:"payment_method"`
+	Phone            *string    `gorm:"type:varchar(30)" json:"phone,omitempty"`
+	ReceiptURL       *string    `gorm:"type:varchar(500)" json:"receipt_url,omitempty"`
+	TotalAmountTiyin *int64     `gorm:"type:bigint" json:"total_amount_tiyin,omitempty"`
+	CommissionTiyin  *int64     `gorm:"type:bigint" json:"commission_tiyin,omitempty"`
+	PaidAt           *time.Time `json:"paid_at"`
+	CreatedAt        time.Time  `json:"created_at"`
 }
 
 type Subscription struct {

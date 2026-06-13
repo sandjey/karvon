@@ -77,6 +77,11 @@ func (s *ContactService) resolveContact(ctx context.Context, listingType string,
 			info.CompanyName = &w.Company.Name
 			info.City = &w.Company.City
 		}
+		// WhatsApp / Telegram берём из профиля владельца склада
+		if owner, err := s.users.FindByID(ctx, w.UserID); err == nil && owner != nil {
+			info.WhatsApp = owner.WhatsApp
+			info.Telegram = owner.Telegram
+		}
 		return w.UserID, info, nil
 	default:
 		return uuid.Nil, nil, ErrListingNotFound
@@ -124,6 +129,14 @@ func (s *ContactService) Open(ctx context.Context, viewerID uuid.UUID, req dto.O
 	}
 	info.TokensSpent = 1
 	info.TokenBalance = newBalance
+
+	// счётчик купленных контактов
+	switch req.ListingType {
+	case "cargo":
+		_ = s.cargo.IncrementContactsBought(ctx, req.ListingID)
+	case "warehouse":
+		_ = s.warehouse.IncrementContactsBought(ctx, req.ListingID)
+	}
 
 	// уведомить автора
 	meta, _ := json.Marshal(map[string]string{

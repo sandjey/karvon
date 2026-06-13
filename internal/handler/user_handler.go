@@ -79,6 +79,7 @@ func toProfileResponse(u *model.User) dto.ProfileResponse {
 		Phone:        u.Phone,
 		Name:         u.Name,
 		Email:        u.Email,
+		ExtraPhone:   u.ExtraPhone,
 		WhatsApp:     u.WhatsApp,
 		Telegram:     u.Telegram,
 		City:         u.City,

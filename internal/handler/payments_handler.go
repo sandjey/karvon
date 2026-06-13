@@ -27,6 +27,7 @@ func (h *PaymentsHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFu
 	g.POST("/create", auth, h.Create)
 	g.POST("/webhook", h.Webhook) // публичный, верификация через store_invoice_id
 	g.GET("/history", auth, h.History)
+	g.GET("/:id", auth, h.GetOrder)
 
 	rg.GET("/subscriptions/active", auth, h.ActiveSubscription)
 	rg.POST("/listings/:type/:id/boost", auth, h.Boost)
@@ -56,6 +57,7 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 		ListingType: req.ListingType,
 		ListingID:   req.ListingID,
 		Lang:        i18n.Lang(c),
+		ReturnURL:   req.ReturnURL,
 	})
 	if err != nil {
 		if isErr(err, service.ErrNotFound) {
@@ -69,39 +71,56 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": checkoutURL, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
 }
 
-// Webhook принимает callback от Multicard при успешной оплате инвойса.
-// Тело запроса — PaymentModel от Multicard; ключевые поля: store_invoice_id, status, ps, uuid.
-// При любом статусе, кроме "success", просто подтверждаем приём (200).
+// Webhook принимает полный PaymentModel callback от Multicard.
+// Обрабатывает статусы "success" (зачислить) и "revert" (откатить).
+// Остальные статусы (draft/progress/billing/error) — квитируем 200 без обработки.
 // При ошибке обработки возвращаем 500 — Multicard повторит запрос.
 func (h *PaymentsHandler) Webhook(c *gin.Context) {
 	var cb dto.MulticardCallback
 	if err := c.ShouldBindJSON(&cb); err != nil {
-		// Неизвестный формат — отвечаем 200, чтобы Multicard не повторял бесконечно
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 		return
 	}
 
-	if cb.Status != "success" {
+	// Обрабатываем только финальные статусы
+	if cb.Status != "success" && cb.Status != "revert" {
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 		return
 	}
 
-	orderID, err := uuid.Parse(cb.StoreInvoiceID)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"ok": true})
-		return
-	}
-
-	if err := h.payments.Webhook(c.Request.Context(), orderID, cb.PS, cb.UUID); err != nil {
+	if err := h.payments.Webhook(c.Request.Context(), cb); err != nil {
 		if isErr(err, service.ErrNotFound) {
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
-		log.Error().Err(err).Str("order_id", cb.StoreInvoiceID).Msg("payment webhook failed")
+		log.Error().Err(err).Str("order_id", cb.StoreInvoiceID).Str("status", cb.Status).Msg("payment webhook failed")
 		InternalError(c)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+// GetOrder возвращает статус платёжного заказа (для клиентского поллинга).
+func (h *PaymentsHandler) GetOrder(c *gin.Context) {
+	orderID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	userID := c.MustGet("user_id").(uuid.UUID)
+	order, err := h.payments.GetByID(c.Request.Context(), orderID, userID)
+	if err != nil {
+		switch {
+		case isErr(err, service.ErrNotFound):
+			FailCode(c, http.StatusNotFound, "NOT_FOUND")
+		case isErr(err, service.ErrNotOwner):
+			Forbidden(c)
+		default:
+			InternalError(c)
+		}
+		return
+	}
+	OK(c, order)
 }
 
 func (h *PaymentsHandler) History(c *gin.Context) {
@@ -140,6 +159,7 @@ func (h *PaymentsHandler) Boost(c *gin.Context) {
 		req.PricingKey,
 		req.Currency,
 		i18n.Lang(c),
+		req.ReturnURL,
 	)
 	if err != nil {
 		switch {

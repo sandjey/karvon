@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -107,13 +108,17 @@ type ofdItem struct {
 	Total       int64  `json:"total"`
 	PackageCode string `json:"package_code"`
 	Name        string `json:"name"`
+	VAT         int    `json:"vat,omitempty"`  // НДС в %
+	TIN         string `json:"tin,omitempty"`  // ИНН продавца
+	Mark        string `json:"mark,omitempty"` // маркировка товара
 }
 
 type invoiceReq struct {
 	StoreID     int       `json:"store_id"`
-	Amount      int64     `json:"amount"`      // в тийинах (1 UZS = 100 тийин)
-	InvoiceID   string    `json:"invoice_id"`  // наш UUID заказа
+	Amount      int64     `json:"amount"`               // в тийинах (1 UZS = 100 тийин)
+	InvoiceID   string    `json:"invoice_id"`           // наш UUID заказа
 	Lang        string    `json:"lang"`
+	TTL         int       `json:"ttl,omitempty"`        // время жизни инвойса в секундах
 	ReturnURL   string    `json:"return_url,omitempty"`
 	CallbackURL string    `json:"callback_url"`
 	OFD         []ofdItem `json:"ofd"`
@@ -133,8 +138,9 @@ type invoiceResp struct {
 
 // CreatePayment создаёт инвойс в Multicard и возвращает (invoiceUUID, checkoutURL).
 // amountUZS — сумма в UZS; itemName — название услуги для ОФД.
+// returnURL переопределяет дефолтный ReturnURL из конфига; передайте "", чтобы использовать конфиг.
 // Если клиент не сконфигурирован — возвращает stub-данные для локального тестирования.
-func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS float64, lang, itemName string) (invoiceUUID, checkoutURL string, err error) {
+func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS float64, lang, itemName, returnURL string) (invoiceUUID, checkoutURL string, err error) {
 	if !c.Configured() {
 		return "stub-" + orderID, "https://pay.karvon.uz/stub/" + orderID, nil
 	}
@@ -150,14 +156,19 @@ func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS fl
 	if itemName == "" {
 		itemName = "Сервис платформы Karvon"
 	}
-	amountTiyin := int64(amountUZS * 100)
+	if returnURL == "" {
+		returnURL = c.cfg.ReturnURL
+	}
+	// Конвертируем UZS → тийины с округлением (исключаем float-артефакты)
+	amountTiyin := int64(math.Round(amountUZS * 100))
 
 	body, _ := json.Marshal(invoiceReq{
 		StoreID:     c.cfg.StoreID,
 		Amount:      amountTiyin,
 		InvoiceID:   orderID,
 		Lang:        lang,
-		ReturnURL:   c.cfg.ReturnURL,
+		TTL:         3600,
+		ReturnURL:   returnURL,
 		CallbackURL: c.cfg.CallbackURL,
 		OFD: []ofdItem{{
 			Qty:         1,
@@ -198,11 +209,19 @@ func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS fl
 
 // ─── Callback ────────────────────────────────────────────────────────────────
 
-// CallbackPayload — тело callback-запроса, который Multicard отправляет нам при оплате инвойса.
-// Ключевые поля: StoreInvoiceID = наш order UUID; Status = "success"|"error"|"revert".
+// CallbackPayload — полное тело callback-запроса (PaymentModel) от Multicard.
+// Статусы: draft | progress | billing | success | error | revert.
 type CallbackPayload struct {
-	StoreInvoiceID string `json:"store_invoice_id"`
-	Status         string `json:"status"`
-	PS             string `json:"ps"`  // uzcard|humo|visa|mastercard|...
-	UUID           string `json:"uuid"` // UUID транзакции в Multicard
+	UUID             string `json:"uuid"`              // UUID транзакции в Multicard
+	StoreInvoiceID   string `json:"store_invoice_id"`  // наш UUID заказа
+	Status           string `json:"status"`            // draft|progress|billing|success|error|revert
+	PS               string `json:"ps"`                // uzcard|humo|visa|mastercard|...
+	PaymentAmount    int64  `json:"payment_amount"`    // сумма оплаты в тийинах
+	TotalAmount      int64  `json:"total_amount"`      // итого с комиссией в тийинах
+	CommissionAmount int64  `json:"commission_amount"` // комиссия в тийинах
+	CardPan          string `json:"card_pan"`          // маскированный номер карты
+	Phone            string `json:"phone"`             // телефон плательщика
+	ReceiptURL       string `json:"receipt_url"`       // URL ОФД-чека
+	OtpHash          string `json:"otp_hash"`          // хэш OTP-подтверждения
+	PaymentTime      string `json:"payment_time"`      // время оплаты ("2006-01-02 15:04:05")
 }

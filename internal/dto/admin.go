@@ -38,3 +38,18 @@ type CreatePricingRequest struct {
 	DurationDays int     `json:"duration_days"`
 	IsActive     *bool   `json:"is_active"`
 }
+
+type CreateCategoryRequest struct {
+	Key      string `json:"key"      binding:"required,min=1,max=50"`
+	LabelRu  string `json:"label_ru" binding:"required,min=1,max=200"`
+	LabelUz  string `json:"label_uz" binding:"required,min=1,max=200"`
+	LabelEn  string `json:"label_en" binding:"required,min=1,max=200"`
+	IsActive *bool  `json:"is_active"`
+}
+
+type UpdateCategoryRequest struct {
+	LabelRu  *string `json:"label_ru" binding:"omitempty,min=1,max=200"`
+	LabelUz  *string `json:"label_uz" binding:"omitempty,min=1,max=200"`
+	LabelEn  *string `json:"label_en" binding:"omitempty,min=1,max=200"`
+	IsActive *bool   `json:"is_active"`
+}

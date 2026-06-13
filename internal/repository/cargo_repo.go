@@ -172,6 +172,22 @@ func (r *CargoRepo) ListTemplates(ctx context.Context, userID uuid.UUID) ([]mode
 	return list, err
 }
 
+// IncrementContactsBought увеличивает счётчик купленных контактов груза.
+func (r *CargoRepo) IncrementContactsBought(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("id = ?", id).
+		UpdateColumn("contacts_bought_count", gorm.Expr("contacts_bought_count + 1")).Error
+}
+
+// CountFreeActive считает активные бесплатные объявления-грузов пользователя.
+func (r *CargoRepo) CountFreeActive(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("user_id = ? AND is_paid = false AND status = 'active' AND is_template = false", userID).
+		Count(&count).Error
+	return count, err
+}
+
 // ExpireBoosts снимает истёкшие бусты. Возвращает число затронутых.
 func (r *CargoRepo) ExpireBoosts(ctx context.Context) (int64, error) {
 	res := r.db.WithContext(ctx).Model(&model.CargoListing{}).
@@ -185,4 +201,11 @@ func (r *CargoRepo) SetBoost(ctx context.Context, id uuid.UUID, until interface{
 	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
 		Where("id = ?", id).
 		Updates(map[string]interface{}{"is_boosted": true, "boost_expires_at": until}).Error
+}
+
+// RemoveBoost снимает буст (используется при revert-платеже).
+func (r *CargoRepo) RemoveBoost(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{"is_boosted": false, "boost_expires_at": nil}).Error
 }
