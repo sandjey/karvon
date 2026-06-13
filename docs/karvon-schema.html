@@ -115,6 +115,88 @@
   .badge-amber{background:#fffbeb;color:#d97706}
   .badge-red{background:#fef2f2;color:#dc2626}
   @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  /* ── Postman Runner ──────────────────────────────────────────── */
+  .pm-wrap{margin:-28px -28px -48px;height:calc(100vh - 54px);display:flex;flex-direction:column;background:#f0f4f8}
+  /* vars bar */
+  .pm-vbar{background:#1e293b;color:#e2e8f0;flex-shrink:0;border-bottom:1px solid #0f172a}
+  .pm-vbar-hdr{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;user-select:none}
+  .pm-vbar-hdr:hover{background:#0f172a80}
+  .pm-vbar-title{font-size:12px;font-weight:700;letter-spacing:.05em;color:#94a3b8}
+  .pm-vbar-body{border-top:1px solid #334155}
+  .pm-vars-inputs{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px}
+  .pm-var-item{display:flex;align-items:center;gap:5px}
+  .pm-var-item label{font-size:10px;color:#94a3b8;font-family:monospace;white-space:nowrap}
+  .pm-var-item input{background:#0f172a;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:3px 8px;font-size:11px;width:160px;font-family:monospace;outline:none}
+  .pm-var-item input:focus{border-color:#3b82f6}
+  .pm-btn-sm{background:#334155;border:none;color:#94a3b8;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
+  .pm-btn-sm:hover{background:#475569;color:#e2e8f0}
+  /* split */
+  .pm-split{display:flex;flex:1;overflow:hidden}
+  /* sidebar */
+  .pm-sidebar{width:270px;flex-shrink:0;background:#fff;border-right:1px solid #e4e9f0;display:flex;flex-direction:column;overflow:hidden}
+  .pm-sidebar-search{padding:10px;border-bottom:1px solid #f1f5f9;flex-shrink:0}
+  .pm-sidebar-search input{width:100%;border:1px solid #e4e9f0;border-radius:6px;padding:5px 10px;font-size:12px;outline:none;background:#f8fafc}
+  .pm-sidebar-search input:focus{border-color:#3b82f6;background:#fff}
+  .pm-tree{flex:1;overflow-y:auto;padding:6px 0}
+  .pm-tree-loading{padding:20px;text-align:center;color:#94a3b8;font-size:13px}
+  .pm-folder-hdr{display:flex;align-items:center;gap:7px;padding:6px 12px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;user-select:none}
+  .pm-folder-hdr:hover{background:#f8fafc}
+  .pm-folder-arrow{font-size:10px;color:#94a3b8;flex-shrink:0;width:10px}
+  .pm-folder-count{font-size:10px;background:#f1f5f9;color:#94a3b8;border-radius:8px;padding:1px 6px;margin-left:auto}
+  .pm-req-row{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 26px;font-size:12px;cursor:pointer;color:#475569;transition:background .1s}
+  .pm-req-row:hover{background:#eff6ff;color:#1d4ed8}
+  .pm-req-row.active{background:#dbeafe;color:#1d4ed8;font-weight:500}
+  .pm-req-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pm-m{font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px;flex-shrink:0;width:40px;text-align:center;font-family:monospace}
+  .pm-m-GET{background:#dcfce7;color:#166534}.pm-m-POST{background:#dbeafe;color:#1e40af}
+  .pm-m-PUT{background:#fef3c7;color:#92400e}.pm-m-PATCH{background:#e0e7ff;color:#3730a3}
+  .pm-m-DELETE{background:#fee2e2;color:#991b1b}
+  /* right panel */
+  .pm-right{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+  .pm-nosel{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px;font-size:14px}
+  .pm-nosel-icon{font-size:48px}
+  .pm-req-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+  /* url bar */
+  .pm-urlbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #e4e9f0;flex-shrink:0;background:#fff}
+  .pm-method-sel{border:1px solid #e4e9f0;border-radius:6px;padding:6px 8px;font-size:12px;font-weight:700;background:#f8fafc;cursor:pointer;outline:none;min-width:72px}
+  .pm-url-inp{flex:1;border:1px solid #e4e9f0;border-radius:6px;padding:7px 10px;font-size:12px;font-family:monospace;outline:none}
+  .pm-url-inp:focus{border-color:#3b82f6}
+  .pm-send-btn{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 18px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+  .pm-send-btn:hover{background:#1d4ed8}
+  .pm-send-btn:disabled{background:#94a3b8;cursor:default}
+  .pm-curl-btn{background:#f1f5f9;border:1px solid #e4e9f0;color:#475569;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;flex-shrink:0;font-weight:600}
+  .pm-curl-btn:hover{background:#e2e8f0}
+  /* req tabs */
+  .pm-rtabs{display:flex;padding:0 14px;border-bottom:1px solid #e4e9f0;flex-shrink:0;background:#fafbfc}
+  .pm-rtab{padding:8px 12px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;transition:all .15s}
+  .pm-rtab:hover{color:#334155}
+  .pm-rtab.active{color:#2563eb;border-bottom-color:#2563eb}
+  /* tab content */
+  .pm-rcon{flex:1;overflow-y:auto;padding:10px 14px;min-height:0}
+  .pm-headers-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .pm-headers-tbl th{text-align:left;padding:5px 8px;color:#94a3b8;font-weight:600;font-size:10px;text-transform:uppercase;border-bottom:1px solid #f1f5f9}
+  .pm-headers-tbl td{padding:3px 4px;border-bottom:1px solid #f8fafc}
+  .pm-headers-tbl td input{width:100%;border:1px solid #e4e9f0;border-radius:4px;padding:4px 7px;font-size:12px;outline:none;font-family:monospace;background:#fff}
+  .pm-headers-tbl td input:focus{border-color:#3b82f6}
+  .pm-body-ed{width:100%;min-height:130px;border:1px solid #e4e9f0;border-radius:6px;padding:8px;font-family:monospace;font-size:12px;resize:vertical;outline:none;background:#f8fafc}
+  .pm-body-ed:focus{border-color:#3b82f6;background:#fff}
+  .pm-example{border:1px solid #e4e9f0;border-radius:8px;overflow:hidden;margin-bottom:8px}
+  .pm-ex-hdr{display:flex;align-items:center;gap:8px;padding:7px 12px;font-size:12px;font-weight:500;cursor:pointer;user-select:none}
+  .pm-ex-hdr:hover{opacity:.85}
+  .pm-ex-2xx{background:#f0fdf4;color:#166534}.pm-ex-4xx{background:#fef2f2;color:#991b1b}.pm-ex-5xx{background:#fffbeb;color:#92400e}
+  .pm-ex-code{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(0,0,0,.08)}
+  .pm-ex-body{padding:10px 12px;background:#0f172a;margin:0;font-family:monospace;font-size:11.5px;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
+  /* response */
+  .pm-resp{border-top:2px solid #e4e9f0;flex-shrink:0;display:flex;flex-direction:column;height:260px;background:#fff}
+  .pm-resp-bar{display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid #f1f5f9;flex-shrink:0;background:#fafbfc}
+  .pm-resp-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+  .pm-status-badge{font-weight:700;padding:2px 8px;border-radius:4px;font-size:11px}
+  .pm-s-2xx{background:#dcfce7;color:#166534}.pm-s-4xx{background:#fee2e2;color:#991b1b}.pm-s-5xx{background:#fef3c7;color:#92400e}
+  .pm-resp-ms{font-size:11px;color:#64748b}
+  .pm-resp-pre{flex:1;overflow:auto;padding:10px 14px;background:#0f172a;font-family:monospace;font-size:11.5px;color:#e2e8f0;margin:0;white-space:pre-wrap;word-break:break-word}
+  /* syntax highlight */
+  .hl-key{color:#7dd3fc}.hl-str{color:#86efac}.hl-num{color:#fbbf24}.hl-bool{color:#f472b6}.hl-null{color:#94a3b8}
 </style>
 </head>
 <body>
@@ -133,6 +215,10 @@
     <button class="tab" onclick="showTab('flows',this)">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
       Потоки
+    </button>
+    <button class="tab" onclick="showTab('postman',this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z"/></svg>
+      Runner
     </button>
   </nav>
 </header>
@@ -849,7 +935,71 @@ sequenceDiagram
 
 </div>
 
+<!-- ═══════════════════════════════════════════════════════ RUNNER -->
+<div id="tab-postman" class="section pm-wrap">
 
+  <div class="pm-vbar">
+    <div class="pm-vbar-hdr" onclick="toggleVarsPanel()">
+      <span class="pm-vbar-title">⚙ ПЕРЕМЕННЫЕ КОЛЛЕКЦИИ</span>
+      <button class="pm-btn-sm" onclick="event.stopPropagation();loadCollection()" title="Перечитать karvon_api.json с сервера">⟳ Reload</button>
+      <span id="pmCollName" style="font-size:11px;color:#64748b;margin-left:8px"></span>
+      <span id="pmVarsToggleArrow" style="margin-left:auto;font-size:11px;color:#64748b">▼</span>
+    </div>
+    <div class="pm-vbar-body" id="pmVarsBody">
+      <div id="pmVarsInputs" class="pm-vars-inputs"></div>
+    </div>
+  </div>
+
+  <div class="pm-split">
+
+    <div class="pm-sidebar">
+      <div class="pm-sidebar-search">
+        <input type="search" id="pmSearch" placeholder="🔍 Поиск запросов..." oninput="filterPm(this.value)">
+      </div>
+      <div id="pmTree" class="pm-tree">
+        <div class="pm-tree-loading">Выберите вкладку Runner для загрузки...</div>
+      </div>
+    </div>
+
+    <div class="pm-right">
+      <div id="pmNoSel" class="pm-nosel">
+        <div class="pm-nosel-icon">📡</div>
+        <div>Выберите запрос из списка слева</div>
+      </div>
+
+      <div id="pmReqWrap" class="pm-req-wrap" style="display:none">
+        <div class="pm-urlbar">
+          <select id="pmMethodSel" class="pm-method-sel" onchange="updateMethodColor()">
+            <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+          </select>
+          <input id="pmUrlInp" class="pm-url-inp" type="text" placeholder="URL">
+          <button class="pm-send-btn" onclick="sendPm()" id="pmSendBtn">Send</button>
+          <button class="pm-curl-btn" onclick="copyCurl()">cURL</button>
+        </div>
+
+        <div class="pm-rtabs">
+          <button class="pm-rtab active" data-tab="Headers" onclick="switchPmTab(this)">Headers</button>
+          <button class="pm-rtab" data-tab="Body" onclick="switchPmTab(this)">Body</button>
+          <button class="pm-rtab" data-tab="Examples" onclick="switchPmTab(this)">Examples</button>
+        </div>
+
+        <div id="pmTabHeaders" class="pm-rcon"></div>
+        <div id="pmTabBody"    class="pm-rcon" style="display:none"></div>
+        <div id="pmTabExamples" class="pm-rcon" style="display:none"></div>
+
+        <div class="pm-resp">
+          <div class="pm-resp-bar">
+            <span class="pm-resp-label">Ответ</span>
+            <span id="pmRespMeta"></span>
+            <button class="pm-btn-sm" onclick="copyResp()" style="margin-left:auto">Copy</button>
+          </div>
+          <pre id="pmRespPre" class="pm-resp-pre">Нажмите Send для отправки запроса</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 </main>
 
@@ -918,6 +1068,7 @@ sequenceDiagram
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     el.closest('.tab').classList.add('active');
+    if (name === 'postman' && !window.pmCollection) loadCollection();
     // Re-apply number circle styles after tab render
     setTimeout(function() {
       document.querySelectorAll('.mermaid circle').forEach(function(c) {
@@ -928,6 +1079,323 @@ sequenceDiagram
       });
     }, 100);
   }
+
+  /* ══════════════ POSTMAN RUNNER ══════════════ */
+  window.pmCollection = null;
+  window.pmVars = {};
+
+  async function loadCollection() {
+    const tree = document.getElementById('pmTree');
+    if (tree) tree.innerHTML = '<div class="pm-tree-loading">⟳ Загрузка...</div>';
+    try {
+      const r = await fetch('/docs/postman/karvon_api.json?_=' + Date.now());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      window.pmCollection = await r.json();
+      // init vars
+      window.pmVars = {};
+      (pmCollection.variable || []).forEach(v => { pmVars[v.key] = v.value || ''; });
+      const nameEl = document.getElementById('pmCollName');
+      if (nameEl) nameEl.textContent = pmCollection.info?.name || '';
+      renderPmVars();
+      renderPmTree();
+    } catch(e) {
+      if (tree) tree.innerHTML = '<div style="padding:16px;color:#ef4444;font-size:12px">Ошибка: ' + e.message + '</div>';
+    }
+  }
+
+  function renderPmVars() {
+    const el = document.getElementById('pmVarsInputs');
+    if (!el) return;
+    el.innerHTML = '';
+    Object.entries(pmVars).forEach(([k, v]) => {
+      const d = document.createElement('div');
+      d.className = 'pm-var-item';
+      const isSecret = k.includes('token') || k.includes('password') || k.includes('secret');
+      d.innerHTML = '<label>{{' + k + '}}</label>'
+        + '<input type="' + (isSecret ? 'password' : 'text') + '" value="' + escH(v) + '" placeholder="' + k + '" oninput="pmVars[\'' + k + '\']=this.value">';
+      el.appendChild(d);
+    });
+  }
+
+  function resolveVars(s) {
+    if (!s) return s;
+    return s.replace(/\{\{(\w+)\}\}/g, (_, k) => pmVars[k] !== undefined ? pmVars[k] : '{{' + k + '}}');
+  }
+
+  function renderPmTree() {
+    const el = document.getElementById('pmTree');
+    if (!el || !pmCollection) return;
+    el.innerHTML = '';
+    renderPmItems(pmCollection.item || [], el);
+  }
+
+  function renderPmItems(items, parent) {
+    items.forEach(item => {
+      if (item.item) {
+        const cnt = countPmReqs(item.item);
+        const wrap = document.createElement('div');
+        wrap.className = 'pm-folder';
+        wrap.dataset.open = '1';
+        wrap.innerHTML = '<div class="pm-folder-hdr" onclick="togglePmFolder(this)">'
+          + '<span class="pm-folder-arrow">▾</span>'
+          + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escH(item.name) + '</span>'
+          + '<span class="pm-folder-count">' + cnt + '</span>'
+          + '</div><div class="pm-folder-body"></div>';
+        parent.appendChild(wrap);
+        renderPmItems(item.item, wrap.querySelector('.pm-folder-body'));
+      } else if (item.request) {
+        const m = item.request.method || 'GET';
+        const row = document.createElement('div');
+        row.className = 'pm-req-row';
+        row.dataset.name = item.name.toLowerCase();
+        row.innerHTML = '<span class="pm-m pm-m-' + m + '">' + m + '</span>'
+          + '<span class="pm-req-name">' + escH(item.name) + '</span>';
+        row.onclick = () => selectPmReq(item, row);
+        parent.appendChild(row);
+      }
+    });
+  }
+
+  function countPmReqs(items) {
+    return items.reduce((n, i) => n + (i.request ? 1 : i.item ? countPmReqs(i.item) : 0), 0);
+  }
+
+  function togglePmFolder(hdr) {
+    const folder = hdr.closest('.pm-folder');
+    const body = folder.querySelector('.pm-folder-body');
+    const arrow = hdr.querySelector('.pm-folder-arrow');
+    const open = folder.dataset.open === '1';
+    folder.dataset.open = open ? '0' : '1';
+    body.style.display = open ? 'none' : '';
+    arrow.textContent = open ? '▸' : '▾';
+  }
+
+  function selectPmReq(item, el) {
+    document.querySelectorAll('.pm-req-row').forEach(r => r.classList.remove('active'));
+    el.classList.add('active');
+    window.pmCurrentReq = item;
+    const req = item.request;
+
+    document.getElementById('pmNoSel').style.display = 'none';
+    const wrap = document.getElementById('pmReqWrap');
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+
+    // method
+    const mSel = document.getElementById('pmMethodSel');
+    mSel.value = req.method || 'GET';
+    updateMethodColor();
+
+    // url
+    document.getElementById('pmUrlInp').value = resolveVars(req.url?.raw || '');
+
+    // headers
+    renderPmHeaders(req.header || []);
+
+    // body
+    document.getElementById('pmTabBody').innerHTML =
+      '<textarea class="pm-body-ed" id="pmBodyEd" rows="8">' + escH(req.body?.raw || '') + '</textarea>';
+
+    // examples
+    renderPmExamples(item.response || []);
+
+    // switch to headers tab
+    document.querySelectorAll('.pm-rtab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.pm-rtab[data-tab="Headers"]').classList.add('active');
+    document.getElementById('pmTabHeaders').style.display = 'block';
+    document.getElementById('pmTabBody').style.display = 'none';
+    document.getElementById('pmTabExamples').style.display = 'none';
+
+    // clear response
+    document.getElementById('pmRespPre').textContent = 'Нажмите Send для отправки запроса';
+    document.getElementById('pmRespMeta').innerHTML = '';
+  }
+
+  function renderPmHeaders(headers) {
+    const el = document.getElementById('pmTabHeaders');
+    let html = '<table class="pm-headers-tbl"><thead><tr><th>Header</th><th>Value</th></tr></thead><tbody>';
+    headers.forEach(h => {
+      html += '<tr><td><input class="pm-hk" value="' + escH(h.key) + '" placeholder="Header"></td>'
+            + '<td><input class="pm-hv" value="' + escH(resolveVars(h.value || '')) + '" placeholder="Value"></td></tr>';
+    });
+    html += '<tr><td><input class="pm-hk" placeholder="+ Header" oninput="addPmHeaderRow(this)"></td>'
+          + '<td><input class="pm-hv" placeholder="Value"></td></tr>';
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+
+  function addPmHeaderRow(inp) {
+    if (!inp.value) return;
+    inp.oninput = null;
+    const tbody = inp.closest('tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input class="pm-hk" placeholder="+ Header" oninput="addPmHeaderRow(this)"></td>'
+                 + '<td><input class="pm-hv" placeholder="Value"></td>';
+    tbody.appendChild(tr);
+  }
+
+  function renderPmExamples(responses) {
+    const el = document.getElementById('pmTabExamples');
+    if (!responses.length) {
+      el.innerHTML = '<div style="padding:14px;color:#94a3b8;font-size:12px">Нет примеров ответов</div>';
+      return;
+    }
+    el.innerHTML = responses.map(resp => {
+      const cls = resp.code >= 500 ? 'pm-ex-5xx' : resp.code >= 400 ? 'pm-ex-4xx' : 'pm-ex-2xx';
+      return '<div class="pm-example">'
+        + '<div class="pm-ex-hdr ' + cls + '" onclick="togglePmExample(this)">'
+        + '<span class="pm-ex-code">' + resp.code + '</span>'
+        + '<span>' + escH(resp.name) + '</span>'
+        + '<span style="margin-left:auto">▾</span>'
+        + '</div>'
+        + '<pre class="pm-ex-body" style="display:none">' + escH(fmtJson(resp.body)) + '</pre>'
+        + '</div>';
+    }).join('');
+  }
+
+  function togglePmExample(hdr) {
+    const pre = hdr.nextElementSibling;
+    const arr = hdr.querySelector('span:last-child');
+    const open = pre.style.display !== 'none';
+    pre.style.display = open ? 'none' : 'block';
+    if (arr) arr.textContent = open ? '▾' : '▴';
+  }
+
+  function switchPmTab(btn) {
+    document.querySelectorAll('.pm-rtab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    ['Headers','Body','Examples'].forEach(t => {
+      document.getElementById('pmTab' + t).style.display = t === tab ? 'block' : 'none';
+    });
+  }
+
+  function updateMethodColor() {
+    const sel = document.getElementById('pmMethodSel');
+    if (!sel) return;
+    const m = sel.value;
+    const c = {GET:'#166534',POST:'#1e40af',PUT:'#92400e',PATCH:'#3730a3',DELETE:'#991b1b'};
+    const b = {GET:'#dcfce7',POST:'#dbeafe',PUT:'#fef3c7',PATCH:'#e0e7ff',DELETE:'#fee2e2'};
+    sel.style.color = c[m]||'#334155';
+    sel.style.background = b[m]||'#f8fafc';
+  }
+
+  async function sendPm() {
+    const btn = document.getElementById('pmSendBtn');
+    const pre = document.getElementById('pmRespPre');
+    const meta = document.getElementById('pmRespMeta');
+    const method = document.getElementById('pmMethodSel').value;
+    const url = resolveVars(document.getElementById('pmUrlInp').value);
+
+    // collect headers
+    const headers = {};
+    document.querySelectorAll('#pmTabHeaders .pm-hk').forEach(k => {
+      const v = k.closest('tr').querySelector('.pm-hv');
+      const kk = resolveVars(k.value.trim()), vv = resolveVars((v?.value||'').trim());
+      if (kk && vv) headers[kk] = vv;
+    });
+
+    const bodyRaw = resolveVars(document.getElementById('pmBodyEd')?.value || '');
+
+    btn.disabled = true; btn.textContent = '...';
+    pre.textContent = 'Отправка...';
+    meta.innerHTML = '';
+
+    const t0 = performance.now();
+    try {
+      const opts = { method, headers };
+      if (bodyRaw && method !== 'GET' && method !== 'DELETE') {
+        opts.body = bodyRaw;
+        if (!headers['Content-Type'] && !headers['content-type'])
+          headers['Content-Type'] = 'application/json';
+      }
+      const resp = await fetch(url, opts);
+      const ms = Math.round(performance.now() - t0);
+      const text = await resp.text();
+      const cls = resp.status >= 500 ? 'pm-s-5xx' : resp.status >= 400 ? 'pm-s-4xx' : 'pm-s-2xx';
+      meta.innerHTML = '<span class="pm-status-badge ' + cls + '">' + resp.status + ' ' + resp.statusText + '</span>'
+                     + ' <span class="pm-resp-ms">' + ms + 'ms</span>';
+      pre.innerHTML = syntaxHL(fmtJson(text));
+    } catch(e) {
+      const ms = Math.round(performance.now() - t0);
+      meta.innerHTML = '<span class="pm-status-badge pm-s-5xx">Error</span> <span class="pm-resp-ms">' + ms + 'ms</span>';
+      pre.textContent = 'Ошибка: ' + e.message + '\n\n(Возможно CORS или сеть недоступна)';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Send';
+    }
+  }
+
+  function copyCurl() {
+    const method = document.getElementById('pmMethodSel').value;
+    const url = resolveVars(document.getElementById('pmUrlInp').value);
+    let curl = "curl -X " + method + " '" + url + "'";
+    document.querySelectorAll('#pmTabHeaders .pm-hk').forEach(k => {
+      const v = k.closest('tr').querySelector('.pm-hv');
+      const kk = resolveVars(k.value.trim()), vv = resolveVars((v?.value||'').trim());
+      if (kk && vv) curl += " \\\n  -H '" + kk + ": " + vv + "'";
+    });
+    const body = document.getElementById('pmBodyEd')?.value;
+    if (body && method !== 'GET')
+      curl += " \\\n  -d '" + resolveVars(body).replace(/'/g, "\\'") + "'";
+    navigator.clipboard.writeText(curl).then(() => {
+      const btn = document.querySelector('.pm-curl-btn');
+      if (btn) { btn.textContent = '✓ Copied'; setTimeout(() => btn.textContent = 'cURL', 1500); }
+    });
+  }
+
+  function copyResp() {
+    const text = document.getElementById('pmRespPre').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btns = document.querySelectorAll('.pm-resp-bar .pm-btn-sm');
+      btns.forEach(b => { b.textContent = '✓ Copied'; setTimeout(() => b.textContent = 'Copy', 1500); });
+    });
+  }
+
+  function filterPm(q) {
+    const query = q.toLowerCase().trim();
+    document.querySelectorAll('.pm-req-row').forEach(row => {
+      row.style.display = (!query || row.dataset.name.includes(query)) ? '' : 'none';
+    });
+    document.querySelectorAll('.pm-folder').forEach(folder => {
+      const any = Array.from(folder.querySelectorAll('.pm-req-row')).some(r => r.style.display !== 'none');
+      folder.style.display = any ? '' : 'none';
+      if (query && any) {
+        folder.dataset.open = '1';
+        const body = folder.querySelector('.pm-folder-body');
+        const arrow = folder.querySelector('.pm-folder-arrow');
+        if (body) body.style.display = '';
+        if (arrow) arrow.textContent = '▾';
+      }
+    });
+  }
+
+  function toggleVarsPanel() {
+    const body = document.getElementById('pmVarsBody');
+    const arrow = document.getElementById('pmVarsToggleArrow');
+    if (!body) return;
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? '' : 'none';
+    if (arrow) arrow.textContent = hidden ? '▼' : '▲';
+  }
+
+  function fmtJson(str) {
+    try { return JSON.stringify(JSON.parse(str), null, 2); } catch { return str || ''; }
+  }
+
+  function syntaxHL(s) {
+    return escH(s)
+      .replace(/"([^"]+)"(\s*:)/g, '<span class="hl-key">"$1"</span>$2')
+      .replace(/:\s*"([^"]*)"/g, ': <span class="hl-str">"$1"</span>')
+      .replace(/:\s*(true|false)/g, ': <span class="hl-bool">$1</span>')
+      .replace(/:\s*(null)/g, ': <span class="hl-null">$1</span>')
+      .replace(/:\s*(-?\d+\.?\d*)/g, ': <span class="hl-num">$1</span>');
+  }
+
+  function escH(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  /* ══════════════ END RUNNER ══════════════ */
 
   function toggleCode(btn) {
     const pre = btn.nextElementSibling;
