@@ -117,7 +117,8 @@
   @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
 
   /* ── Postman Runner ──────────────────────────────────────────── */
-  .pm-wrap{margin:-28px -28px -48px;height:calc(100vh - 54px);display:flex;flex-direction:column}
+  .pm-wrap{margin:-28px -28px -48px;height:calc(100vh - 54px);flex-direction:column}
+  .section.active.pm-wrap{display:flex}
   /* vars toolbar */
   .pm-vbar{background:#2b2b2b;flex-shrink:0;border-bottom:1px solid #1a1a1a}
   .pm-vbar-hdr{display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;user-select:none}
@@ -1345,7 +1346,7 @@ sequenceDiagram
     let html = '<table class="pm-headers-tbl"><thead><tr><th>Header</th><th>Value</th></tr></thead><tbody>';
     headers.forEach(h => {
       html += '<tr><td><input class="pm-hk" value="' + escH(h.key) + '" placeholder="Header"></td>'
-            + '<td><input class="pm-hv" value="' + escH(resolveVars(h.value || '')) + '" placeholder="Value"></td></tr>';
+            + '<td><input class="pm-hv" value="' + escH(h.value || '') + '" placeholder="Value"></td></tr>';
     });
     html += '<tr><td><input class="pm-hk" placeholder="+ Header" oninput="addPmHeaderRow(this)"></td>'
           + '<td><input class="pm-hv" placeholder="Value"></td></tr>';
