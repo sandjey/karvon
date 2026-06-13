@@ -148,7 +148,7 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (
 		return nil, err
 	}
 
-	isNew := false
+	isNew := user == nil || user.Name == nil
 	if user == nil {
 		isNew = true
 		newUser := &model.User{

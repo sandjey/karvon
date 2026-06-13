@@ -2675,8 +2675,16 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}/stats",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "warehouses", "{{warehouse_id}}", "stats"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "warehouses",
+                "{{warehouse_id}}",
+                "stats"
+              ]
             },
             "description": "Только для владельца объявления. Возвращает просмотры, сколько раз купили контакт, список пользователей добавивших в избранное."
           },
@@ -2685,7 +2693,12 @@
               "name": "200 OK",
               "status": "OK",
               "code": 200,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": true,\n  \"data\": {\n    \"views_count\": 142,\n    \"contacts_bought_count\": 8,\n    \"favorites\": [\n      {\"user_name\": \"Иван Иванов\", \"company_name\": \"ООО Транзит\", \"added_at\": \"2026-01-15T10:00:00Z\"}\n    ]\n  }\n}"
             }
           ]
@@ -3762,6 +3775,41 @@
           "response": []
         },
         {
+          "name": "GET /admin/moderators",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/moderators?page=1&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "moderators"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "POST /admin/moderators — создать модератора",
           "request": {
             "method": "POST",
@@ -4368,8 +4416,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "categories"
+              ]
             },
             "description": "Все категории (включая неактивные). Публичный /api/v1/config возвращает только активные."
           },
@@ -4378,7 +4433,12 @@
               "name": "200 OK",
               "status": "OK",
               "code": 200,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": true,\n  \"data\": [\n    {\"id\": \"...\", \"key\": \"stroymat\", \"label_ru\": \"Стройматериалы\", \"label_uz\": \"Qurilish materiallari\", \"label_en\": \"Construction materials\", \"is_active\": true},\n    {\"id\": \"...\", \"key\": \"food\", \"label_ru\": \"Питание / Продукты\", \"label_uz\": \"Oziq-ovqat\", \"label_en\": \"Food / Groceries\", \"is_active\": true}\n  ]\n}"
             }
           ]
@@ -4388,18 +4448,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"key\": \"agro\",\n  \"label_ru\": \"Агропродукция\",\n  \"label_uz\": \"Qishloq xo'jaligi\",\n  \"label_en\": \"Agriculture\",\n  \"is_active\": true\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/categories",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "categories"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "categories"
+              ]
             },
             "description": "key — уникальный идентификатор (используется в поле category при создании объявления груза)."
           },
@@ -4410,19 +4487,42 @@
           "request": {
             "method": "PUT",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"label_ru\": \"Агропродукция (обновлено)\",\n  \"label_uz\": \"Qishloq xo'jaligi\",\n  \"label_en\": \"Agriculture\",\n  \"is_active\": true\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/categories/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "categories", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "categories",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []
@@ -4432,13 +4532,29 @@
           "request": {
             "method": "DELETE",
             "header": [
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/categories/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "categories", ":id"],
-              "variable": [{"key": "id", "value": ""}]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "categories",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
             }
           },
           "response": []

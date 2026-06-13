@@ -39,6 +39,7 @@ func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.
 	g.POST("/pricing", h.CreatePricing)
 	g.PUT("/pricing/:key", h.UpdatePricing)
 	g.DELETE("/pricing/:key", h.DeletePricing)
+	g.GET("/moderators", h.ListModerators)
 	g.POST("/moderators", h.CreateModerator)
 	g.DELETE("/moderators/:id", h.DeleteModerator)
 	g.GET("/categories", h.ListCategories)
@@ -265,7 +266,7 @@ func (h *AdminHandler) CreatePricing(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	CreatedMsg(c, p, "PRICING_UPDATED")
+	CreatedMsg(c, p, "PRICING_CREATED")
 }
 
 func (h *AdminHandler) DeletePricing(c *gin.Context) {
@@ -273,7 +274,17 @@ func (h *AdminHandler) DeletePricing(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	OKMsg(c, nil, "PRICING_UPDATED")
+	OKMsg(c, nil, "PRICING_DELETED")
+}
+
+func (h *AdminHandler) ListModerators(c *gin.Context) {
+	page, perPage := parsePagination(c)
+	list, total, err := h.svc.Users(c.Request.Context(), "", "moderator", (page-1)*perPage, perPage)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	Paginated(c, list, int(total), page, perPage)
 }
 
 func (h *AdminHandler) CreateModerator(c *gin.Context) {

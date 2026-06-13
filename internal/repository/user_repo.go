@@ -80,12 +80,12 @@ func (r *UserRepo) DashboardEvents(ctx context.Context, userID uuid.UUID, limit 
 			UNION ALL
 			SELECT id, 'warehouse' AS lt FROM warehouse_listings WHERE user_id = ?
 		)
-		SELECT 'contact_purchased' AS type, u.name AS actor_name, cv.listing_type, cv.listing_id, cv.viewed_at AS at
+		SELECT 'contact_purchased' AS type, u.name AS actor_name, cv.listing_type::text, cv.listing_id, cv.viewed_at AS at
 		FROM contact_views cv
 		JOIN users u ON u.id = cv.user_id
 		WHERE cv.listing_id IN (SELECT id FROM my_listings) AND cv.user_id <> ?
 		UNION ALL
-		SELECT 'favorited' AS type, u.name AS actor_name, f.listing_type, f.listing_id, f.created_at AS at
+		SELECT 'favorited' AS type, u.name AS actor_name, f.listing_type::text, f.listing_id, f.created_at AS at
 		FROM favorites f
 		JOIN users u ON u.id = f.user_id
 		WHERE f.listing_id IN (SELECT id FROM my_listings) AND f.user_id <> ?
