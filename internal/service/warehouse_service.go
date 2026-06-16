@@ -50,13 +50,18 @@ func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID,
 	return uuid.Nil, ErrCompanyNotFound
 }
 
-// validateByType проверяет обязательные поля по типу склада.
-func validateByType(req *dto.WarehouseUpsertRequest) error {
-	// контактное лицо обязательно для всех типов
+// validateCreate проверяет обязательные поля при создании склада.
+func validateCreate(req *dto.WarehouseUpsertRequest) error {
+	if req.WarehouseType == nil || *req.WarehouseType == "" {
+		return ErrValidation
+	}
+	if req.Name == nil || *req.Name == "" {
+		return ErrValidation
+	}
 	if req.ContactPerson == nil || *req.ContactPerson == "" {
 		return ErrValidation
 	}
-	switch req.WarehouseType {
+	switch *req.WarehouseType {
 	case "cold":
 		if req.TempMin == nil || req.TempMax == nil || len(req.ColdChamberTypes) == 0 {
 			return ErrValidation
@@ -66,7 +71,6 @@ func validateByType(req *dto.WarehouseUpsertRequest) error {
 			return ErrValidation
 		}
 	}
-	// свободная площадь не больше общей
 	if req.AreaTotalM2 != nil && req.AreaFreeM2 != nil && *req.AreaFreeM2 > *req.AreaTotalM2 {
 		return ErrValidation
 	}
@@ -74,7 +78,7 @@ func validateByType(req *dto.WarehouseUpsertRequest) error {
 }
 
 func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto.WarehouseUpsertRequest) (*model.WarehouseListing, error) {
-	if err := validateByType(&req); err != nil {
+	if err := validateCreate(&req); err != nil {
 		return nil, err
 	}
 	companyID, err := s.resolveCompany(ctx, userID, req.CompanyID)
@@ -174,9 +178,6 @@ func (s *WarehouseService) Update(ctx context.Context, id, userID uuid.UUID, req
 	if err != nil {
 		return nil, err
 	}
-	if err := validateByType(&req); err != nil {
-		return nil, err
-	}
 	applyWarehouse(&req, w)
 	if err := s.repo.Save(ctx, w); err != nil {
 		return nil, err
@@ -223,8 +224,12 @@ func (s *WarehouseService) Stats(ctx context.Context, id, userID uuid.UUID) (*dt
 }
 
 func applyWarehouse(req *dto.WarehouseUpsertRequest, w *model.WarehouseListing) {
-	w.WarehouseType = req.WarehouseType
-	w.Name = req.Name
+	if req.WarehouseType != nil {
+		w.WarehouseType = *req.WarehouseType
+	}
+	if req.Name != nil {
+		w.Name = *req.Name
+	}
 	w.Region = req.Region
 	w.Address = req.Address
 	w.Lat = req.Lat

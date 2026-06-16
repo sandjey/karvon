@@ -11,8 +11,8 @@ import (
 type WarehouseUpsertRequest struct {
 	CompanyID *uuid.UUID `json:"company_id"`
 
-	WarehouseType string  `json:"warehouse_type" binding:"required,oneof=regular cold customs"`
-	Name          string  `json:"name" binding:"required,min=2,max=200"`
+	WarehouseType *string `json:"warehouse_type" binding:"omitempty,oneof=regular cold customs"`
+	Name          *string `json:"name"           binding:"omitempty,min=2,max=200"`
 	Region        *string `json:"region"`
 	Address       *string `json:"address"`
 	Lat           *float64 `json:"lat"`
@@ -20,7 +20,7 @@ type WarehouseUpsertRequest struct {
 
 	PhoneMain     *string `json:"phone_main"`
 	PhoneExtra    *string `json:"phone_extra"`
-	ContactPerson *string `json:"contact_person" binding:"required"`
+	ContactPerson *string `json:"contact_person" binding:"omitempty"`
 	Email         *string `json:"email" binding:"omitempty,email"`
 	Website       *string `json:"website"`
 

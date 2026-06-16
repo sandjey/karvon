@@ -19,8 +19,8 @@ type CargoUpsertRequest struct {
 	CompanyID *uuid.UUID `json:"company_id"`
 
 	// О товаре
-	CargoName   string  `json:"cargo_name" binding:"required,min=2,max=200"`
-	Category    string  `json:"category" binding:"required,min=1,max=50"`
+	CargoName   *string `json:"cargo_name" binding:"omitempty,min=2,max=200"`
+	Category    *string `json:"category"   binding:"omitempty,min=1,max=50"`
 	Description *string `json:"description"`
 
 	// Объём

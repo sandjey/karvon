@@ -31,7 +31,7 @@ func (h *CargoHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gin.Ha
 	g.GET("/:id/stats", auth, h.Stats)
 	// owner / verified
 	g.POST("", auth, verified, h.Create)
-	g.PUT("/:id", auth, h.Update)
+	g.PATCH("/:id", auth, h.Update)
 	g.PATCH("/:id/status", auth, h.SetStatus)
 	g.DELETE("/:id", auth, h.Delete)
 	g.POST("/:id/duplicate", auth, verified, h.Duplicate)

@@ -57,6 +57,12 @@ func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, exp
 }
 
 func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.CargoUpsertRequest) (*model.CargoListing, error) {
+	if req.CargoName == nil || *req.CargoName == "" {
+		return nil, ErrValidation
+	}
+	if req.Category == nil || *req.Category == "" {
+		return nil, ErrValidation
+	}
 	companyID, err := s.resolveCompany(ctx, userID, req.CompanyID)
 	if err != nil {
 		return nil, err
@@ -367,8 +373,12 @@ func (s *CargoService) notifyMatchingRoutes(ctx context.Context, c *model.CargoL
 
 // applyCargo переносит поля запроса в модель карточки товара.
 func applyCargo(req *dto.CargoUpsertRequest, m *model.CargoListing) {
-	m.CargoName = req.CargoName
-	m.Category = req.Category
+	if req.CargoName != nil {
+		m.CargoName = *req.CargoName
+	}
+	if req.Category != nil {
+		m.Category = *req.Category
+	}
 	m.Description = req.Description
 	m.QuantityAvailable = req.QuantityAvailable
 	m.QuantityUnit = req.QuantityUnit

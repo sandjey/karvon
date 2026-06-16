@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ func (h *CompanyHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFun
 	g.POST("", h.Create)
 	g.GET("", h.GetAll)
 	g.GET("/:id", h.GetOne)
-	g.PUT("/:id", h.Update)
+	g.PATCH("/:id", h.Update)
 }
 
 func (h *CompanyHandler) Create(c *gin.Context) {
@@ -127,6 +128,7 @@ func handleCompanyErr(c *gin.Context, err error) {
 	case isErr(err, service.ErrAlreadyExists):
 		FailCode(c, http.StatusConflict, "ALREADY_EXISTS")
 	default:
+		log.Printf("[company] unhandled error: %v", err)
 		InternalError(c)
 	}
 }

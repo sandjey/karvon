@@ -27,7 +27,7 @@ func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gi
 	g.GET("/:id", h.GetOne)
 	g.GET("/:id/stats", auth, h.Stats)
 	g.POST("", auth, verified, h.Create)
-	g.PUT("/:id", auth, h.Update)
+	g.PATCH("/:id", auth, h.Update)
 	g.PATCH("/:id/status", auth, h.SetStatus)
 	g.DELETE("/:id", auth, h.Delete)
 }

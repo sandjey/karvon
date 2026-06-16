@@ -37,14 +37,14 @@ func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.
 	g.GET("/payments", h.Payments)
 	g.GET("/pricing", h.Pricing)
 	g.POST("/pricing", h.CreatePricing)
-	g.PUT("/pricing/:key", h.UpdatePricing)
+	g.PATCH("/pricing/:key", h.UpdatePricing)
 	g.DELETE("/pricing/:key", h.DeletePricing)
 	g.GET("/moderators", h.ListModerators)
 	g.POST("/moderators", h.CreateModerator)
 	g.DELETE("/moderators/:id", h.DeleteModerator)
 	g.GET("/categories", h.ListCategories)
 	g.POST("/categories", h.CreateCategory)
-	g.PUT("/categories/:id", h.UpdateCategory)
+	g.PATCH("/categories/:id", h.UpdateCategory)
 	g.DELETE("/categories/:id", h.DeleteCategory)
 }
 

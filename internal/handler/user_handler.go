@@ -23,7 +23,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFunc) {
 	g := rg.Group("/users", auth)
 	g.GET("/me", h.GetProfile)
-	g.PUT("/me", h.UpdateProfile)
+	g.PATCH("/me", h.UpdateProfile)
 	g.GET("/me/stats", h.GetStats)
 	g.GET("/me/events", h.GetEvents)
 }
