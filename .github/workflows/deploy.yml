@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
+        id: deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -16,3 +17,27 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: bash /home/dev_backend/karvon/deploy.sh
+
+      - name: Notify Telegram — success
+        if: success()
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ *Karvon deployed*
+            Commit: `${{ github.sha }}`
+            By: ${{ github.actor }}
+            ${{ github.event.head_commit.message }}
+
+      - name: Notify Telegram — failure
+        if: failure()
+        uses: appleboy/telegram-action@v1.0.0
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ *Karvon deploy FAILED*
+            Commit: `${{ github.sha }}`
+            By: ${{ github.actor }}
+            Check: https://github.com/sandjey/karvon/actions
