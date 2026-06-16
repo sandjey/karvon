@@ -1380,7 +1380,6 @@ sequenceDiagram
     const bodyEl   = document.getElementById('pmBodyEd');
     const hdrsEl   = document.getElementById('pmTabHeaders');
     pmReqCache[window.pmCurrentReqKey] = {
-      method:      methodEl ? methodEl.value : null,
       url:         urlEl    ? urlEl.value    : null,
       body:        bodyEl   ? bodyEl.value   : null,
       headersHtml: hdrsEl   ? hdrsEl.innerHTML : null,
@@ -1422,10 +1421,9 @@ sequenceDiagram
     // examples
     renderPmExamples(item.response || []);
 
-    // restore cached edits (user's changes override collection defaults)
+    // restore cached edits (url/body/headers only — method always from collection)
     const cached = pmReqCache[item.name];
     if (cached) {
-      if (cached.method) { document.getElementById('pmMethodSel').value = cached.method; updateMethodColor(); }
       if (cached.url)    document.getElementById('pmUrlInp').value = cached.url;
       if (cached.headersHtml) document.getElementById('pmTabHeaders').innerHTML = cached.headersHtml;
       if (cached.body) { const b = document.getElementById('pmBodyEd'); if (b) b.value = cached.body; }
