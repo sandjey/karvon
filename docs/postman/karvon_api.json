@@ -792,7 +792,8 @@
                   "value": "{{lang}}"
                 }
               ]
-            }
+            },
+            "description": "Статистика пользователя. Поля: token_balance, companies_count, verified_companies, active_cargo (активные грузы), active_warehouses (активные склады), contacts_purchased (куплено контактов)."
           },
           "response": [
             {
@@ -808,6 +809,120 @@
               "body": "{\n  \"success\": true,\n  \"data\": {\n    \"token_balance\": 5,\n    \"companies_count\": 2,\n    \"verified_companies\": 1\n  }\n}"
             }
           ]
+        },
+        {
+          "name": "GET /users/me/listing-quota — квота объявлений",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/listing-quota",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "listing-quota"
+              ]
+            },
+            "description": "Проверить квоту бесплатного объявления. free_used=0 → можно разместить бесплатно, иначе нужна оплата (pricing_key=listing_paid)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /users/me/listings/cargo — мои грузы",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/listings/cargo?page=1&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "listings",
+                "cargo"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Все объявления о грузах текущего пользователя (все статусы). Пагинация: page, per_page."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /users/me/warehouses — мои склады",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/warehouses?page=1&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me",
+                "warehouses"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Все склады текущего пользователя (все статусы). Пагинация: page, per_page."
+          },
+          "response": []
         }
       ]
     },
@@ -2413,6 +2528,34 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "GET /listings/cargo/:id/similar — похожие объявления",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/similar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "listings",
+                "cargo",
+                "{{cargo_id}}",
+                "similar"
+              ]
+            },
+            "description": "Похожие активные объявления той же категории. Возвращает до 5 записей."
+          },
+          "response": []
         }
       ]
     },
@@ -2707,6 +2850,33 @@
               "body": "{\n  \"success\": true,\n  \"data\": {\n    \"views_count\": 142,\n    \"contacts_bought_count\": 8,\n    \"favorites\": [\n      {\"user_name\": \"Иван Иванов\", \"company_name\": \"ООО Транзит\", \"added_at\": \"2026-01-15T10:00:00Z\"}\n    ]\n  }\n}"
             }
           ]
+        },
+        {
+          "name": "GET /warehouses/:id/similar — похожие склады",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}/similar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "warehouses",
+                "{{warehouse_id}}",
+                "similar"
+              ]
+            },
+            "description": "Похожие активные склады того же типа и региона. Возвращает до 5 записей."
+          },
+          "response": []
         }
       ]
     },
@@ -4586,7 +4756,7 @@
                 "config"
               ]
             },
-            "description": "Возвращает справочные данные: язык интерфейса, категории грузов, типы организаций (org_types). Поддерживает локализацию через ?lang=ru|uz|en или Accept-Language."
+            "description": "GET /config — справочники приложения. Теперь включает:\n- categories, org_types\n- quantity_units, divisibility, packaging_types, body_types, loading_methods\n- delivery_geography, permits, incoterms, adr_classes\n- warehouse_types, heating_types, cold_chamber_types, storage_types\n- warehouse_services, infrastructure, specialization\n- regions (14 регионов Узбекистана)\nЯзык через ?lang=ru|uz|en или Accept-Language."
           },
           "response": [
             {
@@ -4627,6 +4797,32 @@
               ]
             },
             "description": "Кто купил контакт / добавил в избранное по моим объявлениям."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /stats/public — публичная статистика",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept-Language",
+                "value": "{{lang}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/stats/public",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "stats",
+                "public"
+              ]
+            },
+            "description": "Публичная статистика для главной страницы: active_listings, verified_companies, countries_covered, warehouse_spaces_m2."
           },
           "response": []
         }
