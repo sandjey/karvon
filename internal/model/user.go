@@ -19,6 +19,7 @@ type User struct {
 	TokenBalance int       `gorm:"not null;default:5"`
 	Role         string    `gorm:"type:user_role;not null;default:'user'"`
 	IsBlocked    bool      `gorm:"not null;default:false"`
+	TokenVersion int       `gorm:"not null;default:0"`
 	// Admin panel credentials (moderators only)
 	AdminLogin        *string `gorm:"type:varchar(100);uniqueIndex"`
 	AdminPasswordHash *string `gorm:"type:varchar(200)"`

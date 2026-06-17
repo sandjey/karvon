@@ -49,6 +49,12 @@ func Auth(jwtMgr *jwtpkg.Manager, userRepo *repository.UserRepo) gin.HandlerFunc
 			return
 		}
 
+		if claims.TokenVersion != user.TokenVersion {
+			handler.Unauthorized(c)
+			c.Abort()
+			return
+		}
+
 		c.Set("user_id", userID)
 		c.Set("role", user.Role)
 		c.Set("user", user)

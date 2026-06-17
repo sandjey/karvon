@@ -1,0 +1,1457 @@
+{
+  "info": {
+    "name": "KARVON API v1",
+    "_postman_id": "karvon-api-v1",
+    "description": "KARVON logistics platform API. Auth via OTP (WhatsApp/Telegram) + JWT.\n\n## Локализация\nВсе ответы (и успешные, и ошибочные) содержат поле `message` на языке запроса.\n\n**Способы задать язык:**\n1. Query param: `?lang=ru` | `?lang=uz` | `?lang=en`\n2. Заголовок: `Accept-Language: ru` | `Accept-Language: uz` | `Accept-Language: en`\n3. По умолчанию: `ru`\n\n**Формат успешного ответа (с действием):**\n```json\n{\n  \"success\": true,\n  \"message\": \"OTP код отправлен\",\n  \"data\": { \"expires_in\": 300 }\n}\n```\n\n**Формат GET-ответа (без действия):**\n```json\n{\n  \"success\": true,\n  \"data\": { ... }\n}\n```\n\n**Формат ошибки:**\n```json\n{\n  \"success\": false,\n  \"error\": { \"code\": \"OTP_INVALID\", \"message\": \"Неверный код подтверждения\" }\n}\n```\n\n**Формат пагинированного ответа:**\n```json\n{\n  \"success\": true,\n  \"data\": [...],\n  \"meta\": { \"total\": 10, \"page\": 1, \"per_page\": 20 }\n}\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",        "value": "https://fan.sarbon.me" },
+    { "key": "access_token",    "value": "" },
+    { "key": "refresh_token",   "value": "" },
+    { "key": "admin_token",     "value": "" },
+    { "key": "lang",            "value": "ru" },
+    { "key": "company_id",      "value": "" },
+    { "key": "cargo_id",        "value": "" },
+    { "key": "warehouse_id",    "value": "" },
+    { "key": "route_id",        "value": "" },
+    { "key": "notification_id", "value": "" },
+    { "key": "user_id",         "value": "" },
+    { "key": "order_id",        "value": "" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "OTP-аутентификация. Все ответы содержат поле `message` на языке запроса.",
+      "item": [
+        {
+          "name": "1. Send OTP (WhatsApp)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/send-otp?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","send-otp"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"whatsapp\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"OTP код отправлен\",\n  \"data\": { \"expires_in\": 300 }\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"OTP kodi yuborildi\",\n  \"data\": { \"expires_in\": 300 }\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"OTP code sent\",\n  \"data\": { \"expires_in\": 300 }\n}"
+            },
+            {
+              "name": "429 — OTP лимит (ru)",
+              "status": "Too Many Requests", "code": 429,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"OTP_MAX_ATTEMPTS\", \"message\": \"Превышен лимит запросов OTP. Попробуйте через час\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "1b. Send OTP (Telegram Gateway)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/send-otp?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","send-otp"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"telegram\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"OTP код отправлен\",\n  \"data\": { \"expires_in\": 300 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.success && r.data) {",
+                  "  pm.collectionVariables.set('access_token', r.data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', r.data.refresh_token);",
+                  "  pm.test('Tokens saved', () => pm.expect(r.data.access_token).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/verify-otp?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","verify-otp"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"code\": \"123456\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": [
+            {
+              "name": "200 — ru (существующий пользователь)",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Успешная авторизация\",\n  \"data\": {\n    \"access_token\": \"eyJ...\",\n    \"refresh_token\": \"eyJ...\",\n    \"is_new_user\": false\n  }\n}"
+            },
+            {
+              "name": "200 — ru (новый пользователь)",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Успешная авторизация\",\n  \"data\": {\n    \"access_token\": \"eyJ...\",\n    \"refresh_token\": \"eyJ...\",\n    \"is_new_user\": true\n  }\n}"
+            },
+            {
+              "name": "400 — Неверный код (ru)",
+              "status": "Bad Request", "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"OTP_INVALID\", \"message\": \"Неверный код подтверждения\" }\n}"
+            },
+            {
+              "name": "400 — Код истёк (ru)",
+              "status": "Bad Request", "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"OTP_EXPIRED\", \"message\": \"Код истёк. Запросите новый\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. Complete Registration",
+          "description": "Завершить регистрацию после первого входа (`is_new_user: true`).\n\nОбязательно: `name`. Остальные поля — опциональны.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/complete-registration?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","complete-registration"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Регистрация завершена\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Ro'yxatdan o'tish yakunlandi\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Registration complete\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "409 — Имя уже установлено (ru)",
+              "status": "Conflict", "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"NAME_ALREADY_SET\", \"message\": \"Имя уже установлено\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "4. Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.success && r.data) {",
+                  "  pm.collectionVariables.set('access_token', r.data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', r.data.refresh_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/refresh?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","refresh"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Успешная авторизация\",\n  \"data\": {\n    \"access_token\": \"eyJ...\",\n    \"refresh_token\": \"eyJ...\"\n  }\n}"
+            },
+            {
+              "name": "401 — Токен недействителен (ru)",
+              "status": "Unauthorized", "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"UNAUTHORIZED\", \"message\": \"Не авторизован\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "5. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","auth","logout"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Выход выполнен\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Chiqish amalga oshirildi\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out successfully\",\n  \"data\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Профиль и статистика пользователя. Все эндпоинты требуют JWT.",
+      "item": [
+        {
+          "name": "GET /users/me — Мой профиль",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","users","me"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер\",\n    \"email\": null,\n    \"whatsapp\": null,\n    \"telegram\": null,\n    \"city\": null,\n    \"country\": null,\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "PUT /users/me — Обновить профиль",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","users","me"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Профиль обновлён\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер Иванов\",\n    \"email\": \"alisher@example.com\",\n    \"whatsapp\": \"+998331108810\",\n    \"telegram\": \"@alisher\",\n    \"city\": \"Ташкент\",\n    \"country\": \"Узбекистан\",\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profil yangilandi\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер Иванов\",\n    \"email\": null,\n    \"whatsapp\": null,\n    \"telegram\": null,\n    \"city\": null,\n    \"country\": null,\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Profile updated\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"phone\": \"+998331108810\",\n    \"name\": \"Алишер Иванов\",\n    \"email\": null,\n    \"whatsapp\": null,\n    \"telegram\": null,\n    \"city\": null,\n    \"country\": null,\n    \"token_balance\": 5,\n    \"role\": \"user\",\n    \"created_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /users/me/stats — Статистика",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me/stats?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","users","me","stats"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"token_balance\": 5,\n    \"companies_count\": 2,\n    \"verified_companies\": 1\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "description": "Управление юридическими лицами. Один пользователь → несколько компаний.\n\nСтатусы: `pending` → `approved` / `rejected` / `docs_requested`\n\n**Поля формы верификации:** country, org_type (ooo/ao/ip/ltd/gmbh/co_ltd), name, inn (ИНН/БИН/VAT/USCC), phone, email, city, region (необяз.), street, postal_code (необяз.), reg_doc_url.\n\n**Бизнес-правила:**\n- ИНН уникален среди одобренных компаний\n- `pending` — нельзя редактировать\n- `docs_requested` — можно обновить свидетельство (reg_doc_url), статус автоматически вернётся в pending",
+      "item": [
+        {
+          "name": "POST /companies — Добавить компанию",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.success && r.data) {",
+                  "  pm.collectionVariables.set('company_id', r.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/companies?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","companies"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"country\": \"UZ\",\n  \"org_type\": \"ooo\",\n  \"name\": \"Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 15, офис 3\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Добавить компанию (отправить на проверку). Статус автоматически = `pending`.\n\n`reg_doc_url` — URL свидетельства из `POST /upload`.\n\n**Обязательны:** country, org_type, name, inn, phone, email, city, street, reg_doc_url.\n**Опциональны:** region, postal_code.\n\n`org_type`: ooo / ao / ip / ltd / gmbh / co_ltd."
+          },
+          "response": [
+            {
+              "name": "201 — ru",
+              "status": "Created", "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Компания отправлена на проверку\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "201 — uz",
+              "status": "Created", "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Kompaniya tekshiruvga yuborildi\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "201 — en",
+              "status": "Created", "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Company submitted for verification\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": false,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"pending\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": null,\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T10:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "409 — ИНН уже существует (ru)",
+              "status": "Conflict", "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"ALREADY_EXISTS\", \"message\": \"Запись уже существует\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /companies — Мои компании",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/companies?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","companies"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"name\": \"Карвон Логистика\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"postal_code\": \"100000\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"status\": \"approved\",\n      \"rejection_reason\": null,\n      \"docs_request_note\": null,\n      \"verified_at\": \"2026-06-09T12:00:00Z\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"updated_at\": \"2026-06-09T12:00:00Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /companies/:id — Одна компания",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/companies/{{company_id}}?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","companies","{{company_id}}"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"postal_code\": \"100000\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"status\": \"approved\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": \"2026-06-09T12:00:00Z\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T12:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "404 — Не найдено (ru)",
+              "status": "Not Found", "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"COMPANY_NOT_FOUND\", \"message\": \"Компания не найдена\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "PUT /companies/:id — Обновить компанию",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/companies/{{company_id}}?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","companies","{{company_id}}"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Карвон Логистика Апдейт\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 1\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Обновить данные компании. Все поля опциональны.\n\n- `pending` → `COMPANY_NOT_EDITABLE` (409)\n- `docs_requested` → можно обновить свидетельство (reg_doc_url), статус автовернётся в `pending`\n- `approved` / `rejected` → можно обновить country, org_type, name, phone, email, city, region, street, postal_code"
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Данные компании обновлены\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"name\": \"Карвон Логистика Апдейт\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Самарканд\",\n    \"region\": \"Самаркандская область\",\n    \"street\": \"ул. Регистан, 1\",\n    \"postal_code\": \"140100\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\",\n    \"status\": \"approved\",\n    \"rejection_reason\": null,\n    \"docs_request_note\": null,\n    \"verified_at\": \"2026-06-09T12:00:00Z\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"updated_at\": \"2026-06-09T13:00:00Z\"\n  }\n}"
+            },
+            {
+              "name": "409 — Нельзя редактировать (ru)",
+              "status": "Conflict", "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"COMPANY_NOT_EDITABLE\", \"message\": \"Компанию нельзя редактировать в текущем статусе\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Upload",
+      "description": "Загрузка файлов. Поддерживаются изображения (jpg/jpeg/png/gif/webp) и PDF. Максимум 10 МБ.",
+      "item": [
+        {
+          "name": "POST /upload — Загрузить файл",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/upload?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","upload"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "", "description": "Файл (PDF или изображение, макс. 10 МБ)" },
+                { "key": "dir", "value": "companies", "type": "text", "description": "Подпапка: companies / fleet / etc. (опционально, default: uploads)" }
+              ]
+            },
+            "description": "Загрузить файл и получить URL.\n\nВозвращённый URL используется в `POST /companies` как `reg_doc_url` (свидетельство о регистрации)."
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Файл успешно загружен\",\n  \"data\": {\n    \"url\": \"https://fan.sarbon.me/uploads/companies/1749456000_a1b2c3d4.pdf\",\n    \"name\": \"inn_doc.pdf\",\n    \"size\": 245760\n  }\n}"
+            },
+            {
+              "name": "400 — Файл слишком большой (ru)",
+              "status": "Bad Request", "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"FILE_TOO_LARGE\", \"message\": \"Файл слишком большой. Максимум 10 МБ\" }\n}"
+            },
+            {
+              "name": "400 — Тип не разрешён (ru)",
+              "status": "Bad Request", "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"FILE_TYPE_NOT_ALLOWED\", \"message\": \"Тип файла не разрешён. Допустимы: изображения и PDF\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Moderator",
+      "description": "Верификация компаний. Доступно только для роли `moderator` или `super_admin`.\n\nОчерёдность обработки: pending → approved / rejected / docs_requested\n\n`is_urgent: true` — если до дедлайна (created_at + 24ч) осталось меньше 2 часов.",
+      "item": [
+        {
+          "name": "GET /moderator/queue — Очередь",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/queue?status=pending&page=1&per_page=20&lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","queue"],
+              "query": [
+                { "key": "status",   "value": "pending",  "description": "pending | docs_requested" },
+                { "key": "page",     "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "lang",     "value": "{{lang}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"Карвон Логистика\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"status\": \"pending\",\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 1, \"page\": 1, \"per_page\": 20 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /moderator/queue/:id — Детали заявки",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/queue/{{company_id}}?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","queue","{{company_id}}"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"uuid\",\n    \"company_name\": \"Карвон Логистика\",\n    \"country\": \"UZ\",\n    \"org_type\": \"ooo\",\n    \"inn\": \"123456789\",\n    \"inn_verified\": true,\n    \"status\": \"pending\",\n    \"phone\": \"+998331108810\",\n    \"email\": \"info@karvon.uz\",\n    \"city\": \"Ташкент\",\n    \"region\": \"Ташкентская область\",\n    \"street\": \"ул. Амира Темура, 15, офис 3\",\n    \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n    \"user_name\": \"Алишер\",\n    \"user_phone\": \"+998331108810\",\n    \"created_at\": \"2026-06-09T10:00:00Z\",\n    \"deadline\": \"2026-06-10T10:00:00Z\",\n    \"is_urgent\": false\n  }\n}"
+            },
+            {
+              "name": "404 — Не найдено (ru)",
+              "status": "Not Found", "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"COMPANY_NOT_FOUND\", \"message\": \"Компания не найдена\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /moderator/queue/:id/approve — Одобрить",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/queue/{{company_id}}/approve?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","queue","{{company_id}}","approve"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Компания одобрена\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Kompaniya tasdiqlandi\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Company approved\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /moderator/queue/:id/reject — Отклонить",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/queue/{{company_id}}/reject?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","queue","{{company_id}}","reject"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Документы не читаемы, загрузите скан лучшего качества\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "`reason` обязателен."
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Компания отклонена\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Kompaniya rad etildi\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Company rejected\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /moderator/queue/:id/request-docs — Запросить документы",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/queue/{{company_id}}/request-docs?lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","queue","{{company_id}}","request-docs"],
+              "query": [{ "key": "lang", "value": "{{lang}}" }]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Пожалуйста, загрузите чёткий скан свидетельства о регистрации\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "`message` обязателен."
+          },
+          "response": [
+            {
+              "name": "200 — ru",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Документы запрошены у пользователя\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — uz",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Foydalanuvchidan hujjatlar so'raldi\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "200 — en",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Documents requested from user\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /moderator/history — Мои решения",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/moderator/history?page=1&per_page=20&lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","moderator","history"],
+              "query": [
+                { "key": "page",     "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "lang",     "value": "{{lang}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"uuid\",\n      \"company_name\": \"Карвон Логистика\",\n      \"country\": \"UZ\",\n      \"org_type\": \"ooo\",\n      \"inn\": \"123456789\",\n      \"inn_verified\": true,\n      \"status\": \"approved\",\n      \"phone\": \"+998331108810\",\n      \"email\": \"info@karvon.uz\",\n      \"city\": \"Ташкент\",\n      \"region\": \"Ташкентская область\",\n      \"street\": \"ул. Амира Темура, 15, офис 3\",\n      \"reg_doc_url\": \"/uploads/companies/reg_doc.pdf\",\n      \"user_name\": \"Алишер\",\n      \"user_phone\": \"+998331108810\",\n      \"created_at\": \"2026-06-09T10:00:00Z\",\n      \"deadline\": \"2026-06-10T10:00:00Z\",\n      \"is_urgent\": false\n    }\n  ],\n  \"meta\": { \"total\": 5, \"page\": 1, \"per_page\": 20 }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "i18n Examples",
+      "description": "Быстрые примеры для проверки локализации.",
+      "item": [
+        {
+          "name": "Send OTP — ?lang=ru",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/auth/send-otp?lang=ru", "host": ["{{base_url}}"], "path": ["api","v1","auth","send-otp"], "query": [{ "key": "lang", "value": "ru" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"whatsapp\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Send OTP — ?lang=uz",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/auth/send-otp?lang=uz", "host": ["{{base_url}}"], "path": ["api","v1","auth","send-otp"], "query": [{ "key": "lang", "value": "uz" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"whatsapp\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "Send OTP — Accept-Language: en",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept-Language", "value": "en" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/auth/send-otp", "host": ["{{base_url}}"], "path": ["api","v1","auth","send-otp"] },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"whatsapp\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Geo (Reference)",
+      "description": "Справочные данные: страны и города/регионы. Не требуют авторизации.",
+      "item": [
+        {
+          "name": "Get Countries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/geo/countries?q=&limit=250",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","geo","countries"],
+              "query": [
+                { "key": "q",     "value": "",    "description": "Строка поиска (ru или en). Пусто = все страны." },
+                { "key": "limit", "value": "250", "description": "Макс. количество результатов (1–500, default 250)" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — все страны",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"code\": \"UZ\", \"name_ru\": \"Узбекистан\", \"name_en\": \"Uzbekistan\", \"continent\": \"AS\", \"lat\": 41.37749, \"lng\": 64.58526 },\n    { \"code\": \"KZ\", \"name_ru\": \"Казахстан\", \"name_en\": \"Kazakhstan\", \"continent\": \"AS\", \"lat\": 48.01957, \"lng\": 66.92368 },\n    { \"code\": \"KG\", \"name_ru\": \"Кыргызстан\", \"name_en\": \"Kyrgyzstan\", \"continent\": \"AS\", \"lat\": 41.20438, \"lng\": 74.76609 },\n    { \"code\": \"TJ\", \"name_ru\": \"Таджикистан\", \"name_en\": \"Tajikistan\", \"continent\": \"AS\", \"lat\": 38.86103, \"lng\": 71.27609 },\n    { \"code\": \"TM\", \"name_ru\": \"Туркменистан\", \"name_en\": \"Turkmenistan\", \"continent\": \"AS\", \"lat\": 38.96972, \"lng\": 59.55697 }\n  ]\n}"
+            },
+            {
+              "name": "200 — поиск ?q=каз",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"code\": \"KZ\", \"name_ru\": \"Казахстан\", \"name_en\": \"Kazakhstan\", \"continent\": \"AS\", \"lat\": 48.01957, \"lng\": 66.92368 }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/geo/cities?q=таш&country_code=UZ&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","geo","cities"],
+              "query": [
+                { "key": "q",            "value": "таш",  "description": "Строка поиска (ru или en). Поддерживает autocomplete." },
+                { "key": "country_code", "value": "UZ",   "description": "ISO-3166 код страны (необязательно). Пример: UZ, KZ, RU" },
+                { "key": "limit",        "value": "10",   "description": "Макс. количество результатов (1–100, default 10)" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — ?q=таш&country_code=UZ",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"name_ru\": \"Ташкент\",\n      \"name_en\": \"Tashkent\",\n      \"country_code\": \"UZ\",\n      \"country\": \"Узбекистан\",\n      \"region\": \"Tashkent\",\n      \"lat\": 41.29910,\n      \"lng\": 69.24007,\n      \"population\": 1978028\n    }\n  ]\n}"
+            },
+            {
+              "name": "200 — ?q=алма (Казахстан)",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"name_ru\": \"Алматы\",\n      \"name_en\": \"Almaty\",\n      \"country_code\": \"KZ\",\n      \"country\": \"Казахстан\",\n      \"region\": \"Almaty\",\n      \"lat\": 43.25654,\n      \"lng\": 76.92848,\n      \"population\": 1977011\n    }\n  ]\n}"
+            },
+            {
+              "name": "200 — ?q=tash (Latin search)",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"name_ru\": \"Ташкент\",\n      \"name_en\": \"Tashkent\",\n      \"country_code\": \"UZ\",\n      \"country\": \"Узбекистан\",\n      \"region\": \"Tashkent\",\n      \"lat\": 41.29910,\n      \"lng\": 69.24007,\n      \"population\": 1978028\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Cities — все города страны",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/geo/cities?country_code=UZ&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","geo","cities"],
+              "query": [
+                { "key": "q",            "value": "",    "description": "Пусто = все города страны (по убыванию населения)" },
+                { "key": "country_code", "value": "UZ",  "description": "ISO-3166 код страны" },
+                { "key": "limit",        "value": "50",  "description": "Макс. количество" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK", "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    { \"name_ru\": \"Ташкент\",  \"name_en\": \"Tashkent\",  \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Tashkent\",  \"lat\": 41.29910, \"lng\": 69.24007, \"population\": 1978028 },\n    { \"name_ru\": \"Андижон\",  \"name_en\": \"Andijon\",   \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Andijan\",   \"lat\": 40.78206, \"lng\": 72.34424, \"population\": 747800 },\n    { \"name_ru\": \"Наманган\", \"name_en\": \"Namangan\",  \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Namangan\",  \"lat\": 41.00423, \"lng\": 71.66603, \"population\": 713220 },\n    { \"name_ru\": \"Самарканд\",\"name_en\": \"Samarkand\", \"country_code\": \"UZ\", \"country\": \"Узбекистан\", \"region\": \"Samarkand\", \"lat\": 39.65417, \"lng\": 66.97583, \"population\": 595200 }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cargo",
+      "description": "Объявления о грузах. Создание — только верифицированной компанией. Контакты скрыты (см. Contacts → View).",
+      "item": [
+        {
+          "name": "POST /listings/cargo — создать",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('cargo_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Accept-Language", "value": "{{lang}}" }
+            ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\"loader\"],\n  \"is_adr\": false,\n  \"has_temp_regime\": false,\n  \"required_body_types\": [\"tent\"],\n  \"delivery_geography\": [\"uz\", \"cis\"],\n  \"comment_for_carrier\": \"Погрузка с 9:00\",\n  \"media\": [{ \"file_url\": \"/uploads/cargo/yarn1.jpg\", \"file_type\": \"photo\" }]\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Карточка ТОВАРА. Требует JWT + approved-компанию. company_id опционален (иначе первая approved). category: stroymat|food|textile|metal|chemical|wood|electronics|other. media: file_type photo|video|document."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo — список (фильтры)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{lang}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/listings/cargo?category=&from_city=&from_country=&divisibility=&packaging=&min_order_max=&qty_min=&qty_max=&price_min=&price_max=&temp_regime=&adr=&verified_only=&sort=newest&page=1&per_page=20&lang={{lang}}",
+              "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo"],
+              "query": [
+                { "key": "category", "value": "", "description": "stroymat|food|textile|metal|chemical|wood|electronics|other" },
+                { "key": "from_city", "value": "" }, { "key": "from_country", "value": "" },
+                { "key": "divisibility", "value": "", "description": "ftl|ltl|dogruz" }, { "key": "packaging", "value": "" },
+                { "key": "min_order_max", "value": "" }, { "key": "qty_min", "value": "" }, { "key": "qty_max", "value": "" },
+                { "key": "price_min", "value": "" }, { "key": "price_max", "value": "" },
+                { "key": "temp_regime", "value": "", "description": "true|false" }, { "key": "adr", "value": "", "description": "true|false" },
+                { "key": "verified_only", "value": "", "description": "true|false" },
+                { "key": "sort", "value": "newest", "description": "newest|price_asc|price_desc|quantity" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }, { "key": "lang", "value": "{{lang}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/templates — мои шаблоны",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/templates", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","templates"] } },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/:id — карточка",
+          "request": { "method": "GET", "header": [{ "key": "Accept-Language", "value": "{{lang}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] }, "description": "Контакты скрыты (phone/email компании = пусто). Реальные контакты — через POST /contacts/view." },
+          "response": []
+        },
+        {
+          "name": "GET /listings/cargo/:id/stats — статистика (owner)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/stats", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","stats"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /listings/cargo/:id — редактировать",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа (обновлено)\",\n  \"category\": \"textile\",\n  \"quantity_available\": 100,\n  \"quantity_unit\": \"ton\",\n  \"price_per_unit\": 26000000,\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /listings/cargo/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/status", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\",\n  \"in_stock\": false\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/:id/duplicate",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/duplicate", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","duplicate"] } },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/:id/template — сохранить как шаблон",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/template", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","template"] },
+            "body": { "mode": "raw", "raw": "{\n  \"template_name\": \"Ташкент-Самарканд текстиль\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /listings/cargo/from-template/:id",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/from-template/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","from-template","{{cargo_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /listings/cargo/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Warehouses",
+      "description": "Склады (regular/cold/customs). Создание — верифицированной компанией. Для cold обязательны temp_min/temp_max/cold_chamber_types; для customs — customs_license_*. occupancy_percent считается автоматически.",
+      "item": [
+        {
+          "name": "POST /warehouses — создать",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('warehouse_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"storage_type\": [\"стеллажное\"],\n  \"infrastructure\": [\"loader\", \"parking_trucks\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" },\n  \"media\": [{ \"file_url\": \"/uploads/wh/wh1.jpg\", \"file_type\": \"photo\" }, { \"file_url\": \"/uploads/wh/tour.mp4\", \"file_type\": \"video\" }]\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /warehouses — список (фильтры)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept-Language", "value": "{{lang}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/warehouses?region=&warehouse_type=&area_min=&area_max=&temp_min=&temp_max=&services=&sort=&page=1&per_page=20",
+              "host": ["{{base_url}}"], "path": ["api","v1","warehouses"],
+              "query": [
+                { "key": "region", "value": "" }, { "key": "warehouse_type", "value": "", "description": "regular|cold|customs" },
+                { "key": "area_min", "value": "" }, { "key": "area_max", "value": "" }, { "key": "temp_min", "value": "" }, { "key": "temp_max", "value": "" },
+                { "key": "services", "value": "", "description": "crossdock|railway|parking_trucks" }, { "key": "sort", "value": "" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /warehouses/:id",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /warehouses/:id",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] },
+            "body": { "mode": "raw", "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад (обновлён)\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 200\n}", "options": { "raw": { "language": "json" } } },
+            "description": "contact_person обязателен (валидация по типу). Для cold — temp_min/temp_max/cold_chamber_types; для customs — customs_license_*."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /warehouses/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}/status", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"archived\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /warehouses/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/warehouses/{{warehouse_id}}", "host": ["{{base_url}}"], "path": ["api","v1","warehouses","{{warehouse_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Contacts & Tokens",
+      "description": "Открытие контактов за токены. Своё объявление/повтор за 30 дней/подписка — без списания. Нет токенов → 402 с тарифами.",
+      "item": [
+        {
+          "name": "POST /contacts/view — открыть контакт",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" }, { "key": "Accept-Language", "value": "{{lang}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/contacts/view?lang={{lang}}", "host": ["{{base_url}}"], "path": ["api","v1","contacts","view"], "query": [{ "key": "lang", "value": "{{lang}}" }] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "listing_type: cargo|warehouse. При нехватке токенов — 402 + data.packages/subscriptions."
+          },
+          "response": [
+            { "name": "402 — нет токенов", "status": "Payment Required", "code": 402, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": false,\n  \"error\": { \"code\": \"INSUFFICIENT_TOKENS\", \"message\": \"Недостаточно токенов\" },\n  \"data\": { \"packages\": [], \"subscriptions\": [] }\n}" }
+          ]
+        },
+        {
+          "name": "GET /contacts/history — за 30 дней",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/contacts/history", "host": ["{{base_url}}"], "path": ["api","v1","contacts","history"] } },
+          "response": []
+        },
+        {
+          "name": "GET /users/me/tokens — баланс и история",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/users/me/tokens", "host": ["{{base_url}}"], "path": ["api","v1","users","me","tokens"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "description": "Тарифы + платёжный цикл. Rahmat — scaffold (заказ → webhook → активация токенов/подписки/Boost). Реальный вызов Rahmat API подключается в pkg/rahmat.",
+      "item": [
+        {
+          "name": "GET /payments/packages — тарифы",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/payments/packages", "host": ["{{base_url}}"], "path": ["api","v1","payments","packages"] } },
+          "response": []
+        },
+        {
+          "name": "POST /payments/create — создать платёж",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('order_id', r.data.order_id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/payments/create", "host": ["{{base_url}}"], "path": ["api","v1","payments","create"] },
+            "body": { "mode": "raw", "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_basic\",\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "payment_type: tokens|subscription|listing. Для listing укажите listing_type+listing_id. Возвращает order_id + payment_url."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /payments/webhook — уведомление Rahmat",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/payments/webhook", "host": ["{{base_url}}"], "path": ["api","v1","payments","webhook"] },
+            "body": { "mode": "raw", "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"method\": \"uzcard\",\n  \"signature\": \"\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Активирует заказ: токены/подписка/listing/boost. Идемпотентно. Подпись проверяется в pkg/rahmat (в режиме заглушки пропускается)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /payments/history",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/payments/history?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","payments","history"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /subscriptions/active",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/subscriptions/active", "host": ["{{base_url}}"], "path": ["api","v1","subscriptions","active"] } },
+          "response": []
+        },
+        {
+          "name": "POST /listings/:type/:id/boost — продвижение",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/listings/cargo/{{cargo_id}}/boost", "host": ["{{base_url}}"], "path": ["api","v1","listings","cargo","{{cargo_id}}","boost"] },
+            "body": { "mode": "raw", "raw": "{\n  \"pricing_key\": \"boost_3day\",\n  \"currency\": \"UZS\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "type: cargo|warehouse. Создаёт платёжный заказ на Boost; буст активируется после webhook."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Favorites",
+      "description": "Избранное. POST идемпотентен. В списке is_expired=true если объявление не активно.",
+      "item": [
+        {
+          "name": "POST /favorites",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /favorites",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /favorites",
+          "request": {
+            "method": "DELETE",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/favorites", "host": ["{{base_url}}"], "path": ["api","v1","favorites"] },
+            "body": { "mode": "raw", "raw": "{\n  \"listing_type\": \"cargo\",\n  \"listing_id\": \"{{cargo_id}}\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "description": "Сохранённые маршруты. При создании груза по совпадающему маршруту владелец получает уведомление.",
+      "item": [
+        {
+          "name": "POST /routes",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('route_id', r.data.id);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/routes", "host": ["{{base_url}}"], "path": ["api","v1","routes"] },
+            "body": { "mode": "raw", "raw": "{\n  \"from_city\": \"Ташкент\",\n  \"to_city\": \"Самарканд\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /routes",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/routes", "host": ["{{base_url}}"], "path": ["api","v1","routes"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /routes/:id/notifications",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{access_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/routes/{{route_id}}/notifications", "host": ["{{base_url}}"], "path": ["api","v1","routes","{{route_id}}","notifications"] },
+            "body": { "mode": "raw", "raw": "{\n  \"enabled\": false\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /routes/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/routes/{{route_id}}", "host": ["{{base_url}}"], "path": ["api","v1","routes","{{route_id}}"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Внутренние уведомления. Список: сначала непрочитанные.",
+      "item": [
+        {
+          "name": "GET /notifications",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","notifications"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /notifications/unread-count",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/unread-count", "host": ["{{base_url}}"], "path": ["api","v1","notifications","unread-count"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /notifications/:id/read",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/{{notification_id}}/read", "host": ["{{base_url}}"], "path": ["api","v1","notifications","{{notification_id}}","read"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /notifications/read-all",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/notifications/read-all", "host": ["{{base_url}}"], "path": ["api","v1","notifications","read-all"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "description": "Единый поиск по типу (cargo|warehouse) + автодополнение городов.",
+      "item": [
+        {
+          "name": "GET /search?type=cargo",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search?type=cargo&from_city=Ташкент&to_city=Самарканд&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","search"], "query": [{ "key": "type", "value": "cargo" }, { "key": "from_city", "value": "Ташкент" }, { "key": "to_city", "value": "Самарканд" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /search?type=warehouse",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search?type=warehouse&region=Ташкент&warehouse_type=cold", "host": ["{{base_url}}"], "path": ["api","v1","search"], "query": [{ "key": "type", "value": "warehouse" }, { "key": "region", "value": "Ташкент" }, { "key": "warehouse_type", "value": "cold" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /search/cities — автодополнение",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/search/cities?q=таш&limit=10", "host": ["{{base_url}}"], "path": ["api","v1","search","cities"], "query": [{ "key": "q", "value": "таш" }, { "key": "limit", "value": "10" }] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin (Super Admin)",
+      "description": "Скрытый статик-админ. Вход по login+password (из .env ADMIN_LOGIN/ADMIN_PASSWORD), без OTP. Остальные эндпоинты требуют роль super_admin. Используйте {{admin_token}}.",
+      "item": [
+        {
+          "name": "POST /admin/login — скрытый вход",
+          "event": [{ "listen": "test", "script": { "exec": ["const r=pm.response.json(); if(r.success&&r.data){pm.collectionVariables.set('admin_token', r.data.access_token);}"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/login", "host": ["{{base_url}}"], "path": ["api","v1","admin","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"karvonadmin\",\n  \"password\": \"karvon321321\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Возвращает JWT супер-админа. Тест сохраняет access_token в {{admin_token}}."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin/dashboard",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/dashboard?period=30d", "host": ["{{base_url}}"], "path": ["api","v1","admin","dashboard"], "query": [{ "key": "period", "value": "30d", "description": "7d|30d|90d" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/users",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/users?q=&role=&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","users"], "query": [{ "key": "q", "value": "" }, { "key": "role", "value": "", "description": "user|moderator|super_admin" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/users/:id",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /admin/users/:id/block",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}/block", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}","block"] },
+            "body": { "mode": "raw", "raw": "{\n  \"blocked\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/users/:id/topup — начислить токены",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/users/{{user_id}}/topup", "host": ["{{base_url}}"], "path": ["api","v1","admin","users","{{user_id}}","topup"] },
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 50\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/moderators — создать модератора",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/moderators", "host": ["{{base_url}}"], "path": ["api","v1","admin","moderators"] },
+            "body": { "mode": "raw", "raw": "{\n  \"phone\": \"+998331108810\",\n  \"name\": \"Модератор Иван\"\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Создаёт нового пользователя с ролью moderator или повышает существующего по телефону. Модератор затем входит обычным OTP."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/moderators/:id — снять модератора",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/moderators/{{user_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","moderators","{{user_id}}"] }, "description": "Понижает роль обратно до user." },
+          "response": []
+        },
+        {
+          "name": "GET /admin/listings?type=cargo",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings?type=cargo&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings"], "query": [{ "key": "type", "value": "cargo", "description": "cargo|warehouse" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "PATCH /admin/listings/:type/:id/block",
+          "request": { "method": "PATCH", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings/cargo/{{cargo_id}}/block", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings","cargo","{{cargo_id}}","block"] } },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/listings/:type/:id",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/listings/cargo/{{cargo_id}}", "host": ["{{base_url}}"], "path": ["api","v1","admin","listings","cargo","{{cargo_id}}"] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/companies",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/companies?status=&page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","companies"], "query": [{ "key": "status", "value": "", "description": "pending|approved|rejected|docs_requested" }, { "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/payments",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/payments?page=1&per_page=20", "host": ["{{base_url}}"], "path": ["api","v1","admin","payments"], "query": [{ "key": "page", "value": "1" }, { "key": "per_page", "value": "20" }] } },
+          "response": []
+        },
+        {
+          "name": "GET /admin/pricing",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/pricing", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing"] } },
+          "response": []
+        },
+        {
+          "name": "PUT /admin/pricing/:key — изменить тариф/токены/сумму",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/pricing/tokens_basic", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing","tokens_basic"] },
+            "body": { "mode": "raw", "raw": "{\n  \"label\": \"Базовый пакет\",\n  \"price_uzs\": 30000,\n  \"price_usd\": 2.5,\n  \"tokens_amount\": 20,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } },
+            "description": "Динамическое управление тарифами: суммы (price_uzs/usd), кол-во токенов (tokens_amount), длительность (duration_days). Ключ tokens_registration задаёт бонус при регистрации."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/pricing — создать тариф",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" } ],
+            "url": { "raw": "{{base_url}}/api/v1/admin/pricing", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing"] },
+            "body": { "mode": "raw", "raw": "{\n  \"key\": \"tokens_promo\",\n  \"label\": \"Промо пакет (10 токенов)\",\n  \"price_uzs\": 15000,\n  \"price_usd\": 1.2,\n  \"tokens_amount\": 10,\n  \"is_active\": true\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /admin/pricing/:key — удалить тариф",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": { "raw": "{{base_url}}/api/v1/admin/pricing/tokens_promo", "host": ["{{base_url}}"], "path": ["api","v1","admin","pricing","tokens_promo"] } },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Misc (Config, Dashboard)",
+      "description": "Публичный конфиг (адрес карты, языки) и лента событий дашборда.",
+      "item": [
+        {
+          "name": "GET /config — публичная конфигурация",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/v1/config", "host": ["{{base_url}}"], "path": ["api","v1","config"] } },
+          "response": [
+            { "name": "200 OK", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": true,\n  \"data\": {\n    \"map_tiles_url\": \"https://maps.fan.sarbon.me\",\n    \"languages\": [\"ru\", \"uz\"]\n  }\n}" }
+          ]
+        },
+        {
+          "name": "GET /users/me/events — лента событий",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": { "raw": "{{base_url}}/api/v1/users/me/events", "host": ["{{base_url}}"], "path": ["api","v1","users","me","events"] }, "description": "Кто купил контакт / добавил в избранное по моим объявлениям." },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

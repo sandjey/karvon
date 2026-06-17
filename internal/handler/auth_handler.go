@@ -77,7 +77,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	_ = h.svc.Logout(c.Request.Context(), req.RefreshToken)
+	userID := c.MustGet("user_id").(uuid.UUID)
+	_ = h.svc.Logout(c.Request.Context(), req.RefreshToken, userID)
 	OKMsg(c, nil, "LOGOUT_SUCCESS")
 }
 

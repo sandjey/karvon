@@ -64,6 +64,13 @@ func (r *UserRepo) UpdateProfile(ctx context.Context, id uuid.UUID, fields map[s
 		Updates(fields).Error
 }
 
+func (r *UserRepo) IncrementTokenVersion(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("id = ?", id).
+		UpdateColumn("token_version", gorm.Expr("token_version + 1")).Error
+}
+
 func (r *UserRepo) CountCompanies(ctx context.Context, userID uuid.UUID) (total int64, verified int64, err error) {
 	if err = r.db.WithContext(ctx).Model(&model.Company{}).Where("user_id = ?", userID).Count(&total).Error; err != nil {
 		return

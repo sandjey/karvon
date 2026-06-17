@@ -24,6 +24,7 @@ type Country struct {
 	Code      string  `json:"code"`
 	NameRu    string  `json:"name_ru"`
 	NameEn    string  `json:"name_en"`
+	NameUz    string  `json:"name_uz"`
 	Continent string  `json:"continent,omitempty"`
 	Lat       float64 `json:"lat"`
 	Lng       float64 `json:"lng"`
@@ -33,6 +34,7 @@ type Country struct {
 type City struct {
 	NameRu      string  `json:"name_ru"`
 	NameEn      string  `json:"name_en"`
+	NameUz      string  `json:"name_uz"`
 	CountryCode string  `json:"country_code"`
 	CountryName string  `json:"country"`
 	Region      string  `json:"region,omitempty"`
@@ -43,6 +45,56 @@ type City struct {
 	// cyrAlts holds all pure-Russian Cyrillic tokens from alternateNames.
 	// Not exported; used only for search to handle all Russian spelling variants.
 	cyrAlts []string
+}
+
+// uzCountryNames maps ISO country code → Uzbek Latin name.
+var uzCountryNames = map[string]string{
+	"UZ": "O'zbekiston", "RU": "Rossiya", "KZ": "Qozog'iston",
+	"KG": "Qirg'iziston", "TJ": "Tojikiston", "TM": "Turkmaniston",
+	"CN": "Xitoy", "DE": "Germaniya", "US": "AQSh",
+	"GB": "Buyuk Britaniya", "TR": "Turkiya", "AE": "BAA",
+	"AF": "Afg'oniston", "IR": "Eron", "PK": "Pokiston",
+	"IN": "Hindiston", "JP": "Yaponiya", "KR": "Janubiy Koreya",
+	"FR": "Fransiya", "IT": "Italiya", "ES": "Ispaniya",
+	"PL": "Polsha", "UA": "Ukraina", "BY": "Belarus",
+	"AZ": "Ozarbayjon", "GE": "Gruziya", "AM": "Armaniston",
+	"SA": "Saudiya Arabistoni", "EG": "Misr", "IL": "Isroil",
+	"NL": "Niderlandiya", "SE": "Shvetsiya", "NO": "Norvegiya",
+	"FI": "Finlandiya", "DK": "Daniya", "CH": "Shveytsariya",
+	"AT": "Avstriya", "BE": "Belgiya", "PT": "Portugaliya",
+	"CZ": "Chexiya", "HU": "Vengriya", "RO": "Ruminiya",
+	"SK": "Slovakiya", "BG": "Bolgariya", "GR": "Gretsiya",
+	"RS": "Serbiya", "HR": "Xorvatiya", "BA": "Bosniya va Gersegovina",
+	"MD": "Moldova", "MN": "Mo'g'uliston", "LT": "Litva",
+	"LV": "Latviya", "EE": "Estoniya", "MX": "Meksika",
+	"BR": "Braziliya", "CA": "Kanada", "AU": "Avstraliya",
+	"TH": "Tailand", "MY": "Malayziya", "SG": "Singapur",
+	"KW": "Quvayt", "QA": "Qatar", "OM": "Ummon",
+	"JO": "Iordaniya", "LB": "Livan",
+}
+
+// uzCityNames maps ASCII city name → Uzbek Latin name for major CIS/UZ cities.
+var uzCityNames = map[string]string{
+	"Tashkent": "Toshkent", "Samarkand": "Samarqand", "Bukhara": "Buxoro",
+	"Namangan": "Namangan", "Andijan": "Andijon", "Fergana": "Farg'ona",
+	"Kokand": "Qo'qon", "Navoi": "Navoiy", "Termez": "Termiz",
+	"Urgench": "Urganch", "Nukus": "Nukus", "Jizzakh": "Jizzax",
+	"Karshi": "Qarshi", "Denov": "Denov", "Guliston": "Guliston",
+	"Muynaq": "Mo'ynoq", "Khiva": "Xiva",
+	"Almaty": "Olmaota", "Astana": "Nursulton", "Shymkent": "Shymkent",
+	"Karaganda": "Qorag'anda", "Aktobe": "Aqto'be",
+	"Moscow": "Moskva", "Saint Petersburg": "Sankt-Peterburg",
+	"Novosibirsk": "Novosibirsk", "Ekaterinburg": "Yekaterinburg",
+	"Vladivostok": "Vladivostok", "Omsk": "Omsk",
+	"Bishkek": "Bishkek", "Osh": "O'sh",
+	"Dushanbe": "Dushanbe", "Khujand": "Xo'jand",
+	"Ashgabat": "Ashgabat", "Mary": "Meru", "Turkmenabat": "Turkmanobod",
+	"Baku": "Boku", "Tbilisi": "Tbilisi", "Yerevan": "Yerevan",
+	"Kyiv": "Kiyev", "Minsk": "Minsk",
+	"Istanbul": "Istanbul", "Ankara": "Anqara",
+	"Beijing": "Pekin", "Shanghai": "Shanxay",
+	"Dubai": "Dubay", "Abu Dhabi": "Abu-Dabi",
+	"Tehran": "Tehron", "Kabul": "Kobul",
 }
 
 var (
@@ -119,6 +171,7 @@ func loadCountries() {
 			Code:      code,
 			NameEn:    nameEn,
 			NameRu:    ruCountryName(code, nameEn),
+			NameUz:    uzCountryNames[code],
 			Continent: continent,
 		}
 		Countries = append(Countries, c)
@@ -166,6 +219,7 @@ func loadCities() {
 		Cities = append(Cities, City{
 			NameEn:      nameEn,
 			NameRu:      nameRu,
+			NameUz:      uzCityNames[nameEn],
 			CountryCode: cc,
 			CountryName: country.NameRu,
 			Region:      region,
@@ -355,6 +409,11 @@ func bestCityScore(city City, q string) int {
 	if e := score(city.NameEn, q); e > s {
 		s = e
 	}
+	if city.NameUz != "" {
+		if u := score(city.NameUz, q); u > s {
+			s = u
+		}
+	}
 	// also search all Cyrillic alternate names so users can type any known Russian form
 	for _, alt := range city.cyrAlts {
 		if a := score(alt, q); a > s {
@@ -368,6 +427,11 @@ func bestCountryScore(c Country, q string) int {
 	s := score(c.NameRu, q)
 	if e := score(c.NameEn, q); e > s {
 		s = e
+	}
+	if c.NameUz != "" {
+		if u := score(c.NameUz, q); u > s {
+			s = u
+		}
 	}
 	return s
 }

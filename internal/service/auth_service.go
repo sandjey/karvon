@@ -227,7 +227,7 @@ func (s *AuthService) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto
 		return nil, ErrUserBlocked
 	}
 
-	access, err := s.jwtMgr.GenerateAccess(user.ID, user.Role)
+	access, err := s.jwtMgr.GenerateAccess(user.ID, user.Role, user.TokenVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -242,9 +242,11 @@ func (s *AuthService) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto
 	return &dto.RefreshResponse{AccessToken: access, RefreshToken: refresh}, nil
 }
 
-// Logout инвалидирует refresh token.
-func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
-	return s.tokenRepo.Delete(ctx, refreshToken)
+// Logout инвалидирует все токены пользователя: удаляет refresh-токены и
+// увеличивает token_version, что делает все выданные access-токены невалидными.
+func (s *AuthService) Logout(ctx context.Context, refreshToken string, userID uuid.UUID) error {
+	_ = s.tokenRepo.DeleteByUserID(ctx, userID)
+	return s.userRepo.IncrementTokenVersion(ctx, userID)
 }
 
 // CompleteRegistration устанавливает имя и опциональные поля профиля новому пользователю.
@@ -278,7 +280,7 @@ func (s *AuthService) CompleteRegistration(ctx context.Context, userID uuid.UUID
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func (s *AuthService) issueTokens(ctx context.Context, user *model.User, isNew bool) (*dto.TokenPair, error) {
-	access, err := s.jwtMgr.GenerateAccess(user.ID, user.Role)
+	access, err := s.jwtMgr.GenerateAccess(user.ID, user.Role, user.TokenVersion)
 	if err != nil {
 		return nil, err
 	}

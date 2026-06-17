@@ -9,8 +9,9 @@ import (
 )
 
 type Claims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
+	UserID       string `json:"user_id"`
+	Role         string `json:"role"`
+	TokenVersion int    `json:"tv"`
 	jwt.RegisteredClaims
 }
 
@@ -28,10 +29,11 @@ func NewManager(secret string, accessTTL, refreshTTL time.Duration) *Manager {
 	}
 }
 
-func (m *Manager) GenerateAccess(userID uuid.UUID, role string) (string, error) {
+func (m *Manager) GenerateAccess(userID uuid.UUID, role string, tokenVersion int) (string, error) {
 	claims := Claims{
-		UserID: userID.String(),
-		Role:   role,
+		UserID:       userID.String(),
+		Role:         role,
+		TokenVersion: tokenVersion,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(m.accessTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

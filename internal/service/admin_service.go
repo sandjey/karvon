@@ -109,7 +109,7 @@ func (s *AdminService) Login(ctx context.Context, login, password string) (*dto.
 }
 
 func (s *AdminService) issueTokens(ctx context.Context, u *model.User) (*dto.TokenPair, error) {
-	access, err := s.jwtMgr.GenerateAccess(u.ID, u.Role)
+	access, err := s.jwtMgr.GenerateAccess(u.ID, u.Role, u.TokenVersion)
 	if err != nil {
 		return nil, err
 	}
