@@ -15,6 +15,9 @@ const (
 // ErrNumberNotRegistered возвращается CheckNumber когда номер не найден на платформе.
 var ErrNumberNotRegistered = errors.New("phone number not registered on this platform")
 
+// ErrRateLimit возвращается Send когда API вернул rate-limit (FLOOD_WAIT и подобные).
+var ErrRateLimit = errors.New("rate limit exceeded")
+
 // Notifier отправляет OTP-коды пользователю.
 type Notifier interface {
 	// Send отправляет сообщение.

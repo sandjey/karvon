@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -113,6 +114,9 @@ func (t *TelegramGatewayNotifier) Send(_ context.Context, phone, message string)
 			Str("description", result.Descr).
 			Str("phone", phone).
 			Msg("telegram gateway send failed")
+		if strings.HasPrefix(result.Error, "FLOOD_WAIT") {
+			return ErrRateLimit
+		}
 		return fmt.Errorf("telegram gateway: %s — %s", result.Error, result.Descr)
 	}
 

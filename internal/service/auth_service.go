@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -128,6 +129,9 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 			return nil, ErrTelegramNotConfigured
 		}
 		if err := s.telegram.Send(ctx, phone, message); err != nil {
+			if errors.Is(err, notifier.ErrRateLimit) {
+				return nil, ErrOTPRateLimit
+			}
 			return nil, err
 		}
 	default:
@@ -135,6 +139,9 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 			return nil, ErrWhatsAppNotConfigured
 		}
 		if err := s.whatsapp.Send(ctx, phone, message); err != nil {
+			if errors.Is(err, notifier.ErrRateLimit) {
+				return nil, ErrOTPRateLimit
+			}
 			return nil, err
 		}
 	}
