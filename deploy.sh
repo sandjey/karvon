@@ -5,7 +5,8 @@ APP_DIR=/home/dev_backend/karvon
 cd $APP_DIR
 
 echo "[karvon] Pulling latest code..."
-git pull --ff-only origin master
+git fetch origin master
+git reset --hard FETCH_HEAD
 
 echo "[karvon] Building and restarting containers..."
 COMPOSE="docker-compose"
