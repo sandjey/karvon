@@ -128,14 +128,14 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 			return nil, ErrTelegramNotConfigured
 		}
 		if err := s.telegram.Send(ctx, phone, message); err != nil {
-			return nil, ErrTelegramNotConfigured
+			return nil, err
 		}
 	default:
 		if s.whatsapp == nil {
 			return nil, ErrWhatsAppNotConfigured
 		}
 		if err := s.whatsapp.Send(ctx, phone, message); err != nil {
-			return nil, ErrWhatsAppNotConfigured
+			return nil, err
 		}
 	}
 
