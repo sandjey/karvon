@@ -11,12 +11,24 @@ import (
 )
 
 type UserService struct {
-	userRepo    *repository.UserRepo
-	companyRepo *repository.CompanyRepo
+	userRepo      *repository.UserRepo
+	companyRepo   *repository.CompanyRepo
+	cargoRepo     *repository.CargoRepo
+	warehouseRepo *repository.WarehouseRepo
 }
 
-func NewUserService(userRepo *repository.UserRepo, companyRepo *repository.CompanyRepo) *UserService {
-	return &UserService{userRepo: userRepo, companyRepo: companyRepo}
+func NewUserService(
+	userRepo *repository.UserRepo,
+	companyRepo *repository.CompanyRepo,
+	cargoRepo *repository.CargoRepo,
+	warehouseRepo *repository.WarehouseRepo,
+) *UserService {
+	return &UserService{
+		userRepo:      userRepo,
+		companyRepo:   companyRepo,
+		cargoRepo:     cargoRepo,
+		warehouseRepo: warehouseRepo,
+	}
 }
 
 func (s *UserService) GetProfile(ctx context.Context, userID uuid.UUID) (*model.User, error) {
@@ -72,9 +84,54 @@ func (s *UserService) GetStats(ctx context.Context, userID uuid.UUID) (*dto.User
 	if err != nil {
 		return nil, err
 	}
+	activeCargo, err := s.cargoRepo.CountActiveByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	activeWarehouses, err := s.warehouseRepo.CountActiveByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	contacts, err := s.userRepo.CountContactsPurchasedByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
 	return &dto.UserStatsResponse{
 		TokenBalance:      u.TokenBalance,
 		CompaniesCount:    int(total),
 		VerifiedCompanies: int(verified),
+		ActiveCargo:       int(activeCargo),
+		ActiveWarehouses:  int(activeWarehouses),
+		ContactsPurchased: int(contacts),
+	}, nil
+}
+
+// GetMyCargo возвращает все объявления-грузы пользователя (не шаблоны).
+func (s *UserService) GetMyCargo(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.CargoListing, int64, error) {
+	return s.cargoRepo.ListByUser(ctx, userID, offset, limit)
+}
+
+// GetMyWarehouses возвращает все склады пользователя.
+func (s *UserService) GetMyWarehouses(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.WarehouseListing, int64, error) {
+	return s.warehouseRepo.ListByUser(ctx, userID, offset, limit)
+}
+
+// GetListingQuota возвращает информацию о бесплатном слоте объявлений.
+func (s *UserService) GetListingQuota(ctx context.Context, userID uuid.UUID) (*dto.ListingQuotaResponse, error) {
+	freeCargo, err := s.cargoRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeWarehouse, err := s.warehouseRepo.CountFreeActive(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	freeUsed := int(freeCargo + freeWarehouse)
+	const freeTotal = 1
+	return &dto.ListingQuotaResponse{
+		FreeUsed:    freeUsed,
+		FreeTotal:   freeTotal,
+		CanPostFree: freeUsed < freeTotal,
+		PricingKey:  "listing_paid",
 	}, nil
 }

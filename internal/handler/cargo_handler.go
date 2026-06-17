@@ -29,6 +29,7 @@ func (h *CargoHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gin.Ha
 	g.GET("/templates", auth, h.Templates)
 	g.GET("/:id", h.GetOne)
 	g.GET("/:id/stats", auth, h.Stats)
+	g.GET("/:id/similar", h.Similar)
 	// owner / verified
 	g.POST("", auth, verified, h.Create)
 	g.PATCH("/:id", auth, h.Update)
@@ -246,6 +247,29 @@ func (h *CargoHandler) Stats(c *gin.Context) {
 	OK(c, stats)
 }
 
+func (h *CargoHandler) Similar(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	listing, err := h.svc.GetByID(c.Request.Context(), id, optionalUserID(c))
+	if err != nil {
+		handleCargoErr(c, err)
+		return
+	}
+	similar, err := h.svc.Similar(c.Request.Context(), id, listing.Category)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	for i := range similar {
+		maskCargo(&similar[i])
+	}
+	OK(c, similar)
+}
+
 // maskCargo прячет контактные данные компании в публичной выдаче (контакты — через /contacts/view).
 func maskCargo(c *model.CargoListing) {
 	c.User = nil
@@ -263,6 +287,8 @@ func handleCargoErr(c *gin.Context, err error) {
 		Forbidden(c)
 	case isErr(err, service.ErrCompanyNotFound), isErr(err, service.ErrCompanyNotOwned):
 		FailCode(c, http.StatusForbidden, "COMPANY_NOT_VERIFIED")
+	case isErr(err, service.ErrPhotoLimitExceeded):
+		FailCode(c, http.StatusBadRequest, "PHOTO_LIMIT_EXCEEDED")
 	default:
 		InternalError(c)
 	}

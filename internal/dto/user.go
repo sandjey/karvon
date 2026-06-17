@@ -32,7 +32,17 @@ type ProfileResponse struct {
 }
 
 type UserStatsResponse struct {
-	TokenBalance      int `json:"token_balance"`
-	CompaniesCount    int `json:"companies_count"`
-	VerifiedCompanies int `json:"verified_companies"`
+	TokenBalance        int `json:"token_balance"`
+	CompaniesCount      int `json:"companies_count"`
+	VerifiedCompanies   int `json:"verified_companies"`
+	ActiveCargo         int `json:"active_cargo"`
+	ActiveWarehouses    int `json:"active_warehouses"`
+	ContactsPurchased   int `json:"contacts_purchased"`
+}
+
+type ListingQuotaResponse struct {
+	FreeUsed    int    `json:"free_used"`
+	FreeTotal   int    `json:"free_total"`
+	CanPostFree bool   `json:"can_post_free"`
+	PricingKey  string `json:"pricing_key"`
 }

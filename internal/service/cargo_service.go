@@ -56,12 +56,25 @@ func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, exp
 	return uuid.Nil, ErrCompanyNotFound
 }
 
+func countPhotos(media []dto.MediaItem) int {
+	n := 0
+	for _, m := range media {
+		if m.FileType == "photo" {
+			n++
+		}
+	}
+	return n
+}
+
 func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.CargoUpsertRequest) (*model.CargoListing, error) {
 	if req.CargoName == nil || *req.CargoName == "" {
 		return nil, ErrValidation
 	}
 	if req.Category == nil || *req.Category == "" {
 		return nil, ErrValidation
+	}
+	if countPhotos(req.Media) > 10 {
+		return nil, ErrPhotoLimitExceeded
 	}
 	companyID, err := s.resolveCompany(ctx, userID, req.CompanyID)
 	if err != nil {
@@ -152,7 +165,14 @@ func (s *CargoService) ownedListing(ctx context.Context, id, userID uuid.UUID) (
 	return c, nil
 }
 
+func (s *CargoService) Similar(ctx context.Context, id uuid.UUID, category string) ([]model.CargoListing, error) {
+	return s.repo.Similar(ctx, id, category, 5)
+}
+
 func (s *CargoService) Update(ctx context.Context, id, userID uuid.UUID, req dto.CargoUpsertRequest) (*model.CargoListing, error) {
+	if countPhotos(req.Media) > 10 {
+		return nil, ErrPhotoLimitExceeded
+	}
 	c, err := s.ownedListing(ctx, id, userID)
 	if err != nil {
 		return nil, err

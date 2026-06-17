@@ -97,7 +97,7 @@ func main() {
 	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
 
 	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
-	userSvc      := service.NewUserService(userRepo, companyRepo)
+	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
 	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo)
@@ -118,6 +118,7 @@ func main() {
 	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
 	routeSvc     := service.NewRouteService(routeRepo)
 	notifSvc     := service.NewNotificationService(notifRepo)
+	statsRepo    := repository.NewStatsRepo(gormDB)
 	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
 
 	// Сид скрытого статик-админа
@@ -170,6 +171,7 @@ func main() {
 	handler.NewNotificationHandler(notifSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewSearchHandler(cargoSvc, warehouseSvc).RegisterRoutes(v1)
 	handler.NewAdminHandler(adminSvc).RegisterRoutes(v1, authMiddleware, superAdminMiddleware)
+	handler.NewStatsHandler(statsRepo).RegisterRoutes(v1)
 
 	// ── Сервер ───────────────────────────────────────────────────────────────
 	srv := &http.Server{

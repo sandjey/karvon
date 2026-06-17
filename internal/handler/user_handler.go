@@ -26,6 +26,9 @@ func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFunc) 
 	g.PATCH("/me", h.UpdateProfile)
 	g.GET("/me/stats", h.GetStats)
 	g.GET("/me/events", h.GetEvents)
+	g.GET("/me/listing-quota", h.ListingQuota)
+	g.GET("/me/listings/cargo", h.MyCargoListings)
+	g.GET("/me/warehouses", h.MyWarehouses)
 }
 
 func (h *UserHandler) GetEvents(c *gin.Context) {
@@ -71,6 +74,42 @@ func (h *UserHandler) GetStats(c *gin.Context) {
 		return
 	}
 	OK(c, stats)
+}
+
+func (h *UserHandler) ListingQuota(c *gin.Context) {
+	userID := c.MustGet("user_id").(uuid.UUID)
+	quota, err := h.svc.GetListingQuota(c.Request.Context(), userID)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	OK(c, quota)
+}
+
+func (h *UserHandler) MyCargoListings(c *gin.Context) {
+	userID := c.MustGet("user_id").(uuid.UUID)
+	page, perPage := parsePagination(c)
+	offset := (page - 1) * perPage
+
+	list, total, err := h.svc.GetMyCargo(c.Request.Context(), userID, offset, perPage)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	Paginated(c, list, int(total), page, perPage)
+}
+
+func (h *UserHandler) MyWarehouses(c *gin.Context) {
+	userID := c.MustGet("user_id").(uuid.UUID)
+	page, perPage := parsePagination(c)
+	offset := (page - 1) * perPage
+
+	list, total, err := h.svc.GetMyWarehouses(c.Request.Context(), userID, offset, perPage)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	Paginated(c, list, int(total), page, perPage)
 }
 
 func toProfileResponse(u *model.User) dto.ProfileResponse {

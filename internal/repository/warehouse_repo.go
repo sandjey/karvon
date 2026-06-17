@@ -153,6 +153,32 @@ func (r *WarehouseRepo) RemoveBoost(ctx context.Context, id uuid.UUID) error {
 		Updates(map[string]interface{}{"is_boosted": false, "boost_expires_at": nil}).Error
 }
 
+// Similar возвращает похожие активные склады того же типа и региона.
+func (r *WarehouseRepo) Similar(ctx context.Context, excludeID uuid.UUID, warehouseType, region string, limit int) ([]model.WarehouseListing, error) {
+	var list []model.WarehouseListing
+	q := r.db.WithContext(ctx).
+		Where("status = 'active' AND is_admin_blocked = false AND id <> ?", excludeID)
+	if warehouseType != "" {
+		q = q.Where("warehouse_type = ?", warehouseType)
+	}
+	if region != "" {
+		q = q.Where("region ILIKE ?", "%"+region+"%")
+	}
+	err := q.Preload("Company").
+		Order("is_boosted DESC, created_at DESC").
+		Limit(limit).Find(&list).Error
+	return list, err
+}
+
+// CountActiveByUser считает активные склады пользователя.
+func (r *WarehouseRepo) CountActiveByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
+		Where("user_id = ? AND status = 'active'", userID).
+		Count(&count).Error
+	return count, err
+}
+
 func (r *WarehouseRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.WarehouseListing, int64, error) {
 	q := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).Where("user_id = ?", userID)
 	var total int64

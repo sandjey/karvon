@@ -188,6 +188,29 @@ func (r *CargoRepo) CountFreeActive(ctx context.Context, userID uuid.UUID) (int6
 	return count, err
 }
 
+// Similar возвращает похожие активные объявления той же категории.
+func (r *CargoRepo) Similar(ctx context.Context, excludeID uuid.UUID, category string, limit int) ([]model.CargoListing, error) {
+	var list []model.CargoListing
+	q := r.db.WithContext(ctx).
+		Where("status = 'active' AND is_template = false AND is_admin_blocked = false AND id <> ?", excludeID)
+	if category != "" {
+		q = q.Where("category = ?", category)
+	}
+	err := q.Preload("Company").
+		Order("is_boosted DESC, created_at DESC").
+		Limit(limit).Find(&list).Error
+	return list, err
+}
+
+// CountActiveByUser считает активные объявления (не шаблоны) пользователя.
+func (r *CargoRepo) CountActiveByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.CargoListing{}).
+		Where("user_id = ? AND status = 'active' AND is_template = false", userID).
+		Count(&count).Error
+	return count, err
+}
+
 // ExpireBoosts снимает истёкшие бусты. Возвращает число затронутых.
 func (r *CargoRepo) ExpireBoosts(ctx context.Context) (int64, error) {
 	res := r.db.WithContext(ctx).Model(&model.CargoListing{}).

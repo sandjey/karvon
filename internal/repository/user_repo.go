@@ -96,6 +96,14 @@ func (r *UserRepo) DashboardEvents(ctx context.Context, userID uuid.UUID, limit 
 	return events, err
 }
 
+// CountContactsPurchasedByUser считает общее количество купленных контактов пользователем.
+func (r *UserRepo) CountContactsPurchasedByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.ContactView{}).
+		Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}
+
 func (r *UserRepo) FindByAdminLogin(ctx context.Context, login string) (*model.User, error) {
 	var u model.User
 	err := r.db.WithContext(ctx).Where("admin_login = ?", login).First(&u).Error

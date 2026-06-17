@@ -26,6 +26,7 @@ func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gi
 	g.GET("", h.List)
 	g.GET("/:id", h.GetOne)
 	g.GET("/:id/stats", auth, h.Stats)
+	g.GET("/:id/similar", h.Similar)
 	g.POST("", auth, verified, h.Create)
 	g.PATCH("/:id", auth, h.Update)
 	g.PATCH("/:id/status", auth, h.SetStatus)
@@ -194,6 +195,30 @@ func (h *WarehouseHandler) Stats(c *gin.Context) {
 	OK(c, stats)
 }
 
+func (h *WarehouseHandler) Similar(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	w, err := h.svc.GetByID(c.Request.Context(), id, uuid.Nil)
+	if err != nil {
+		handleWarehouseErr(c, err)
+		return
+	}
+	similar, err := h.svc.Similar(c.Request.Context(), id, w.WarehouseType, w.Region)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	resp := make([]warehouseResp, 0, len(similar))
+	for i := range similar {
+		maskWarehouse(&similar[i])
+		resp = append(resp, wrapWarehouse(&similar[i]))
+	}
+	OK(c, resp)
+}
+
 func handleWarehouseErr(c *gin.Context, err error) {
 	switch {
 	case isErr(err, service.ErrListingNotFound):
@@ -204,6 +229,8 @@ func handleWarehouseErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
 	case isErr(err, service.ErrCompanyNotFound), isErr(err, service.ErrCompanyNotOwned):
 		FailCode(c, http.StatusForbidden, "COMPANY_NOT_VERIFIED")
+	case isErr(err, service.ErrPhotoLimitExceeded):
+		FailCode(c, http.StatusBadRequest, "PHOTO_LIMIT_EXCEEDED")
 	default:
 		InternalError(c)
 	}

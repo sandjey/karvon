@@ -77,9 +77,20 @@ func validateCreate(req *dto.WarehouseUpsertRequest) error {
 	return nil
 }
 
+func (s *WarehouseService) Similar(ctx context.Context, id uuid.UUID, warehouseType string, region *string) ([]model.WarehouseListing, error) {
+	r := ""
+	if region != nil {
+		r = *region
+	}
+	return s.repo.Similar(ctx, id, warehouseType, r, 5)
+}
+
 func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto.WarehouseUpsertRequest) (*model.WarehouseListing, error) {
 	if err := validateCreate(&req); err != nil {
 		return nil, err
+	}
+	if countPhotos(req.Media) > 10 {
+		return nil, ErrPhotoLimitExceeded
 	}
 	companyID, err := s.resolveCompany(ctx, userID, req.CompanyID)
 	if err != nil {
@@ -174,6 +185,9 @@ func (s *WarehouseService) owned(ctx context.Context, id, userID uuid.UUID) (*mo
 }
 
 func (s *WarehouseService) Update(ctx context.Context, id, userID uuid.UUID, req dto.WarehouseUpsertRequest) (*model.WarehouseListing, error) {
+	if countPhotos(req.Media) > 10 {
+		return nil, ErrPhotoLimitExceeded
+	}
 	w, err := s.owned(ctx, id, userID)
 	if err != nil {
 		return nil, err
