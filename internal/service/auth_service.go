@@ -72,6 +72,33 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		return nil, ErrOTPRateLimit
 	}
 
+	channel := notifier.Channel(req.Channel)
+	if channel == "" {
+		channel = notifier.ChannelWhatsApp
+	}
+
+	// Проверить, зарегистрирован ли номер на выбранном канале
+	switch channel {
+	case notifier.ChannelTelegram:
+		if s.telegram == nil {
+			return nil, ErrTelegramNotConfigured
+		}
+		if checker, ok := s.telegram.(notifier.NumberChecker); ok {
+			if err := checker.CheckNumber(ctx, phone); err != nil {
+				return nil, ErrPhoneNotOnTelegram
+			}
+		}
+	default:
+		if s.whatsapp == nil {
+			return nil, ErrWhatsAppNotConfigured
+		}
+		if checker, ok := s.whatsapp.(notifier.NumberChecker); ok {
+			if err := checker.CheckNumber(ctx, phone); err != nil {
+				return nil, ErrPhoneNotOnWhatsApp
+			}
+		}
+	}
+
 	// Деактивировать старые коды
 	if err := s.otpRepo.InvalidateByPhone(ctx, phone); err != nil {
 		return nil, err
@@ -95,11 +122,6 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 	message := fmt.Sprintf("🔐 Ваш код подтверждения KARVON: *%s*\nКод действует 5 минут.", code)
 
 	// Отправка по выбранному каналу
-	channel := notifier.Channel(req.Channel)
-	if channel == "" {
-		channel = notifier.ChannelWhatsApp
-	}
-
 	switch channel {
 	case notifier.ChannelTelegram:
 		if s.telegram == nil {

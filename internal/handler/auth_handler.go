@@ -117,6 +117,10 @@ func (h *AuthHandler) handleErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusServiceUnavailable, "TELEGRAM_NOT_CONFIGURED")
 	case errors.Is(err, service.ErrWhatsAppNotConfigured):
 		FailCode(c, http.StatusServiceUnavailable, "WHATSAPP_NOT_CONFIGURED")
+	case errors.Is(err, service.ErrPhoneNotOnTelegram):
+		FailCode(c, http.StatusUnprocessableEntity, "PHONE_NOT_ON_TELEGRAM")
+	case errors.Is(err, service.ErrPhoneNotOnWhatsApp):
+		FailCode(c, http.StatusUnprocessableEntity, "PHONE_NOT_ON_WHATSAPP")
 	default:
 		InternalError(c)
 	}

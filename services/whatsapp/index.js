@@ -104,6 +104,30 @@ app.post('/send', async (req, res) => {
   }
 })
 
+// POST /check — проверить, зарегистрирован ли номер в WhatsApp
+// Body: { "phone": "+998901234567" }
+app.post('/check', async (req, res) => {
+  const { phone } = req.body
+  if (!phone) {
+    return res.status(400).json({ error: 'phone is required' })
+  }
+  if (!isReady || !sock) {
+    return res.status(503).json({ error: 'WhatsApp not connected' })
+  }
+  try {
+    const jid = phone.replace(/[^\d]/g, '') + '@s.whatsapp.net'
+    const [result] = await sock.onWhatsApp(jid)
+    if (result?.exists) {
+      res.json({ exists: true })
+    } else {
+      res.status(404).json({ exists: false, error: 'number not registered on WhatsApp' })
+    }
+  } catch (err) {
+    console.error('Ошибка проверки номера:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ── Запуск ────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {

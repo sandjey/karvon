@@ -32,6 +32,34 @@ func NewTelegramGateway(baseURL, token string, bypass bool) *TelegramGatewayNoti
 
 var otpCodeRegexp = regexp.MustCompile(`\*(\d{6})\*`)
 
+func (t *TelegramGatewayNotifier) CheckNumber(ctx context.Context, phone string) error {
+	if t.bypass {
+		return nil
+	}
+	body, _ := json.Marshal(map[string]string{"phone_number": phone})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.baseURL+"/checkSendAbility", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("build telegram check request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+t.token)
+	resp, err := t.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("telegram check: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ErrNumberNotRegistered
+	}
+	var result struct {
+		OK bool `json:"ok"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || !result.OK {
+		return ErrNumberNotRegistered
+	}
+	return nil
+}
+
 // Send — to = номер телефона (+998901234567), message = отформатированный текст с OTP.
 // Код извлекается из message и передаётся в Telegram Gateway API.
 func (t *TelegramGatewayNotifier) Send(_ context.Context, phone, message string) error {

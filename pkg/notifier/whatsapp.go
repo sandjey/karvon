@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+
 var waOTPRegexp = regexp.MustCompile(`\*(\d{6})\*`)
 
 type WhatsAppNotifier struct {
@@ -28,6 +29,30 @@ func NewWhatsApp(serviceURL, token string, bypass bool) *WhatsAppNotifier {
 		bypass:     bypass,
 		client:     &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+func (w *WhatsAppNotifier) CheckNumber(ctx context.Context, phone string) error {
+	if w.bypass {
+		return nil
+	}
+	body, _ := json.Marshal(map[string]string{"phone": phone})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.serviceURL+"/check", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("build whatsapp check request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if w.token != "" {
+		req.Header.Set("Authorization", "Bearer "+w.token)
+	}
+	resp, err := w.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("whatsapp check: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ErrNumberNotRegistered
+	}
+	return nil
 }
 
 func (w *WhatsAppNotifier) Send(_ context.Context, phone, message string) error {

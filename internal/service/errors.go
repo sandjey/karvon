@@ -13,6 +13,8 @@ var (
 	ErrNameAlreadySet        = errors.New("NAME_ALREADY_SET")
 	ErrTelegramNotConfigured = errors.New("TELEGRAM_NOT_CONFIGURED")
 	ErrWhatsAppNotConfigured = errors.New("WHATSAPP_NOT_CONFIGURED")
+	ErrPhoneNotOnTelegram    = errors.New("PHONE_NOT_ON_TELEGRAM")
+	ErrPhoneNotOnWhatsApp    = errors.New("PHONE_NOT_ON_WHATSAPP")
 	ErrAlreadyExists         = errors.New("ALREADY_EXISTS")
 	ErrCompanyNotFound       = errors.New("COMPANY_NOT_FOUND")
 	ErrCompanyNotOwned       = errors.New("FORBIDDEN")
