@@ -167,7 +167,25 @@ func (s *WarehouseService) saveMedia(ctx context.Context, id uuid.UUID, items []
 }
 
 func (s *WarehouseService) List(ctx context.Context, f repository.WarehouseFilter) ([]model.WarehouseListing, int64, error) {
-	return s.repo.List(ctx, f)
+	list, total, err := s.repo.List(ctx, f)
+	if err == nil {
+		s.attachMedia(ctx, list)
+	}
+	return list, total, err
+}
+
+func (s *WarehouseService) attachMedia(ctx context.Context, list []model.WarehouseListing) {
+	if len(list) == 0 {
+		return
+	}
+	ids := make([]uuid.UUID, len(list))
+	for i := range list {
+		ids[i] = list[i].ID
+	}
+	mediaMap, _ := s.media.ListByEntityIDs(ctx, "warehouse", ids)
+	for i := range list {
+		list[i].Media = mediaMap[list[i].ID]
+	}
 }
 
 func (s *WarehouseService) owned(ctx context.Context, id, userID uuid.UUID) (*model.WarehouseListing, error) {

@@ -73,6 +73,9 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if req.Category == nil || *req.Category == "" {
 		return nil, ErrValidation
 	}
+	if req.CompanyID == nil {
+		return nil, ErrValidation
+	}
 	if countPhotos(req.Media) > 10 {
 		return nil, ErrPhotoLimitExceeded
 	}
@@ -144,11 +147,33 @@ func (s *CargoService) loadFull(ctx context.Context, id uuid.UUID) (*model.Cargo
 }
 
 func (s *CargoService) List(ctx context.Context, f repository.CargoFilter) ([]model.CargoListing, int64, error) {
-	return s.repo.List(ctx, f)
+	list, total, err := s.repo.List(ctx, f)
+	if err == nil {
+		s.attachMedia(ctx, list)
+	}
+	return list, total, err
 }
 
 func (s *CargoService) ListMine(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.CargoListing, int64, error) {
-	return s.repo.ListByUser(ctx, userID, offset, limit)
+	list, total, err := s.repo.ListByUser(ctx, userID, offset, limit)
+	if err == nil {
+		s.attachMedia(ctx, list)
+	}
+	return list, total, err
+}
+
+func (s *CargoService) attachMedia(ctx context.Context, list []model.CargoListing) {
+	if len(list) == 0 {
+		return
+	}
+	ids := make([]uuid.UUID, len(list))
+	for i := range list {
+		ids[i] = list[i].ID
+	}
+	mediaMap, _ := s.media.ListByEntityIDs(ctx, "cargo", ids)
+	for i := range list {
+		list[i].Media = mediaMap[list[i].ID]
+	}
 }
 
 func (s *CargoService) ownedListing(ctx context.Context, id, userID uuid.UUID) (*model.CargoListing, error) {

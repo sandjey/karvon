@@ -44,6 +44,25 @@ func (r *MediaRepo) Replace(ctx context.Context, entityType string, entityID uui
 	})
 }
 
+// ListByEntityIDs загружает медиа для нескольких entity за один SQL-запрос.
+func (r *MediaRepo) ListByEntityIDs(ctx context.Context, entityType string, ids []uuid.UUID) (map[uuid.UUID][]model.ListingMedia, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var items []model.ListingMedia
+	err := r.db.WithContext(ctx).
+		Where("entity_type = ? AND entity_id IN ?", entityType, ids).
+		Order("sort_order ASC").Find(&items).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[uuid.UUID][]model.ListingMedia, len(ids))
+	for _, item := range items {
+		result[item.EntityID] = append(result[item.EntityID], item)
+	}
+	return result, nil
+}
+
 func (r *MediaRepo) DeleteByEntity(ctx context.Context, entityType string, entityID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Where("entity_type = ? AND entity_id = ?", entityType, entityID).
