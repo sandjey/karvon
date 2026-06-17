@@ -262,6 +262,9 @@ func (s *AuthService) CompleteRegistration(ctx context.Context, userID uuid.UUID
 	if req.Email != nil {
 		fields["email"] = req.Email
 	}
+	if req.ExtraPhone != nil {
+		fields["extra_phone"] = req.ExtraPhone
+	}
 	if req.WhatsApp != nil {
 		fields["whatsapp"] = req.WhatsApp
 	}

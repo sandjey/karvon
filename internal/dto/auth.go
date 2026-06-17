@@ -17,12 +17,13 @@ type RefreshRequest struct {
 }
 
 type CompleteRegistrationRequest struct {
-	Name     string  `json:"name"     binding:"required,min=2,max=100"`
-	Email    *string `json:"email"    binding:"omitempty,email"`
-	WhatsApp *string `json:"whatsapp" binding:"omitempty,max=20"`
-	Telegram *string `json:"telegram" binding:"omitempty,max=50"`
-	City     *string `json:"city"     binding:"omitempty,max=100"`
-	Country  *string `json:"country"  binding:"omitempty,max=100"`
+	Name       string  `json:"name"        binding:"required,min=2,max=100"`
+	Email      *string `json:"email"       binding:"omitempty,email"`
+	ExtraPhone *string `json:"extra_phone" binding:"omitempty,max=30"`
+	WhatsApp   *string `json:"whatsapp"    binding:"omitempty,max=20"`
+	Telegram   *string `json:"telegram"    binding:"omitempty,max=50"`
+	City       *string `json:"city"        binding:"omitempty,max=100"`
+	Country    *string `json:"country"     binding:"omitempty,max=100"`
 }
 
 // ── Responses ─────────────────────────────────────────────────────────────────
