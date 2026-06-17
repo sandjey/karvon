@@ -17,13 +17,12 @@ $COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
 # Build new images
 $COMPOSE build app admin
 
-# Explicitly stop and remove old containers before starting new ones
-# (avoids Docker Compose race condition with prune + up --no-deps)
-$COMPOSE stop app admin 2>/dev/null || true
-$COMPOSE rm -f app admin 2>/dev/null || true
+# Stop and remove old containers via plain docker to avoid compose state tracking issues
+docker stop karvon_app karvon_admin 2>/dev/null || true
+docker rm   karvon_app karvon_admin 2>/dev/null || true
 
-# Start fresh containers
-$COMPOSE up -d --no-deps app admin
+# Start fresh containers (--force-recreate bypasses stale container ID in compose labels)
+$COMPOSE up -d --no-deps --force-recreate app admin
 
 echo "[karvon] Waiting for app to be healthy..."
 sleep 10
