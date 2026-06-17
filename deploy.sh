@@ -8,20 +8,21 @@ echo "[karvon] Pulling latest code..."
 git pull --ff-only origin master
 
 echo "[karvon] Building and restarting containers..."
-# Prefer docker compose v2 over legacy docker-compose v1
 COMPOSE="docker-compose"
 docker compose version &>/dev/null 2>&1 && COMPOSE="docker compose"
-
-# Clean up stale stopped containers from previous deploys
-docker container prune -f --filter "label=com.docker.compose.project=karvon" 2>/dev/null || true
 
 # Ensure postgres and whatsapp are running (start if not, no recreate)
 $COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
 
-# Build new images (doesn't stop anything)
+# Build new images
 $COMPOSE build app admin
 
-# Restart app and admin containers
+# Explicitly stop and remove old containers before starting new ones
+# (avoids Docker Compose race condition with prune + up --no-deps)
+$COMPOSE stop app admin 2>/dev/null || true
+$COMPOSE rm -f app admin 2>/dev/null || true
+
+# Start fresh containers
 $COMPOSE up -d --no-deps app admin
 
 echo "[karvon] Waiting for app to be healthy..."
