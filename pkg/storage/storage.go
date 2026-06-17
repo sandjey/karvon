@@ -42,5 +42,5 @@ func (s *LocalStorage) Save(dir, originalName string, r io.Reader) (string, erro
 		return "", fmt.Errorf("write file: %w", err)
 	}
 
-	return "/" + filepath.ToSlash(filepath.Join(dir, filename)), nil
+	return "/uploads/" + filepath.ToSlash(filepath.Join(dir, filename)), nil
 }
