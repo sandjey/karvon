@@ -99,8 +99,23 @@ func (t *TelegramGatewayNotifier) Send(_ context.Context, phone, message string)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("telegram gateway returned %d", resp.StatusCode)
+	var result struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+		Descr string `json:"description"`
 	}
+	_ = json.NewDecoder(resp.Body).Decode(&result)
+
+	if resp.StatusCode != http.StatusOK || !result.OK {
+		log.Error().
+			Int("status", resp.StatusCode).
+			Str("tg_error", result.Error).
+			Str("description", result.Descr).
+			Str("phone", phone).
+			Msg("telegram gateway send failed")
+		return fmt.Errorf("telegram gateway: %s — %s", result.Error, result.Descr)
+	}
+
+	log.Info().Str("phone", phone).Msg("telegram OTP sent")
 	return nil
 }
