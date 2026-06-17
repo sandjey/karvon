@@ -25,7 +25,7 @@ docker rm   karvon_app karvon_admin 2>/dev/null || true
 $COMPOSE up -d --no-deps --force-recreate app admin
 
 echo "[karvon] Waiting for app to be healthy..."
-sleep 10
+sleep 15
 if curl -sf http://127.0.0.1:8082/health > /dev/null 2>&1; then
   echo "[karvon] OK — app is running at :8082"
 else
