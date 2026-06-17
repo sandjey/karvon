@@ -2119,7 +2119,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\n    \"loader\"\n  ],\n  \"is_adr\": false,\n  \"has_temp_regime\": false,\n  \"required_body_types\": [\n    \"tent\"\n  ],\n  \"delivery_geography\": [\n    \"uz\",\n    \"cis\"\n  ],\n  \"comment_for_carrier\": \"Погрузка с 9:00\",\n  \"media\": [\n    {\n      \"file_url\": \"/uploads/cargo/yarn1.jpg\",\n      \"file_type\": \"photo\"\n    }\n  ],\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"UZ\"\n}",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\n    \"loader\"\n  ],\n  \"is_adr\": false,\n  \"has_temp_regime\": false,\n  \"required_body_types\": [\n    \"tent\"\n  ],\n  \"delivery_geography\": [\n    \"uz\",\n    \"cis\"\n  ],\n  \"comment_for_carrier\": \"Погрузка с 9:00\",\n  \"media\": [\n    {\n      \"file_url\": \"/uploads/cargo/yarn1.jpg\",\n      \"file_type\": \"photo\"\n    }\n  ],\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"UZ\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2242,7 +2242,8 @@
                   "description": "Тип кузова: tent|ref|board|iso|tank"
                 }
               ]
-            }
+            },
+            "description": "Список активных объявлений о грузах. Поддерживает фильтры и пагинацию. Каждый элемент содержит массив media[] с фото/видео объявления."
           },
           "response": []
         },
@@ -2684,7 +2685,8 @@
                   "value": "20"
                 }
               ]
-            }
+            },
+            "description": "Список активных складов. Поддерживает фильтры и пагинацию. Каждый элемент содержит массив media[] с фото/видео объявления."
           },
           "response": []
         },
