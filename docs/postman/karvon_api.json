@@ -129,14 +129,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"whatsapp\"\n}",
+              "raw": "{\n  \"phone\": \"+998901234567\",\n  \"channel\": \"whatsapp\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Новые ошибки (422 Unprocessable Entity):\n- PHONE_NOT_ON_WHATSAPP — номер не зарегистрирован в WhatsApp\n- PHONE_NOT_ON_TELEGRAM — номер не зарегистрирован в Telegram\n\nПример ответа:\n{\n  \"success\": false,\n  \"code\": \"PHONE_NOT_ON_WHATSAPP\",\n  \"message\": \"Номер не зарегистрирован в WhatsApp\"\n}"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `phone` | string | Номер телефона в формате +998XXXXXXXXX |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `channel` | string | `whatsapp` (по умолчанию) / `telegram` |"
           },
           "response": [
             {
@@ -223,14 +223,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"+998331108810\",\n  \"channel\": \"telegram\"\n}",
+              "raw": "{\n  \"phone\": \"+998901234567\",\n  \"channel\": \"telegram\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Новые ошибки (422 Unprocessable Entity):\n- PHONE_NOT_ON_WHATSAPP — номер не зарегистрирован в WhatsApp\n- PHONE_NOT_ON_TELEGRAM — номер не зарегистрирован в Telegram\n\nПример ответа:\n{\n  \"success\": false,\n  \"code\": \"PHONE_NOT_ON_WHATSAPP\",\n  \"message\": \"Номер не зарегистрирован в WhatsApp\"\n}"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `phone` | string | Номер телефона в формате +998XXXXXXXXX |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `channel` | string | `telegram` |"
           },
           "response": [
             {
@@ -296,13 +296,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"+998331108810\",\n  \"code\": \"123456\"\n}",
+              "raw": "{\n  \"phone\": \"+998901234567\",\n  \"code\": \"123456\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `phone` | string | Номер телефона |\n| `code` | string | 6-значный OTP-код |\n\n**Ответ:** `access_token`, `refresh_token`, `is_new_user` (bool)"
           },
           "response": [
             {
@@ -394,13 +395,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"extra_phone\": \"+998901234567\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "raw": "{\n  \"name\": \"Алишер Каримов\",\n  \"email\": \"alisher@mail.uz\",\n  \"whatsapp\": \"+998901234567\",\n  \"telegram\": \"@alisher_uz\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `name` | string | Имя пользователя (2–100 символов) |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `email` | string (email) | Email |\n| `whatsapp` | string | WhatsApp номер |\n| `telegram` | string | Telegram username |\n| `city` | string | Город |\n| `country` | string | Страна |\n\nВызывается один раз после первого входа (`is_new_user: true` в verify-otp)."
           },
           "response": [
             {
@@ -713,13 +715,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Алишер Иванов\",\n  \"email\": \"alisher@example.com\",\n  \"whatsapp\": \"+998331108810\",\n  \"telegram\": \"@alisher\",\n  \"extra_phone\": \"+998901234567\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
+              "raw": "{\n  \"name\": \"Алишер Каримов\",\n  \"email\": \"alisher@mail.uz\",\n  \"extra_phone\": \"+998901234568\",\n  \"whatsapp\": \"+998901234567\",\n  \"telegram\": \"@alisher_uz\",\n  \"city\": \"Ташкент\",\n  \"country\": \"Узбекистан\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "## PATCH /users/me — Обновить профиль\n\nВсе поля необязательны.\n\n### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `name` | string | Имя пользователя (2–100 символов) |\n| `email` | string (email) | Email |\n| `extra_phone` | string | Дополнительный телефон |\n| `whatsapp` | string | WhatsApp номер |\n| `telegram` | string | Telegram username (@...) |\n| `city` | string | Город |\n| `country` | string | Страна |"
           },
           "response": [
             {
@@ -980,14 +983,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"country\": \"UZ\",\n  \"org_type\": \"mchj\",\n  \"name\": \"Карвон Логистика\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 15, офис 3\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"https://fan.sarbon.me/uploads/companies/reg_doc.pdf\"\n}",
+              "raw": "{\n  \"country\": \"Узбекистан\",\n  \"org_type\": \"mchj\",\n  \"name\": \"ООО Karvon Logistics\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 1\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/reg_doc.pdf\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Добавить компанию (отправить на проверку). Статус автоматически = `pending`.\n\n`reg_doc_url` — URL документа из `POST /upload`.\n\n**Обязательны:** country, org_type, name, inn, phone, city, street, reg_doc_url.\n**Опциональны:** email, region, postal_code.\n\n`org_type`: любая строка до 50 символов (mchj, ooo, ip, ao, llc, ltd, gmbh, и т.д.)\n`inn`: минимум 3 символа, максимум 30\n`phone`: максимум 30 символов"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `country` | string | Страна регистрации |\n| `org_type` | string | Тип организации — из GET /config → org_types |\n| `name` | string | Название компании (2–200 символов) |\n| `inn` | string | ИНН / регномер (3–30 символов) |\n| `phone` | string | Телефон компании |\n| `city` | string | Город |\n| `street` | string | Адрес (улица, дом) |\n| `reg_doc_url` | string | URL документа регистрации из POST /upload |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `email` | string (email) | Email компании |\n| `region` | string | Регион / область |\n| `postal_code` | string | Почтовый индекс |"
           },
           "response": [
             {
@@ -1185,14 +1188,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Карвон Логистика Апдейт\",\n  \"phone\": \"+998331108810\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 1\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"/uploads/companies/reg_doc_v2.pdf\"\n}",
+              "raw": "{\n  \"name\": \"Новое название ООО\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"new@company.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 10\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/new_doc.pdf\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Обновить данные компании. Все поля опциональны.\n\n- `pending` → `COMPANY_NOT_EDITABLE` (409)\n- `docs_requested` → можно обновить свидетельство (reg_doc_url), статус автовернётся в `pending`\n- `approved` / `rejected` → можно обновить country, org_type, name, phone, email, city, region, street, postal_code"
+            "description": "## PATCH /companies/:id — Обновить компанию\n\nВсе поля необязательны — передавайте только те, что нужно изменить.\n\n### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `name` | string | Название (2–200 символов) |\n| `phone` | string | Телефон |\n| `email` | string (email) | Email |\n| `city` | string | Город |\n| `region` | string | Регион |\n| `street` | string | Адрес |\n| `postal_code` | string | Индекс |\n| `reg_doc_url` | string | URL нового документа |"
           },
           "response": [
             {
@@ -2613,13 +2616,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"warehouse_type\": \"customs\",\n  \"name\": \"Таможенный склад Ташкент\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Амира Темура, 15\",\n  \"lat\": 41.3,\n  \"lng\": 69.27,\n  \"phone_main\": \"+998331108810\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 400,\n  \"ceiling_height_m\": 6,\n  \"customs_license_number\": \"TL-2024-001\",\n  \"customs_license_issued\": \"2024-01-01\",\n  \"customs_license_expires\": \"2027-01-01\",\n  \"customs_special_services\": [\"oformlenie\", \"strahovanie\"],\n  \"storage_type\": [\"стеллажное\"],\n  \"infrastructure\": [\"loader\", \"parking_trucks\"],\n  \"services\": [\"crossdock\"],\n  \"working_hours\": { \"mon\": \"9:00-18:00\" },\n  \"media\": [{ \"file_url\": \"/uploads/wh/wh1.jpg\", \"file_type\": \"photo\" }]\n}",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Чиланзар №4\",\n  \"region\": \"Ташкент\",\n  \"address\": \"ул. Чиланзар, 15\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"phone_main\": \"+998901234567\",\n  \"phone_extra\": \"+998901234568\",\n  \"contact_person\": \"Иван Иванов\",\n  \"email\": \"warehouse@company.uz\",\n  \"website\": \"https://company.uz\",\n  \"specialization\": [\n    \"food\",\n    \"textile\"\n  ],\n  \"area_total_m2\": 5000,\n  \"area_free_m2\": 2000,\n  \"ceiling_height_m\": 8.5,\n  \"heating_type\": \"heated\",\n  \"storage_type\": [\n    \"rack\",\n    \"floor\"\n  ],\n  \"temp_min\": null,\n  \"temp_max\": null,\n  \"cold_chamber_types\": [],\n  \"customs_license_number\": null,\n  \"customs_license_issued\": null,\n  \"customs_license_expires\": null,\n  \"customs_special_services\": [],\n  \"infrastructure\": [\n    \"railway\",\n    \"parking\"\n  ],\n  \"services\": [\n    \"forklift\",\n    \"security\"\n  ],\n  \"working_hours\": null,\n  \"media\": [\n    {\n      \"file_url\": \"{{base_url}}/uploads/warehouse.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 0\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `company_id` | uuid | ID одобренной компании |\n| `warehouse_type` | string | `regular` / `cold` / `customs` |\n| `name` | string | Название склада (2–200 символов) |\n| `contact_person` | string | Контактное лицо |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `region` | string | Регион — из GET /config → regions |\n| `address` | string | Адрес |\n| `lat` | float | Широта |\n| `lng` | float | Долгота |\n| `phone_main` | string | Основной телефон |\n| `phone_extra` | string | Доп. телефон |\n| `email` | string (email) | Email |\n| `website` | string | Сайт |\n| `specialization` | array | Из GET /config → specialization |\n| `area_total_m2` | float | Общая площадь (м²) |\n| `area_free_m2` | float | Свободная площадь (м²) |\n| `ceiling_height_m` | float | Высота потолков (м) |\n| `heating_type` | string | `heated` / `unheated` / `open` / `closed` |\n| `storage_type` | array | Из GET /config → storage_types |\n| `temp_min / temp_max` | float | Температура °C (только для cold) |\n| `cold_chamber_types` | array | Из GET /config → cold_chamber_types (только для cold) |\n| `customs_license_number` | string | Номер лицензии (только для customs) |\n| `customs_license_issued` | date | Дата выдачи (только для customs) |\n| `customs_license_expires` | date | Дата истечения (только для customs) |\n| `customs_special_services` | array | Спецуслуги таможни |\n| `infrastructure` | array | Из GET /config → infrastructure |\n| `services` | array | Из GET /config → warehouse_services |\n| `working_hours` | JSON | Часы работы (объект) |\n| `media` | array | Фото/видео, макс. 10. file_url + file_type обязательны |"
           },
           "response": []
         },
@@ -2740,14 +2744,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"warehouse_type\": \"regular\",\n  \"name\": \"Склад Юнусабад (обновлён)\",\n  \"contact_person\": \"Алишер\",\n  \"area_total_m2\": 1000,\n  \"area_free_m2\": 200\n}",
+              "raw": "{\n  \"name\": \"Новое название склада\",\n  \"region\": \"Самарканд\",\n  \"area_free_m2\": 1500,\n  \"services\": [\n    \"forklift\",\n    \"security\",\n    \"loading\"\n  ],\n  \"media\": [\n    {\n      \"file_url\": \"{{base_url}}/uploads/new.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 0\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "contact_person обязателен (валидация по типу). Для cold — temp_min/temp_max/cold_chamber_types; для customs — customs_license_*."
+            "description": "## PATCH /warehouses/:id — Обновить склад\n\nВсе поля необязательны. `company_id` не меняется.\nТе же поля что и в POST."
           },
           "response": []
         },
@@ -2780,13 +2784,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"archived\"\n}",
+              "raw": "{\n  \"name\": \"Новое название склада\",\n  \"region\": \"Самарканд\",\n  \"area_free_m2\": 1500,\n  \"services\": [\n    \"forklift\",\n    \"security\",\n    \"loading\"\n  ],\n  \"media\": [\n    {\n      \"file_url\": \"{{base_url}}/uploads/new.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 0\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "## PATCH /warehouses/:id — Обновить склад\n\nВсе поля необязательны. `company_id` не меняется.\nТе же поля что и в POST."
           },
           "response": []
         },
@@ -2933,7 +2938,7 @@
                 }
               }
             },
-            "description": "listing_type: cargo|warehouse. При нехватке токенов — 402 + data.packages/subscriptions."
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` |\n| `listing_id` | uuid | ID объявления |\n\n**Стоимость:** списывается с баланса токенов.\n**Ответ:** контакты компании (phone, email, whatsapp, telegram, ...)"
           },
           "response": [
             {
@@ -3065,14 +3070,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_basic\",\n  \"currency\": \"UZS\",\n  \"return_url\": \"https://karvon.uz/payment/success\",\n  \"return_error_url\": \"https://karvon.uz/payment/error\"\n}",
+              "raw": "{\n  \"payment_type\": \"tokens\",\n  \"pricing_key\": \"tokens_100\",\n  \"currency\": \"UZS\",\n  \"listing_type\": null,\n  \"listing_id\": null,\n  \"return_url\": \"https://yourapp.uz/success\",\n  \"return_error_url\": \"https://yourapp.uz/error\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Создаёт платёжный заказ. Возвращает payment_url = checkout_url страницы оплаты Multicard. Перенаправь пользователя на этот URL. После оплаты Multicard вызовет POST /payments/webhook. payment_type: tokens|subscription|listing."
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `payment_type` | string | `tokens` / `subscription` / `listing` |\n| `pricing_key` | string | Ключ тарифа из GET /payments/packages |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `currency` | string | `UZS` (по умолчанию) / `USD` |\n| `listing_type` | string | `cargo` / `warehouse` (для payment_type=listing) |\n| `listing_id` | uuid | ID объявления (для payment_type=listing) |\n| `return_url` | string | URL редиректа после успешной оплаты |\n| `return_error_url` | string | URL редиректа при ошибке оплаты |"
           },
           "response": []
         },
@@ -3278,7 +3283,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` |\n| `listing_id` | uuid | ID объявления |"
           },
           "response": []
         },
@@ -3339,7 +3345,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` |\n| `listing_id` | uuid | ID объявления |"
           },
           "response": []
         }
@@ -3392,7 +3399,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `from_city` | string | Город отправления (макс. 100 символов) |\n| `to_city` | string | Город назначения (макс. 100 символов) |\n\nСохраняет маршрут пользователя. При появлении нового груза по маршруту придёт уведомление."
           },
           "response": []
         },
@@ -3449,13 +3457,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"enabled\": false\n}",
+              "raw": "{\n  \"enabled\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `enabled` | bool | `true` — включить уведомления, `false` — выключить |"
           },
           "response": []
         },
