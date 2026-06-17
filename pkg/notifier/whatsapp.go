@@ -38,7 +38,8 @@ func (w *WhatsAppNotifier) CheckNumber(ctx context.Context, phone string) error 
 	body, _ := json.Marshal(map[string]string{"phone": phone})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.serviceURL+"/check", bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("build whatsapp check request: %w", err)
+		// не можем построить запрос — не блокируем отправку
+		return nil
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if w.token != "" {
@@ -46,12 +47,22 @@ func (w *WhatsAppNotifier) CheckNumber(ctx context.Context, phone string) error 
 	}
 	resp, err := w.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("whatsapp check: %w", err)
+		// сервис недоступен — не блокируем
+		return nil
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return ErrNumberNotRegistered
+
+	// Блокируем только если /check явно вернул exists=false.
+	// 404 без нашего JSON (старый контейнер, Express unknown route) — пропускаем.
+	if resp.StatusCode == http.StatusNotFound {
+		var result struct {
+			Exists bool `json:"exists"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err == nil && !result.Exists {
+			return ErrNumberNotRegistered
+		}
 	}
+	// 503 (не подключён), 500, 401, старый 404 без тела — не блокируем
 	return nil
 }
 

@@ -39,22 +39,28 @@ func (t *TelegramGatewayNotifier) CheckNumber(ctx context.Context, phone string)
 	body, _ := json.Marshal(map[string]string{"phone_number": phone})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.baseURL+"/checkSendAbility", bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("build telegram check request: %w", err)
+		return nil
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+t.token)
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("telegram check: %w", err)
+		// сеть недоступна — не блокируем
+		return nil
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return ErrNumberNotRegistered
-	}
+
 	var result struct {
-		OK bool `json:"ok"`
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || !result.OK {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		// не можем разобрать ответ — не блокируем
+		return nil
+	}
+	// Блокируем только при явном "номер не найден в Telegram".
+	// Ошибки баланса, rate-limit, 5xx — пропускаем (пусть Send сам вернёт ошибку).
+	if !result.OK && (result.Error == "PHONE_NOT_FOUND" || result.Error == "PHONE_NUMBER_INVALID") {
 		return ErrNumberNotRegistered
 	}
 	return nil
