@@ -2119,14 +2119,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\n    \"loader\"\n  ],\n  \"is_adr\": false,\n  \"has_temp_regime\": false,\n  \"required_body_types\": [\n    \"tent\"\n  ],\n  \"delivery_geography\": [\n    \"uz\",\n    \"cis\"\n  ],\n  \"comment_for_carrier\": \"Погрузка с 9:00\",\n  \"media\": [\n    {\n      \"file_url\": \"/uploads/cargo/yarn1.jpg\",\n      \"file_type\": \"photo\"\n    }\n  ],\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"UZ\"\n}",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"cargo_name\": \"Хлопковая пряжа\",\n  \"category\": \"textile\",\n  \"description\": \"Пряжа 100% хлопок, Ne 30/1\",\n  \"quantity_available\": 120,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 5,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ltl\",\n  \"packaging\": \"pallets\",\n  \"weight_per_place\": 1000,\n  \"length_m\": 1.2,\n  \"width_m\": 0.8,\n  \"height_m\": 1.0,\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 25000000,\n  \"currency\": \"UZS\",\n  \"vat_mode\": \"yes\",\n  \"payment_terms\": \"prepaid\",\n  \"payment_method\": \"bank\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"to_country\": \"Узбекистан\",\n  \"to_city\": \"Самарканд\",\n  \"pickup_address\": \"Чиланзар, склад 4\",\n  \"lat\": 41.28,\n  \"lng\": 69.2,\n  \"loading_methods\": [\n    \"loader\"\n  ],\n  \"working_hours\": null,\n  \"is_adr\": false,\n  \"adr_class\": null,\n  \"has_temp_regime\": false,\n  \"temp_min\": null,\n  \"temp_max\": null,\n  \"required_body_types\": [\n    \"tent\"\n  ],\n  \"incoterms\": \"EXW\",\n  \"delivery_geography\": [\n    \"uz\",\n    \"cis\"\n  ],\n  \"permits\": [],\n  \"comment_for_carrier\": \"Погрузка с 9:00 до 18:00\",\n  \"media\": [\n    {\n      \"file_url\": \"{{base_url}}/uploads/file.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 0\n    },\n    {\n      \"file_url\": \"{{base_url}}/uploads/file2.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 1\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Карточка ТОВАРА. Требует JWT + approved-компанию. company_id опционален (иначе первая approved). category: ключ из GET /api/v1/config (admin-managed: stroymat, food, textile, metal, chemical, wood, electronics, other и любые добавленные). currency: UZS|USD|KZT. media: file_type photo|video|document. Если у аккаунта уже есть бесплатное активное объявление (груз или склад) — новое создаётся со status=archived до оплаты."
+            "description": "## POST /listings/cargo — Создать объявление о грузе\n\n### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `company_id` | uuid | ID одобренной компании (status=approved) |\n| `cargo_name` | string | Название груза (2–200 символов) |\n| `category` | string | Категория — из GET /config → categories |\n\n### Необязательные поля\n\n**Объём**\n- `quantity_available` — количество (число)\n- `quantity_unit` — `ton` / `places` / `pallet` / `m3`\n- `min_order` — минимальный заказ\n- `min_order_unit` — `ton` / `places` / `pallet` / `m3`\n- `divisibility` — `ftl` / `ltl` / `dogruz`\n\n**Упаковка и габариты**\n- `packaging` — `bulk` / `pallets` / `bags` / `barrels` / `rolls` / `boxes` / `liquid` / `oversized`\n- `weight_per_place` — вес места (кг)\n- `length_m`, `width_m`, `height_m` — габариты (м)\n\n**Цена**\n- `price_mode` — `negotiable` / `fixed` / `announcement`\n- `price_per_unit` — цена за единицу\n- `currency` — `UZS` / `USD` / `KZT`\n- `vat_mode` — `yes` / `no` / `unspecified`\n- `payment_terms` — условия оплаты (строка)\n- `payment_method` — способ оплаты (строка)\n\n**Маршрут**\n- `from_country`, `from_city` — откуда\n- `to_country`, `to_city` — куда\n- `pickup_address` — адрес погрузки\n- `lat`, `lng` — координаты (число)\n- `loading_methods` — массив: `loader` / `ramp` / `manual` / `top` / `side`\n- `working_hours` — JSON объект с часами работы\n\n**Специальные параметры**\n- `is_adr` — bool (опасный груз)\n- `adr_class` — 1–9 (только если `is_adr: true`)\n- `has_temp_regime` — bool (температурный режим)\n- `temp_min`, `temp_max` — температуры °C (только если `has_temp_regime: true`)\n- `required_body_types` — массив типов кузова из GET /config → body_types\n- `incoterms` — из GET /config → incoterms\n- `delivery_geography` — массив из GET /config → delivery_geography\n- `permits` — массив из GET /config → permits\n- `comment_for_carrier` — комментарий для перевозчика\n\n**Медиа (макс. 10 фото)**\n```json\n\"media\": [\n  {\n    \"file_url\": \"URL из POST /upload\",   // обязательно\n    \"file_type\": \"photo|video|document\", // обязательно\n    \"original_name\": \"имя файла\",        // необязательно\n    \"sort_order\": 0                      // необязательно, порядок отображения\n  }\n]\n```"
           },
           "response": []
         },
@@ -2243,7 +2243,7 @@
                 }
               ]
             },
-            "description": "Список активных объявлений о грузах. Поддерживает фильтры и пагинацию. Каждый элемент содержит массив media[] с фото/видео объявления."
+            "description": "## GET /listings/cargo — Список активных объявлений\n\n### Query параметры (все необязательны)\n| Параметр | Тип | Описание |\n|----------|-----|----------|\n| `page` | int | Номер страницы (по умолчанию 1) |\n| `per_page` | int | Элементов на странице (по умолчанию 20) |\n| `category` | string | Фильтр по категории |\n| `from_city` | string | Откуда |\n| `from_country` | string | Страна отправления |\n| `to_city` | string | Куда |\n| `to_country` | string | Страна назначения |\n| `body_type` | string | Тип кузова |\n| `divisibility` | string | ftl / ltl / dogruz |\n| `packaging` | string | Тип упаковки |\n| `verified_only` | bool | Только верифицированные компании |\n| `sort` | string | `date_desc` / `price_asc` / `price_desc` / `quantity` |\n\n### Ответ\nКаждый элемент содержит полный объект груза включая `media[]` (фото/видео)."
           },
           "response": []
         },
@@ -2360,13 +2360,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cargo_name\": \"Хлопковая пряжа (обновлено)\",\n  \"category\": \"textile\",\n  \"quantity_available\": 100,\n  \"quantity_unit\": \"ton\",\n  \"price_per_unit\": 26000000,\n  \"currency\": \"UZS\",\n  \"to_city\": \"Самарканд\",\n  \"to_country\": \"UZ\"\n}",
+              "raw": "{\n  \"cargo_name\": \"Обновлённое название\",\n  \"category\": \"textile\",\n  \"description\": \"Новое описание\",\n  \"quantity_available\": 150,\n  \"quantity_unit\": \"ton\",\n  \"min_order\": 10,\n  \"min_order_unit\": \"ton\",\n  \"divisibility\": \"ftl\",\n  \"packaging\": \"bags\",\n  \"price_mode\": \"fixed\",\n  \"price_per_unit\": 30000000,\n  \"currency\": \"UZS\",\n  \"from_country\": \"Узбекистан\",\n  \"from_city\": \"Ташкент\",\n  \"to_country\": \"Казахстан\",\n  \"to_city\": \"Алматы\",\n  \"media\": [\n    {\n      \"file_url\": \"{{base_url}}/uploads/new.jpg\",\n      \"file_type\": \"photo\",\n      \"sort_order\": 0\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "## PATCH /listings/cargo/:id — Обновить объявление\n\nВсе поля необязательны — передавайте только те, что нужно изменить.\n`company_id` в обновлении не передаётся (компания не меняется).\n\nТе же поля что и в POST, кроме `company_id`."
           },
           "response": []
         },
@@ -2400,13 +2401,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"active\",\n  \"in_stock\": false\n}",
+              "raw": "{\n  \"status\": \"active\",\n  \"in_stock\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "## PATCH /listings/cargo/:id/status — Изменить статус объявления\n\n| Поле | Тип | Значения | Обязательно |\n|------|-----|----------|-------------|\n| `status` | string | `active` / `archived` | нет |\n| `in_stock` | bool | true / false | нет |\n\nПередайте хотя бы одно поле."
           },
           "response": []
         },
