@@ -7,312 +7,308 @@
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
-:root {
-  --g900: #0D2B1A;
-  --g800: #163824;
-  --g700: #1E4D31;
-  --g500: #27AE60;
-  --g400: #2ECC71;
-  --g100: #E8F5EE;
-  --g50:  #F2FBF6;
-  --border: #D8EDE1;
-  --text:   #1A1A1A;
-  --sub:    #5A7060;
-  --white:  #FFFFFF;
-  --shadow: 0 4px 24px rgba(0,0,0,0.10);
+:root{
+  --n900:#071828; --n800:#0D2137; --n700:#122845;
+  --b600:#1252B3; --b500:#1A6FE8; --b400:#3D8EF5;
+  --b100:#EBF3FF; --b50:#F4F8FF;
+  --text:#0D1B2A; --sub:#5B7390; --muted:#8EA5BE;
+  --border:#C8DCF2; --white:#fff;
+  --green:#22C55E; --red:#EF4444; --orange:#F97316;
+  --r:12px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:14px;color:var(--text);}
 
 /* ══ PANEL ═══════════════════════════════════════════════ */
 #panel{
-  position:fixed;top:0;left:0;bottom:0;width:320px;
-  z-index:500;display:flex;flex-direction:column;
+  position:fixed;inset:0 auto 0 0;width:310px;z-index:500;
   background:var(--white);
-  box-shadow:3px 0 20px rgba(0,0,0,0.09);
+  box-shadow:0 0 0 1px rgba(0,0,0,.06),4px 0 24px rgba(0,0,0,.08);
+  display:flex;flex-direction:column;
 }
 
 /* Header */
-.p-head{
-  background:var(--g800);
-  padding:16px 18px;
-  display:flex;align-items:center;gap:12px;
+.hdr{
+  background:var(--n800);
+  padding:15px 18px 14px;
+  display:flex;align-items:center;gap:11px;
   flex-shrink:0;
 }
-.p-logo{
-  width:36px;height:36px;border-radius:10px;
-  background:var(--g500);
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
+.hdr-logo{
+  width:34px;height:34px;border-radius:9px;
+  background:var(--b500);
+  display:grid;place-items:center;flex-shrink:0;
 }
-.p-logo svg{width:20px;height:20px;fill:#fff;}
-.p-title{color:#fff;font-size:15px;font-weight:700;line-height:1.15;}
-.p-sub  {color:rgba(255,255,255,0.55);font-size:11px;margin-top:1px;}
+.hdr-logo svg{width:18px;height:18px;fill:#fff;}
+.hdr-name{color:#fff;font-size:14px;font-weight:700;letter-spacing:.01em;}
+.hdr-sub{color:rgba(255,255,255,.4);font-size:11px;margin-top:1px;}
 
-/* Search bar */
-.p-search{
-  padding:14px 16px 10px;
-  border-bottom:1px solid var(--border);
-  flex-shrink:0;
-  background:var(--white);
-}
-.s-wrap{
-  display:flex;align-items:center;gap:10px;
-  background:var(--g50);
-  border:1.5px solid var(--border);
-  border-radius:12px;
-  padding:9px 13px;
+/* Search */
+.srch-wrap{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.srch-box{
+  display:flex;align-items:center;gap:9px;
+  border:1.5px solid var(--border);border-radius:10px;
+  padding:9px 12px;background:var(--b50);
   transition:border-color .15s,box-shadow .15s;
 }
-.s-wrap:focus-within{border-color:var(--g500);box-shadow:0 0 0 3px rgba(39,174,96,0.12);}
-.s-wrap svg{flex-shrink:0;color:var(--sub);}
-.s-wrap input{
+.srch-box:focus-within{border-color:var(--b500);box-shadow:0 0 0 3px rgba(26,111,232,.1);}
+.srch-box svg{flex-shrink:0;color:var(--muted);}
+.srch-box input{
   flex:1;border:none;background:transparent;
   font-size:13px;color:var(--text);outline:none;
 }
-.s-wrap input::placeholder{color:#9BB8A6;}
-#s-results{
-  display:none;
-  margin-top:8px;
-  border:1.5px solid var(--border);
-  border-radius:11px;overflow:hidden;
-  background:var(--white);
-  box-shadow:0 6px 20px rgba(0,0,0,0.08);
+.srch-box input::placeholder{color:var(--muted);}
+#sr-list{
+  display:none;margin-top:7px;
+  border:1.5px solid var(--border);border-radius:10px;overflow:hidden;
+  background:var(--white);box-shadow:0 6px 20px rgba(0,0,0,.07);
 }
-.sr{
-  padding:10px 14px;cursor:pointer;
-  display:flex;align-items:flex-start;gap:10px;
-  border-bottom:1px solid var(--g50);
+.sri{
+  padding:9px 13px;cursor:pointer;
+  display:flex;align-items:flex-start;gap:9px;
+  border-bottom:1px solid var(--b50);
   transition:background .1s;
 }
-.sr:last-child{border-bottom:none;}
-.sr:hover{background:var(--g50);}
-.sr-ic{color:var(--g500);margin-top:1px;flex-shrink:0;}
-.sr-n{font-size:13px;font-weight:500;color:var(--text);}
-.sr-s{font-size:11px;color:var(--sub);margin-top:2px;}
+.sri:last-child{border-bottom:none;}
+.sri:hover{background:var(--b50);}
+.sri-ic{color:var(--b500);margin-top:2px;flex-shrink:0;}
+.sri-n{font-size:13px;font-weight:500;}
+.sri-s{font-size:11px;color:var(--sub);margin-top:1px;}
 
 /* Tabs */
-.p-tabs{
-  display:flex;
-  border-bottom:2px solid var(--border);
-  flex-shrink:0;background:var(--white);
-}
-.tb{
-  flex:1;padding:11px 6px;border:none;background:none;
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{
+  flex:1;padding:10px 6px;border:none;background:none;
   font-size:12px;font-weight:600;color:var(--sub);cursor:pointer;
-  border-bottom:2.5px solid transparent;margin-bottom:-2px;
-  transition:color .15s,border-color .15s;letter-spacing:.01em;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:color .15s,border-color .15s;
 }
-.tb.on{color:var(--g500);border-bottom-color:var(--g500);}
-.tb:hover:not(.on){color:var(--text);background:var(--g50);}
+.tab.on{color:var(--b500);border-color:var(--b500);}
+.tab:hover:not(.on){color:var(--text);background:var(--b50);}
 
-/* Pane */
+/* Panes */
 .pane{display:none;flex:1;overflow-y:auto;flex-direction:column;}
 .pane.on{display:flex;}
 
-/* Section label */
-.s-lbl{
-  padding:12px 16px 5px;
-  font-size:10px;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;
-  color:var(--sub);
+/* ─ Xarita pane ─ */
+.sec-lbl{
+  padding:13px 16px 5px;
+  font-size:10px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);
 }
-
-/* Legend */
-.leg-list{padding:0 16px 6px;}
-.leg-row{
+.leg{padding:2px 16px 8px;}
+.leg-r{
   display:flex;align-items:center;gap:10px;
-  padding:8px 0;font-size:13px;color:var(--text);
-  border-bottom:1px solid var(--g50);
+  padding:8px 0;font-size:13px;
+  border-bottom:1px solid var(--b50);
 }
-.leg-row:last-child{border-bottom:none;}
+.leg-r:last-child{border-bottom:none;}
 .ld{
-  width:14px;height:14px;border-radius:50%;flex-shrink:0;
-  box-shadow:0 0 0 2px #fff,0 0 0 3.5px currentColor;
+  width:13px;height:13px;border-radius:50%;flex-shrink:0;
+  outline:2px solid currentColor;outline-offset:2px;
 }
-.ld.c{background:#F97316;color:#F97316;}
-.ld.w{background:#2563EB;color:#2563EB;}
-.ld.cl{background:var(--g500);color:var(--g500);}
+.ld.cargo{background:var(--orange);color:var(--orange);}
+.ld.wh   {background:var(--b500); color:var(--b500);}
 .leg-ct{
   margin-left:auto;font-size:11px;color:var(--sub);
-  background:var(--g50);padding:2px 8px;border-radius:20px;
+  background:var(--b100);padding:1px 8px;border-radius:20px;
 }
-
-/* Map info tip */
-.map-tip{
-  margin:10px 16px;padding:11px 13px;
-  background:var(--g50);border-radius:10px;
-  border-left:3px solid var(--g500);
-  font-size:12px;color:var(--sub);line-height:1.6;
+.info-box{
+  margin:8px 16px;padding:11px 13px;
+  background:var(--b50);border-radius:9px;
+  border-left:3px solid var(--b400);
+  font-size:12px;color:var(--sub);line-height:1.65;
 }
-.map-tip b{color:var(--g700);}
+.info-box b{color:var(--b600);}
+.info-box code{font-size:11px;color:var(--b500);}
 
-/* ── Route pane ─────────────────────────────────────────── */
-.r-wrap{padding:14px 16px 0;}
+/* ─ Marshrut pane ─ */
+.rp{padding:13px 15px 0;display:flex;flex-direction:column;gap:0;}
 
-/* A-B visual connector */
-.ab-block{
-  display:flex;flex-direction:column;gap:0;
-  margin-bottom:10px;
+/* Waypoint list */
+.wp-hint{
+  margin-bottom:10px;padding:9px 12px;
+  background:var(--b100);border-radius:9px;
+  font-size:12px;color:var(--b600);line-height:1.5;
+  border:1px solid #C8DCF2;
 }
-.ab-row{
-  display:flex;align-items:center;gap:10px;
-  background:var(--g50);
-  border:1.5px solid var(--border);
-  border-radius:11px;
-  padding:10px 12px;
-  cursor:pointer;
+.wp-hint.hide{display:none;}
+
+#wp-list{display:flex;flex-direction:column;}
+.wp-item{position:relative;}
+.wp-row{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 11px;border:1.5px solid var(--border);
+  border-radius:10px;cursor:pointer;
+  background:var(--b50);
   transition:border-color .15s,background .15s;
-  position:relative;
 }
-.ab-row:hover{border-color:var(--g500);background:#EBF9F2;}
-.ab-row.set{border-color:#22C55E;background:#F0FDF4;}
-.ab-dot{
+.wp-row:hover{border-color:var(--b400);background:var(--b100);}
+.wp-row.active{border-color:var(--b500);background:var(--b100);
+  box-shadow:0 0 0 3px rgba(26,111,232,.1);}
+.wp-row.done{border-color:#A7F3C4;background:#F0FDF4;}
+.wp-dot{
   width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:800;color:#fff;flex-shrink:0;
+  display:grid;place-items:center;
+  font-size:10px;font-weight:800;color:#fff;flex-shrink:0;
 }
-.ab-dot.a{background:#22C55E;}
-.ab-dot.b{background:#EF4444;}
-.ab-txt{flex:1;font-size:13px;color:var(--sub);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.ab-row.set .ab-txt{color:var(--text);font-weight:500;}
-.ab-x{color:#9BB8A6;font-size:13px;cursor:pointer;display:none;padding:2px 4px;}
-.ab-row.set .ab-x{display:block;}
+.wp-lbl{flex:1;font-size:12px;color:var(--sub);overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;}
+.wp-row.done .wp-lbl{color:var(--text);font-weight:500;}
+.wp-del{
+  font-size:14px;color:var(--muted);cursor:pointer;
+  padding:2px 4px;display:none;border-radius:4px;
+  transition:color .1s,background .1s;
+}
+.wp-del:hover{color:var(--red);background:#FEE2E2;}
+.wp-row.done .wp-del{display:block;}
 
-.ab-line{
-  width:22px;height:18px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  margin:0 0 0 16px;
-}
-.ab-line::before{
-  content:'';display:block;width:2px;height:100%;
-  background:var(--border);
+/* Connector line between waypoints */
+.wp-line{
+  width:2px;height:14px;background:var(--border);
+  margin:0 0 0 21px;flex-shrink:0;
 }
 
-/* Vehicle selector */
-.v-lbl{font-size:11px;color:var(--sub);font-weight:600;margin-bottom:6px;}
-.v-row{display:flex;gap:7px;margin-bottom:12px;}
+.wp-add{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 11px;border:1.5px dashed var(--border);
+  border-radius:10px;cursor:pointer;margin-top:8px;
+  font-size:12px;color:var(--sub);font-weight:500;
+  transition:border-color .15s,color .15s,background .15s;
+  background:transparent;width:100%;
+}
+.wp-add:hover{border-color:var(--b500);color:var(--b500);background:var(--b100);}
+.wp-add svg{width:14px;height:14px;}
+
+/* Vehicle */
+.v-lbl{font-size:11px;color:var(--sub);font-weight:600;
+  padding:12px 0 6px;}
+.v-row{display:flex;gap:8px;}
 .v-btn{
-  flex:1;padding:10px 6px;border:1.5px solid var(--border);
-  border-radius:10px;background:var(--g50);cursor:pointer;
-  font-size:12px;font-weight:600;color:var(--sub);
-  display:flex;flex-direction:column;align-items:center;gap:4px;
+  flex:1;padding:10px 8px 9px;
+  border:1.5px solid var(--border);border-radius:10px;
+  background:var(--b50);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
   transition:all .15s;
 }
-.v-btn svg{width:22px;height:16px;}
-.v-btn:hover{border-color:var(--g500);color:var(--g700);}
-.v-btn.on{
-  border-color:var(--g500);background:var(--g100);
-  color:var(--g700);
+.v-btn:hover{border-color:var(--b400);background:var(--b100);}
+.v-btn.on{border-color:var(--b500);background:var(--b100);}
+.v-btn .vi{
+  width:40px;height:24px;
+  display:grid;place-items:center;
 }
-.v-badge{
-  font-size:9px;font-weight:700;padding:1px 5px;
-  border-radius:4px;background:var(--g500);color:#fff;
+.v-btn .vi svg{width:100%;height:100%;}
+.v-btn .vn{font-size:11px;font-weight:700;color:var(--sub);}
+.v-btn.on .vn{color:var(--b600);}
+.hgv-tag{
+  font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:3px;
+  background:var(--b500);color:#fff;
+  margin-top:1px;
 }
 
-/* Draw btn */
+/* Go button */
 .btn-go{
-  width:100%;padding:12px;
-  background:var(--g500);color:#fff;
+  width:100%;padding:12px;margin-top:12px;
+  background:var(--b500);color:#fff;
   border:none;border-radius:11px;
-  font-size:14px;font-weight:700;cursor:pointer;
-  transition:background .15s,transform .1s;
-  margin-bottom:8px;
+  font-size:13px;font-weight:700;cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background .15s,transform .1s,opacity .15s;
 }
-.btn-go:hover:not(:disabled){background:var(--g700);transform:translateY(-1px);}
-.btn-go:disabled{opacity:.4;cursor:default;transform:none;}
-.btn-reset{
-  width:100%;padding:9px;background:none;
-  border:1.5px solid var(--border);border-radius:11px;
-  font-size:13px;color:var(--sub);cursor:pointer;
-  transition:all .15s;display:none;margin-bottom:12px;
-}
-.btn-reset:hover{border-color:#EF4444;color:#EF4444;}
+.btn-go:hover:not(:disabled){background:var(--b600);}
+.btn-go:active:not(:disabled){transform:scale(.98);}
+.btn-go:disabled{opacity:.35;cursor:default;}
 
-/* Route info card */
-#r-info{
-  display:none;margin:0 16px 14px;
-  border:1.5px solid var(--border);border-radius:12px;overflow:hidden;
+.btn-clr{
+  width:100%;padding:9px;margin-top:7px;margin-bottom:12px;
+  background:none;border:1.5px solid var(--border);
+  border-radius:11px;font-size:12px;color:var(--sub);
+  cursor:pointer;transition:all .15s;display:none;
 }
-.ri-head{
-  background:var(--g800);padding:10px 14px;
+.btn-clr:hover{border-color:var(--red);color:var(--red);}
+
+/* Result card */
+#r-card{
+  display:none;margin:0 15px 14px;
+  border:1.5px solid var(--border);border-radius:11px;overflow:hidden;
+}
+.rc-head{
+  background:var(--n800);padding:10px 14px;
   font-size:12px;font-weight:700;color:#fff;
   display:flex;align-items:center;gap:8px;
 }
-.ri-body{padding:12px 14px;}
-.ri-row{
+.rc-head svg{flex-shrink:0;}
+.rc-body{padding:11px 14px;}
+.rc-r{
   display:flex;justify-content:space-between;align-items:center;
-  padding:5px 0;border-bottom:1px solid var(--g50);
+  padding:5px 0;border-bottom:1px solid var(--b50);
 }
-.ri-row:last-child{border-bottom:none;}
-.ri-k{font-size:11px;color:var(--sub);}
-.ri-v{font-size:13px;font-weight:700;color:var(--text);}
-.ri-v.green{color:var(--g500);}
-.hgv-note{
-  margin:8px 16px 12px;padding:9px 12px;
-  background:#FFF8E1;border-radius:8px;border-left:3px solid #F59E0B;
-  font-size:11px;color:#78540A;line-height:1.5;display:none;
-}
+.rc-r:last-child{border-bottom:none;}
+.rc-k{font-size:11px;color:var(--sub);}
+.rc-v{font-size:13px;font-weight:700;color:var(--text);}
+.rc-v.hi{color:var(--b500);}
 
-/* Hint */
-.hint{
-  margin:0 16px 10px;padding:10px 12px;
-  background:var(--g50);border-radius:9px;
-  font-size:12px;color:var(--sub);line-height:1.55;
+/* HGV info */
+.hgv-info{
+  display:none;margin:6px 15px 0;padding:9px 12px;
+  background:#FFF8E1;border-radius:8px;border-left:3px solid #F59E0B;
+  font-size:11px;color:#78540A;line-height:1.55;
 }
-.hint.hide{display:none;}
 
 /* ══ MAP ═════════════════════════════════════════════════ */
 #map{
-  position:fixed;top:0;right:0;bottom:0;left:320px;
-  z-index:100;
+  position:fixed;inset:0 0 0 310px;z-index:100;
 }
-#map.crosshair,#map.crosshair *{cursor:crosshair!important;}
+#map.pick,#map.pick *{cursor:crosshair!important;}
+
+/* Map overlay hint */
+#map-hint{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(11,30,53,.88);backdrop-filter:blur(8px);
+  color:#fff;padding:9px 18px;border-radius:30px;
+  font-size:13px;font-weight:500;
+  pointer-events:none;z-index:200;
+  display:none;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+}
 
 .maplibregl-ctrl-attrib,.maplibregl-ctrl-logo{display:none!important;}
 .maplibregl-ctrl-group{
-  border-radius:10px!important;
-  box-shadow:0 2px 12px rgba(0,0,0,0.12)!important;
-  border:none!important;overflow:hidden;
+  border-radius:10px!important;overflow:hidden;
+  box-shadow:0 2px 12px rgba(0,0,0,.12)!important;border:none!important;
 }
 .maplibregl-ctrl-scale{
-  background:rgba(255,255,255,0.92)!important;
-  border:1.5px solid rgba(0,0,0,0.1)!important;
+  background:rgba(255,255,255,.92)!important;
+  border:1px solid rgba(0,0,0,.1)!important;
   border-radius:6px!important;font-size:10px!important;
 }
 
 /* Popup */
 .maplibregl-popup-content{
-  border-radius:13px!important;padding:0!important;
-  box-shadow:0 8px 32px rgba(0,0,0,0.14)!important;
-  overflow:hidden;min-width:195px;
+  border-radius:12px!important;padding:0!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.14)!important;
+  overflow:hidden;min-width:190px;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 .maplibregl-popup-close-button{display:none!important;}
-.pu-top{padding:12px 14px 10px;}
-.pu-k{
-  font-size:10px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;margin-bottom:4px;
-}
-.pu-k.c{color:#F97316;}.pu-k.w{color:#2563EB;}
-.pu-t{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
+.pu-t{padding:11px 14px 9px;}
+.pu-k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;}
+.pu-k.cargo{color:var(--orange);}
+.pu-k.wh{color:var(--b500);}
+.pu-n{font-size:13px;font-weight:600;line-height:1.3;}
 .pu-s{font-size:11px;color:var(--sub);margin-top:3px;}
-.pu-ft{
-  padding:8px 14px;border-top:1px solid var(--g50);
-  display:flex;justify-content:flex-end;
-}
-.pu-cl{font-size:12px;color:var(--g500);cursor:pointer;font-weight:600;}
+.pu-f{padding:7px 14px;border-top:1px solid var(--b50);display:flex;justify-content:flex-end;}
+.pu-cl{font-size:12px;color:var(--b500);cursor:pointer;font-weight:600;}
 
-/* Route endpoint markers */
-.rm{
-  width:18px;height:18px;border-radius:50%;
+/* Waypoint markers */
+.wpm{
+  width:20px;height:20px;border-radius:50%;
   border:3px solid #fff;
-  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
 }
-.rm.s{background:#22C55E;}
-.rm.e{background:#EF4444;}
 </style>
 </head>
 <body>
@@ -320,170 +316,170 @@ html,body{width:100%;height:100%;overflow:hidden;
 <div id="panel">
 
   <!-- Header -->
-  <div class="p-head">
-    <div class="p-logo">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+  <div class="hdr">
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5S5.17 15.5 6 15.5s1.5.67 1.5 1.5S6.83 18.5 6 18.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
     </div>
     <div>
-      <div class="p-title">CTM Logistics</div>
-      <div class="p-sub">Central Trade Market</div>
+      <div class="hdr-name">CTM Logistics</div>
+      <div class="hdr-sub">Central Trade Market</div>
     </div>
   </div>
 
-  <!-- Search (always visible) -->
-  <div class="p-search">
-    <div class="s-wrap">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+  <!-- Search (always) -->
+  <div class="srch-wrap">
+    <div class="srch-box">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
       </svg>
-      <input id="s-in" type="text" placeholder="Shahar, ko'cha, joy..." autocomplete="off">
+      <input id="s-in" type="text" placeholder="Joy, shahar, manzil qidiring..." autocomplete="off">
     </div>
-    <div id="s-results"></div>
+    <div id="sr-list"></div>
   </div>
 
   <!-- Tabs -->
-  <div class="p-tabs">
-    <button class="tb on" data-t="map">Xarita</button>
-    <button class="tb" data-t="route">Marshrut</button>
+  <div class="tabs">
+    <button class="tab on" data-t="map">Xarita</button>
+    <button class="tab" data-t="route">Marshrut</button>
   </div>
 
   <!-- Xarita pane -->
   <div class="pane on" id="pane-map">
-    <div class="s-lbl">Qatlamlar</div>
-    <div class="leg-list">
-      <div class="leg-row">
-        <span class="ld c"></span> Yuk e'lonlari
+    <div class="sec-lbl">Belgilar</div>
+    <div class="leg">
+      <div class="leg-r">
+        <span class="ld cargo"></span>
+        Yuk e'lonlari
         <span class="leg-ct" id="cnt-c">—</span>
       </div>
-      <div class="leg-row">
-        <span class="ld w"></span> Omborlar
+      <div class="leg-r">
+        <span class="ld wh"></span>
+        Omborlar
         <span class="leg-ct" id="cnt-w">—</span>
       </div>
-      <div class="leg-row">
-        <span class="ld cl"></span> Guruh (klaster)
-      </div>
     </div>
 
-    <div class="s-lbl">Ma'lumot</div>
-    <div class="map-tip">
-      Markerga bosing — tafsilotlar ko'rsatiladi.<br>
-      Marshrut chizish uchun — <b>Marshrut</b> tab.
-    </div>
-
-    <div class="s-lbl">API</div>
-    <div class="map-tip" style="font-size:11px;">
+    <div class="sec-lbl">API</div>
+    <div class="info-box">
       <b>GeoJSON endpoint:</b><br>
-      <code style="color:var(--g700)">/api/v1/map/markers</code><br>
-      <code style="color:#9BB8A6">?kind=cargo|warehouse</code><br><br>
-      MapLibre, Leaflet, iOS/Android SDK — to'g'ridan qo'llash mumkin.
+      <code>/api/v1/map/markers</code><br>
+      <code style="color:var(--muted)">?kind=cargo | warehouse</code><br><br>
+      MapLibre, Leaflet, iOS/Android SDK bilan to'g'ridan ishlaydi.
     </div>
   </div>
 
-  <!-- Route pane -->
+  <!-- Marshrut pane -->
   <div class="pane" id="pane-route">
-    <div class="r-wrap">
+    <div class="rp">
 
-      <div class="hint" id="r-hint">
-        Xaritada bosib boshlang'ich va yakuniy nuqtani belgilang.
+      <div class="wp-hint" id="wp-hint">
+        Xaritada bosib nuqtalarni belgilang. Bir nechta oraliq nuqta qo'shishingiz mumkin.
       </div>
 
-      <!-- A-B block -->
-      <div class="ab-block">
-        <div class="ab-row" id="ab-s" data-p="start">
-          <span class="ab-dot a">A</span>
-          <span class="ab-txt" id="ab-s-t">Boshlang'ich nuqta...</span>
-          <span class="ab-x" id="ab-s-x">✕</span>
-        </div>
-        <div class="ab-line"></div>
-        <div class="ab-row" id="ab-e" data-p="end">
-          <span class="ab-dot b">B</span>
-          <span class="ab-txt" id="ab-e-t">Yakuniy nuqta...</span>
-          <span class="ab-x" id="ab-e-x">✕</span>
-        </div>
-      </div>
+      <!-- Dynamic waypoint list -->
+      <div id="wp-list"></div>
 
-      <!-- Vehicle -->
+      <button class="wp-add" id="wp-add">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Oraliq nuqta qo'shish
+      </button>
+
       <div class="v-lbl">Transport turi</div>
       <div class="v-row">
+        <!-- Car -->
         <button class="v-btn on" data-v="driving-car">
-          <svg viewBox="0 0 28 18" fill="currentColor">
-            <path d="M26 9.5l-2.3-6.3A2.3 2.3 0 0 0 21.5 2H6.5A2.3 2.3 0 0 0 4.3 3.2L2 9.5A1.8 1.8 0 0 0 1 11v4a1 1 0 0 0 1 1h1a3.5 3.5 0 0 0 7 0h10a3.5 3.5 0 0 0 7 0h1a1 1 0 0 0 1-1v-4c0-.6-.4-1.1-1-1.5zM6 15a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zm16 0a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zM4 9l2-5.5a.7.7 0 0 1 .6-.5h14.8a.7.7 0 0 1 .6.5L24 9H4z"/>
-          </svg>
-          Yengil
+          <div class="vi">
+            <svg viewBox="0 0 36 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="8" width="30" height="10" rx="3" fill="currentColor" opacity=".15"/>
+              <path d="M5 8l3-6h20l3 6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <rect x="2" y="8" width="32" height="9" rx="2.5" fill="currentColor" opacity=".9"/>
+              <rect x="6" y="10" width="9" height="5" rx="1" fill="white" opacity=".4"/>
+              <rect x="21" y="10" width="9" height="5" rx="1" fill="white" opacity=".4"/>
+              <circle cx="9" cy="19" r="3" fill="currentColor"/>
+              <circle cx="27" cy="19" r="3" fill="currentColor"/>
+              <circle cx="9" cy="19" r="1.5" fill="white" opacity=".5"/>
+              <circle cx="27" cy="19" r="1.5" fill="white" opacity=".5"/>
+            </svg>
+          </div>
+          <span class="vn">Yengil mashina</span>
         </button>
+        <!-- Truck -->
         <button class="v-btn" data-v="driving-hgv">
-          <svg viewBox="0 0 30 18" fill="currentColor">
-            <rect x="0" y="2" width="18" height="12" rx="1.5"/>
-            <path d="M18 5h7l4 5v5H18V5z"/>
-            <circle cx="5" cy="16" r="2.5"/>
-            <circle cx="13" cy="16" r="2.5"/>
-            <circle cx="24" cy="16" r="2.5"/>
-          </svg>
-          Yuk <span class="v-badge">HGV</span>
+          <div class="vi">
+            <svg viewBox="0 0 40 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="0" y="4" width="24" height="13" rx="2" fill="currentColor" opacity=".9"/>
+              <path d="M24 6h9l5 7v4H24V6z" fill="currentColor" opacity=".7"/>
+              <rect x="26" y="7" width="5" height="4" rx="1" fill="white" opacity=".35"/>
+              <circle cx="6"  cy="19" r="3" fill="currentColor"/>
+              <circle cx="18" cy="19" r="3" fill="currentColor"/>
+              <circle cx="32" cy="19" r="3" fill="currentColor"/>
+              <circle cx="6"  cy="19" r="1.3" fill="white" opacity=".5"/>
+              <circle cx="18" cy="19" r="1.3" fill="white" opacity=".5"/>
+              <circle cx="32" cy="19" r="1.3" fill="white" opacity=".5"/>
+            </svg>
+          </div>
+          <span class="vn">Yuk mashinasi</span>
+          <span class="hgv-tag">HGV</span>
         </button>
       </div>
 
       <button class="btn-go" id="btn-go" disabled>
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-          <path d="M3 12h18M13 5l7 7-7 7"/>
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
         Yo'lni ko'rsat
       </button>
-      <button class="btn-reset" id="btn-reset">Tozalash</button>
+      <button class="btn-clr" id="btn-clr">Tozalash</button>
     </div>
 
-    <!-- HGV note -->
-    <div class="hgv-note" id="hgv-note">
-      🚛 <b>HGV rejimi:</b> ko'prik balandligi, vazn va kenglik cheklovlari hisobga olinadi. OpenRouteService (OSM) ma'lumotlari asosida.
+    <div class="hgv-info" id="hgv-info">
+      🚛 <strong>HGV rejim yoqilgan:</strong> ko'prik balandligi, yo'l vazni va kenglik cheklovlari hisobga olinadi.
     </div>
 
-    <!-- Route result card -->
-    <div id="r-info">
-      <div class="ri-head">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M3 12h18M13 5l7 7-7 7"/>
+    <div id="r-card">
+      <div class="rc-head">
+        <svg width="14" height="14" fill="none" stroke="white" stroke-width="2.2" viewBox="0 0 24 24">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
-        <span id="ri-veh">Marshrut</span>
+        <span id="rc-title">Marshrut</span>
       </div>
-      <div class="ri-body">
-        <div class="ri-row">
-          <span class="ri-k">Masofa</span>
-          <span class="ri-v green" id="ri-dist">—</span>
-        </div>
-        <div class="ri-row">
-          <span class="ri-k">Taxminiy vaqt</span>
-          <span class="ri-v" id="ri-time">—</span>
-        </div>
-        <div class="ri-row">
-          <span class="ri-k">Yo'l turi</span>
-          <span class="ri-v" id="ri-type">—</span>
-        </div>
+      <div class="rc-body">
+        <div class="rc-r"><span class="rc-k">Masofa</span><span class="rc-v hi" id="rc-dist">—</span></div>
+        <div class="rc-r"><span class="rc-k">Vaqt</span><span class="rc-v" id="rc-time">—</span></div>
+        <div class="rc-r"><span class="rc-k">Nuqtalar soni</span><span class="rc-v" id="rc-stops">—</span></div>
       </div>
     </div>
 
   </div><!-- /pane-route -->
 </div><!-- /panel -->
 
-<div id="map"></div>
+<!-- Map -->
+<div id="map">
+  <div id="map-hint"></div>
+</div>
 
 <script>
-const MAPTILER = 'IMtNu6UNxo2LBpjLSZpj';
-const ORS_KEY  = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgyYTEyYzczMWNmZjRkNGJiZTM2ZWE5MGU5ZWEzZWEyIiwiaCI6Im11cm11cjY0In0=';
-const BASE     = window.location.origin;
+const MT  = 'IMtNu6UNxo2LBpjLSZpj';
+const ORS = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgyYTEyYzczMWNmZjRkNGJiZTM2ZWE5MGU5ZWEzZWEyIiwiaCI6Im11cm11cjY0In0=';
+const API = window.location.origin;
 
-/* ── State ──────────────────────────────────────────────── */
-const S = {
-  tab:      'map',
-  vehicle:  'driving-car',
-  start:    null, end: null,
-  mStart:   null, mEnd: null,
-  picking:  'start', // 'start' | 'end'
-};
+/* ── Waypoints state ─────────────────────────────────────── */
+// Each: { id, dot-color, marker(maplibre), data:{lng,lat,label} | null }
+let wps = [
+  { id: 0, color: '#22C55E', marker: null, data: null },
+  { id: 1, color: '#EF4444', marker: null, data: null },
+];
+let idCtr   = 2;
+let activeI = 0;  // index being set by map click
+let vehicle = 'driving-car';
+let curTab  = 'map';
 
 /* ── Map ─────────────────────────────────────────────────── */
 const map = new maplibregl.Map({
   container: 'map',
-  style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER}&language=ru`,
+  style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MT}&language=uz`,
   center: [69.2401, 41.2995], zoom: 11,
   antialias: true, fadeDuration: 200,
   attributionControl: false, renderWorldCopies: false,
@@ -494,284 +490,377 @@ map.addControl(new maplibregl.GeolocateControl({
   positionOptions:{enableHighAccuracy:true}, trackUserLocation:true, showUserHeading:true
 }), 'top-right');
 
-/* ── Canvas circle image ─────────────────────────────────── */
-function circleImg(color) {
-  const N=24, canvas=document.createElement('canvas');
-  canvas.width=N; canvas.height=N;
-  const ctx=canvas.getContext('2d'), cx=N/2, r=N/2-2;
-  ctx.shadowColor='rgba(0,0,0,0.25)'; ctx.shadowBlur=4; ctx.shadowOffsetY=2;
-  ctx.beginPath(); ctx.arc(cx,cx,r,0,Math.PI*2);
-  ctx.fillStyle=color; ctx.fill();
-  ctx.shadowBlur=0; ctx.shadowOffsetY=0;
-  ctx.beginPath(); ctx.arc(cx,cx,r,0,Math.PI*2);
-  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
-  return {data:ctx.getImageData(0,0,N,N),width:N,height:N};
+/* ── Circle image ────────────────────────────────────────── */
+function circleImg(hex) {
+  const N=22, c=document.createElement('canvas');
+  c.width=N; c.height=N;
+  const x=c.getContext('2d'), r=N/2-2, cx=N/2;
+  x.shadowColor='rgba(0,0,0,.22)'; x.shadowBlur=4; x.shadowOffsetY=2;
+  x.beginPath(); x.arc(cx,cx,r,0,Math.PI*2);
+  x.fillStyle=hex; x.fill();
+  x.shadowBlur=0; x.shadowOffsetY=0;
+  x.beginPath(); x.arc(cx,cx,r,0,Math.PI*2);
+  x.strokeStyle='#fff'; x.lineWidth=2.8; x.stroke();
+  return {data:x.getImageData(0,0,N,N),width:N,height:N};
 }
 
-/* ── On load ─────────────────────────────────────────────── */
 map.on('load', () => {
-  map.addImage('mc', circleImg('#F97316'));
-  map.addImage('mw', circleImg('#2563EB'));
+  map.addImage('ic', circleImg('#F97316')); // cargo
+  map.addImage('iw', circleImg('#1A6FE8')); // warehouse
 
-  /* Markers source */
-  map.addSource('markers', {
-    type:'geojson', data:`${BASE}/api/v1/map/markers`,
-    cluster:true, clusterMaxZoom:14, clusterRadius:44,
+  /* Markers source — NO cluster */
+  map.addSource('pts', {
+    type:'geojson',
+    data:`${API}/api/v1/map/markers`,
   });
 
-  map.addLayer({id:'clusters',type:'circle',source:'markers',
-    filter:['has','point_count'],
-    paint:{'circle-color':['step',['get','point_count'],'#27AE60',10,'#1E8449',50,'#1A5C32'],
-      'circle-radius':['step',['get','point_count'],16,10,22,50,28],
-      'circle-stroke-color':'#fff','circle-stroke-width':2.5,'circle-opacity':0.93}});
+  map.addLayer({id:'lc',type:'symbol',source:'pts',
+    filter:['==',['get','kind'],'cargo'],
+    layout:{'icon-image':'ic','icon-size':1,'icon-allow-overlap':true}});
 
-  map.addLayer({id:'cl-cnt',type:'symbol',source:'markers',
-    filter:['has','point_count'],
-    layout:{'text-field':'{point_count_abbreviated}','text-size':12,'text-font':['Noto Sans Bold']},
-    paint:{'text-color':'#fff'}});
+  map.addLayer({id:'lw',type:'symbol',source:'pts',
+    filter:['==',['get','kind'],'warehouse'],
+    layout:{'icon-image':'iw','icon-size':1,'icon-allow-overlap':true}});
 
-  map.addLayer({id:'mc',type:'symbol',source:'markers',
-    filter:['all',['!',['has','point_count']],['==',['get','kind'],'cargo']],
-    layout:{'icon-image':'mc','icon-size':1,'icon-allow-overlap':true}});
-
-  map.addLayer({id:'mw',type:'symbol',source:'markers',
-    filter:['all',['!',['has','point_count']],['==',['get','kind'],'warehouse']],
-    layout:{'icon-image':'mw','icon-size':1,'icon-allow-overlap':true}});
-
-  /* Route layers */
-  map.addSource('route', {type:'geojson', data:{type:'FeatureCollection',features:[]}});
-  // White casing
-  map.addLayer({id:'r-case',type:'line',source:'route',
+  /* Route source */
+  map.addSource('rt', {type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  // white casing
+  map.addLayer({id:'rt-cs',type:'line',source:'rt',
     layout:{'line-join':'round','line-cap':'round'},
-    paint:{'line-color':'#fff','line-width':9,'line-opacity':0.85}});
-  // Car route — green solid
-  map.addLayer({id:'r-car',type:'line',source:'route',
+    paint:{'line-color':'#fff','line-width':9,'line-opacity':.8}});
+  // car — blue solid
+  map.addLayer({id:'rt-car',type:'line',source:'rt',
     filter:['==',['get','v'],'driving-car'],
     layout:{'line-join':'round','line-cap':'round'},
-    paint:{'line-color':'#27AE60','line-width':5}});
-  // HGV route — orange dashed
-  map.addLayer({id:'r-hgv',type:'line',source:'route',
+    paint:{'line-color':'#1A6FE8','line-width':5}});
+  // hgv — orange dash
+  map.addLayer({id:'rt-hgv',type:'line',source:'rt',
     filter:['==',['get','v'],'driving-hgv'],
     layout:{'line-join':'round','line-cap':'butt'},
-    paint:{'line-color':'#F97316','line-width':5,'line-dasharray':[2,1.8]}});
+    paint:{'line-color':'#F97316','line-width':5,'line-dasharray':[2,1.6]}});
 
-  /* Cluster click */
-  map.on('click','clusters',e=>{
-    const f=map.queryRenderedFeatures(e.point,{layers:['clusters']})[0];
-    map.getSource('markers').getClusterExpansionZoom(f.properties.cluster_id,(err,z)=>{
-      if(!err) map.easeTo({center:f.geometry.coordinates,zoom:z,duration:350});
-    });
-  });
-
-  /* Marker popup */
-  const popup=new maplibregl.Popup({offset:14,closeButton:false,maxWidth:'250px'});
-  ['mc','mw'].forEach(layer=>{
-    map.on('click',layer,e=>{
-      if(S.tab==='route') return;
-      const p=e.features[0].properties;
-      const co=e.features[0].geometry.coordinates.slice();
-      const ic=p.kind==='cargo';
-      const sub=ic?(p.city||''):(p.address||'');
+  /* Popups */
+  const popup = new maplibregl.Popup({offset:13,closeButton:false,maxWidth:'240px'});
+  ['lc','lw'].forEach(l => {
+    map.on('click', l, e => {
+      if(curTab==='route') return;
+      const p = e.features[0].properties;
+      const co = e.features[0].geometry.coordinates.slice();
+      const ic = p.kind==='cargo';
       popup.setLngLat(co).setHTML(`
-        <div class="pu-top">
-          <div class="pu-k ${ic?'c':'w'}">${ic?"YUK E'LONI":"OMBOR"}</div>
-          <div class="pu-t">${p.title||'—'}</div>
-          ${sub?`<div class="pu-s">${sub}</div>`:''}
+        <div class="pu-t">
+          <div class="pu-k ${ic?'cargo':'wh'}">${ic?"YUK E'LONI":"OMBOR"}</div>
+          <div class="pu-n">${p.title||'—'}</div>
+          ${(ic?p.city:p.address)?`<div class="pu-s">${ic?p.city:p.address}</div>`:''}
         </div>
-        <div class="pu-ft"><span class="pu-cl" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span></div>
+        <div class="pu-f"><span class="pu-cl" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span></div>
       `).addTo(map);
     });
-    map.on('mouseenter',layer,()=>{if(S.tab!=='route') map.getCanvas().style.cursor='pointer';});
-    map.on('mouseleave',layer,()=>{if(S.tab!=='route') map.getCanvas().style.cursor='';});
+    map.on('mouseenter',l,()=>{if(curTab!=='route') map.getCanvas().style.cursor='pointer';});
+    map.on('mouseleave',l,()=>{if(curTab!=='route') map.getCanvas().style.cursor='';});
   });
-  map.on('mouseenter','clusters',()=>map.getCanvas().style.cursor='pointer');
-  map.on('mouseleave','clusters',()=>map.getCanvas().style.cursor='');
 
-  /* Map click for route */
-  map.on('click',async e=>{
-    if(S.tab!=='route') return;
-    const {lng,lat}=e.lngLat;
-    const label=await revGeo(lng,lat);
-    if(!S.start || S.picking==='start'){
-      setPoint('start',{lng,lat,label});
-      if(!S.end) S.picking='end';
-    } else {
-      setPoint('end',{lng,lat,label});
-      S.picking='start';
+  /* Map click → set waypoint */
+  map.on('click', async e => {
+    if(curTab !== 'route') return;
+    const {lng,lat} = e.lngLat;
+    showHint('Manzil aniqlanmoqda...');
+    const label = await revGeo(lng, lat);
+    hideHint();
+    setWp(activeI, {lng, lat, label});
+    // advance to next unset
+    const next = wps.findIndex((w,i) => i > activeI && !w.data);
+    if(next !== -1) setActive(next);
+    else {
+      const any = wps.findIndex(w => !w.data);
+      if(any !== -1) setActive(any);
     }
-    updateGoBtn();
-    if(S.start && S.end) drawRoute();
+    renderWps();
+    checkGoBtn();
   });
 
-  /* Count badges */
-  map.on('sourcedata',e=>{
-    if(e.sourceId!=='markers'||!e.isSourceLoaded) return;
-    const fs=map.querySourceFeatures('markers');
-    let c=0,w=0;
-    fs.forEach(f=>{if(f.properties.kind==='cargo')c++;else if(f.properties.kind==='warehouse')w++;});
-    if(c>0) document.getElementById('cnt-c').textContent=c;
-    if(w>0) document.getElementById('cnt-w').textContent=w;
+  /* Count markers in legend */
+  map.on('sourcedata', e => {
+    if(e.sourceId!=='pts'||!e.isSourceLoaded) return;
+    const fs = map.querySourceFeatures('pts');
+    let c=0, w=0;
+    fs.forEach(f => {if(f.properties.kind==='cargo')c++;else if(f.properties.kind==='warehouse')w++;});
+    if(c>0) document.getElementById('cnt-c').textContent = c;
+    if(w>0) document.getElementById('cnt-w').textContent = w;
   });
 });
 
 /* ── Tabs ────────────────────────────────────────────────── */
-document.querySelectorAll('.tb').forEach(b=>{
-  b.addEventListener('click',()=>{
-    const t=b.dataset.t;
-    document.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));
+document.querySelectorAll('.tab').forEach(b => {
+  b.addEventListener('click', () => {
+    const t = b.dataset.t;
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
     document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
     document.getElementById(`pane-${t}`).classList.add('on');
-    S.tab=t;
-    document.getElementById('map').classList.toggle('crosshair',t==='route');
+    curTab = t;
+    document.getElementById('map').classList.toggle('pick', t==='route');
+    if(t==='route'){
+      showHint('Xaritada bosing — nuqta qo\'yiladi');
+      setTimeout(hideHint, 2500);
+    }
   });
 });
 
 /* ── Search ──────────────────────────────────────────────── */
-let stimer;
-const sIn=document.getElementById('s-in');
-const sRes=document.getElementById('s-results');
-sIn.addEventListener('input',()=>{
-  clearTimeout(stimer);
-  const q=sIn.value.trim();
-  if(q.length<2){sRes.style.display='none';return;}
-  stimer=setTimeout(()=>search(q),280);
-});
-sIn.addEventListener('keydown',e=>{if(e.key==='Escape'){sRes.style.display='none';sIn.value='';}});
-document.addEventListener('click',e=>{if(!e.target.closest('.p-search'))sRes.style.display='none';});
+let stmr;
+const sIn = document.getElementById('s-in');
+const srL = document.getElementById('sr-list');
 
-async function search(q){
-  try{
-    const u=`https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${MAPTILER}&language=ru&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
-    const {features=[]}=await fetch(u).then(r=>r.json());
-    if(!features.length){sRes.style.display='none';return;}
-    sRes.innerHTML=features.map(f=>{
-      const n=f.text_ru||f.text||'';
-      const s=(f.context||[]).map(c=>c.text_ru||c.text).filter(Boolean).join(', ');
-      return `<div class="sr" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
-        <svg class="sr-ic" width="12" height="15" fill="currentColor" viewBox="0 0 12 15"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5C5.17 6.5 4.5 5.83 4.5 5S5.17 3.5 6 3.5 7.5 4.17 7.5 5 6.83 6.5 6 6.5z"/></svg>
-        <div><div class="sr-n">${n}</div>${s?`<div class="sr-s">${s}</div>`:''}</div>
+sIn.addEventListener('input', () => {
+  clearTimeout(stmr);
+  const q = sIn.value.trim();
+  if(q.length<2){srL.style.display='none';return;}
+  stmr = setTimeout(()=>doSearch(q), 280);
+});
+sIn.addEventListener('keydown', e=>{if(e.key==='Escape'){srL.style.display='none';sIn.value='';}});
+document.addEventListener('click', e=>{if(!e.target.closest('.srch-wrap'))srL.style.display='none';});
+
+async function doSearch(q) {
+  try {
+    const u = `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${MT}&language=uz&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
+    const {features=[]} = await fetch(u).then(r=>r.json());
+    if(!features.length){srL.style.display='none';return;}
+    srL.innerHTML = features.map(f=>{
+      const n = f.text||'';
+      const s = (f.context||[]).map(c=>c.text).filter(Boolean).join(', ');
+      return `<div class="sri" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
+        <svg class="sri-ic" width="11" height="14" fill="currentColor" viewBox="0 0 12 16">
+          <path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 11 5 11S11 8.75 11 5c0-2.76-2.24-5-5-5zm0 7.5C4.62 7.5 3.5 6.38 3.5 5S4.62 2.5 6 2.5 8.5 3.62 8.5 5 7.38 7.5 6 7.5z"/>
+        </svg>
+        <div><div class="sri-n">${n}</div>${s?`<div class="sri-s">${s}</div>`:''}</div>
       </div>`;
     }).join('');
-    sRes.style.display='block';
-    sRes.querySelectorAll('.sr').forEach(el=>{
+    srL.style.display='block';
+    srL.querySelectorAll('.sri').forEach(el=>{
       el.addEventListener('click',()=>{
-        map.flyTo({center:[+el.dataset.lng,+el.dataset.lat],zoom:14,speed:1.5});
-        sRes.style.display='none';
-        sIn.value=el.querySelector('.sr-n').textContent;
+        map.flyTo({center:[+el.dataset.lng,+el.dataset.lat],zoom:14,speed:1.4});
+        srL.style.display='none';
+        sIn.value = el.querySelector('.sri-n').textContent;
       });
     });
-  }catch{sRes.style.display='none';}
+  }catch{srL.style.display='none';}
 }
 
-/* ── Route ───────────────────────────────────────────────── */
-document.querySelectorAll('.v-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.v-btn').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on'); S.vehicle=b.dataset.v;
-    document.getElementById('hgv-note').style.display=S.vehicle==='driving-hgv'?'block':'none';
-    if(S.start&&S.end) drawRoute();
-  });
-});
+/* ── Waypoints ───────────────────────────────────────────── */
+function renderWps() {
+  const list = document.getElementById('wp-list');
+  list.innerHTML = '';
 
-function setPoint(p,data){
-  S[p]=data;
-  const row=document.getElementById(`ab-${p==='start'?'s':'e'}`);
-  const txt=document.getElementById(`ab-${p==='start'?'s':'e'}-t`);
-  txt.textContent=data.label||`${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`;
-  row.classList.add('set');
-  const mk=p==='start'?'mStart':'mEnd';
-  if(S[mk]) S[mk].remove();
-  const div=document.createElement('div');
-  div.className=`rm ${p==='start'?'s':'e'}`;
-  S[mk]=new maplibregl.Marker({element:div,anchor:'center'})
+  wps.forEach((wp, i) => {
+    const isFirst = i===0, isLast = i===wps.length-1;
+    const letter = isFirst ? 'A' : isLast ? 'B' : (i).toString();
+    const label  = wp.data
+      ? wp.data.label || `${wp.data.lat.toFixed(4)}, ${wp.data.lng.toFixed(4)}`
+      : isFirst ? 'Boshlang\'ich nuqta...' : isLast ? 'Oxirgi nuqta...' : 'Oraliq nuqta...';
+    const cls = `wp-row${wp.data?' done':''}${activeI===i?' active':''}`;
+
+    const item = document.createElement('div');
+    item.className = 'wp-item';
+    item.innerHTML = `
+      <div class="${cls}" data-i="${i}">
+        <span class="wp-dot" style="background:${wp.color}">${letter}</span>
+        <span class="wp-lbl">${label}</span>
+        ${wp.data ? `<span class="wp-del" data-i="${i}">✕</span>` : ''}
+      </div>
+      ${!isLast ? '<div class="wp-line"></div>' : ''}
+    `;
+    list.appendChild(item);
+  });
+
+  // Row click → set as active
+  list.querySelectorAll('.wp-row').forEach(row=>{
+    row.addEventListener('click', e=>{
+      if(e.target.classList.contains('wp-del')) return;
+      setActive(+row.dataset.i);
+    });
+  });
+
+  // Delete click
+  list.querySelectorAll('.wp-del').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const i = +btn.dataset.i;
+      clearWp(i);
+      // remove middle waypoints (not first/last)
+      if(i>0 && i<wps.length-1){
+        if(wps[i].marker) wps[i].marker.remove();
+        wps.splice(i,1);
+        if(activeI>=wps.length) activeI=wps.length-1;
+      }
+      renderWps();
+      checkGoBtn();
+      clearRouteLayer();
+      document.getElementById('r-card').style.display='none';
+      document.getElementById('btn-clr').style.display='none';
+    });
+  });
+}
+
+function setActive(i) {
+  activeI = i;
+  renderWps();
+  const names = ['Boshlang\'ich','Oraliq','Oxirgi'];
+  const label = i===0?'Boshlang\'ich nuqtani': i===wps.length-1?'Oxirgi nuqtani':'Oraliq nuqtani';
+  showHint(`Xaritada bosing — ${label} belgilash`);
+  setTimeout(hideHint, 2000);
+}
+
+function setWp(i, data) {
+  wps[i].data = data;
+  if(wps[i].marker) wps[i].marker.remove();
+  const div = document.createElement('div');
+  div.className = 'wpm';
+  div.style.background = wps[i].color;
+  wps[i].marker = new maplibregl.Marker({element:div,anchor:'center'})
     .setLngLat([data.lng,data.lat]).addTo(map);
 }
 
-function clearPoint(p){
-  S[p]=null;
-  const mk=p==='start'?'mStart':'mEnd';
-  if(S[mk]){S[mk].remove();S[mk]=null;}
-  const id=p==='start'?'s':'e';
-  document.getElementById(`ab-${id}`).classList.remove('set');
-  document.getElementById(`ab-${id}-t`).textContent=p==='start'?'Boshlang\'ich nuqta...':'Yakuniy nuqta...';
-  clearRouteGeo();
-  document.getElementById('r-info').style.display='none';
-  document.getElementById('btn-reset').style.display='none';
-  updateGoBtn();
+function clearWp(i) {
+  wps[i].data = null;
+  if(wps[i].marker){wps[i].marker.remove();wps[i].marker=null;}
 }
 
-document.getElementById('ab-s-x').addEventListener('click',e=>{e.stopPropagation();clearPoint('start');});
-document.getElementById('ab-e-x').addEventListener('click',e=>{e.stopPropagation();clearPoint('end');});
-document.getElementById('btn-reset').addEventListener('click',()=>{clearPoint('start');clearPoint('end');});
-document.getElementById('btn-go').addEventListener('click',drawRoute);
-
-function updateGoBtn(){
-  document.getElementById('btn-go').disabled=!(S.start&&S.end);
-}
-
-function clearRouteGeo(){
-  if(map.getSource('route'))
-    map.getSource('route').setData({type:'FeatureCollection',features:[]});
-}
-
-async function drawRoute(){
-  if(!S.start||!S.end) return;
-  const btn=document.getElementById('btn-go');
-  btn.textContent='Yuklanmoqda...'; btn.disabled=true;
-  try{
-    const res=await fetch(`https://api.openrouteservice.org/v2/directions/${S.vehicle}/geojson`,{
-      method:'POST',
-      headers:{'Authorization':ORS_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({coordinates:[[S.start.lng,S.start.lat],[S.end.lng,S.end.lat]]})
-    });
-    const data=await res.json();
-    if(!data.features||!data.features[0]) throw new Error('no route');
-    const feat=data.features[0];
-    const {distance,duration}=feat.properties.summary;
-
-    map.getSource('route').setData({
-      type:'FeatureCollection',
-      features:[{type:'Feature',geometry:feat.geometry,properties:{v:S.vehicle}}]
-    });
-
-    // Fit
-    const cs=feat.geometry.coordinates;
-    const lngs=cs.map(c=>c[0]),lats=cs.map(c=>c[1]);
-    map.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
-      {padding:{top:50,bottom:50,left:50,right:80},duration:600});
-
-    document.getElementById('ri-veh').textContent=
-      S.vehicle==='driving-hgv'?'🚛 Yuk mashinasi (HGV)':'🚗 Yengil mashina';
-    document.getElementById('ri-dist').textContent=
-      distance>=1000?`${(distance/1000).toFixed(1)} km`:`${Math.round(distance)} m`;
-    document.getElementById('ri-time').textContent=fmt(duration);
-    document.getElementById('ri-type').textContent=
-      S.vehicle==='driving-hgv'?'HGV — vazn/balandlik cheklovi hisobda':'Standart yo\'l';
-    document.getElementById('r-info').style.display='block';
-    document.getElementById('btn-reset').style.display='block';
-    document.getElementById('r-hint').classList.add('hide');
-  }catch(err){
-    console.error(err);
-    alert('Marshrut topilmadi. Nuqtalar yo\'l tarmog\'ida bo\'lishi kerak.');
+function checkGoBtn() {
+  const filled = wps.filter(w=>w.data).length;
+  document.getElementById('btn-go').disabled = filled<2;
+  if(filled===0){
+    document.getElementById('wp-hint').classList.remove('hide');
+  }else{
+    document.getElementById('wp-hint').classList.add('hide');
   }
-  btn.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 12h18M13 5l7 7-7 7"/></svg> Yo\'lni ko\'rsat';
-  btn.disabled=!(S.start&&S.end);
 }
 
-function fmt(s){
-  const h=Math.floor(s/3600),m=Math.round((s%3600)/60);
-  return h>0?`${h} soat ${m} daqiqa`:`${m} daqiqa`;
+/* Add waypoint */
+document.getElementById('wp-add').addEventListener('click', ()=>{
+  // insert before last (B)
+  const color = '#1A6FE8';
+  wps.splice(wps.length-1, 0, {id:idCtr++, color, marker:null, data:null});
+  setActive(wps.length-2); // newly added stop
+  renderWps();
+  checkGoBtn();
+});
+
+/* Vehicle buttons */
+document.querySelectorAll('.v-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.v-btn').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    vehicle = b.dataset.v;
+    document.getElementById('hgv-info').style.display =
+      vehicle==='driving-hgv'?'block':'none';
+    if(wps.filter(w=>w.data).length>=2) drawRoute();
+  });
+});
+
+/* Draw button */
+document.getElementById('btn-go').addEventListener('click', drawRoute);
+
+/* Clear button */
+document.getElementById('btn-clr').addEventListener('click', ()=>{
+  wps.forEach((_,i)=>clearWp(i));
+  wps = [
+    {id:0,color:'#22C55E',marker:null,data:null},
+    {id:1,color:'#EF4444',marker:null,data:null},
+  ];
+  idCtr=2; activeI=0;
+  renderWps(); checkGoBtn();
+  clearRouteLayer();
+  document.getElementById('r-card').style.display='none';
+  document.getElementById('btn-clr').style.display='none';
+  document.getElementById('wp-hint').classList.remove('hide');
+});
+
+/* Draw route */
+async function drawRoute() {
+  const pts = wps.filter(w=>w.data);
+  if(pts.length<2) return;
+  const btn = document.getElementById('btn-go');
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Yuklanmoqda...';
+  btn.disabled=true;
+
+  try{
+    const coords = pts.map(w=>[w.data.lng, w.data.lat]);
+    const res = await fetch(`https://api.openrouteservice.org/v2/directions/${vehicle}/geojson`,{
+      method:'POST',
+      headers:{'Authorization':ORS,'Content-Type':'application/json','Accept':'application/json, application/geo+json'},
+      body:JSON.stringify({coordinates:coords})
+    });
+    if(!res.ok) throw new Error(`ORS ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    if(!data.features||!data.features[0]) throw new Error('no route in response');
+    const feat = data.features[0];
+    const {distance,duration} = feat.properties.summary;
+
+    map.getSource('rt').setData({
+      type:'FeatureCollection',
+      features:[{type:'Feature',geometry:feat.geometry,properties:{v:vehicle}}]
+    });
+
+    const cs = feat.geometry.coordinates;
+    const lngs=cs.map(c=>c[0]), lats=cs.map(c=>c[1]);
+    map.fitBounds(
+      [[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
+      {padding:{top:50,bottom:50,left:60,right:80},duration:600}
+    );
+
+    document.getElementById('rc-title').textContent =
+      vehicle==='driving-hgv'?'🚛 Yuk mashinasi (HGV)':'🚗 Yengil mashina';
+    document.getElementById('rc-dist').textContent =
+      distance>=1000?`${(distance/1000).toFixed(1)} km`:`${Math.round(distance)} m`;
+    document.getElementById('rc-time').textContent = fmtDur(duration);
+    document.getElementById('rc-stops').textContent = `${pts.length} ta nuqta`;
+    document.getElementById('r-card').style.display='block';
+    document.getElementById('btn-clr').style.display='block';
+
+  }catch(e){
+    console.error('Route error:',e);
+    alert(`Marshrut chizib bo'lmadi.\n${e.message}\n\nNuqtalar yo'l tarmog'ida bo'lishi kerak.`);
+  }
+
+  btn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Yo\'lni ko\'rsat';
+  btn.disabled = wps.filter(w=>w.data).length<2;
 }
 
+function clearRouteLayer(){
+  if(map.getSource('rt'))
+    map.getSource('rt').setData({type:'FeatureCollection',features:[]});
+}
+
+function fmtDur(s){
+  const h=Math.floor(s/3600), m=Math.round((s%3600)/60);
+  return h>0?`${h} soat ${m} daq`:`${m} daqiqa`;
+}
+
+/* ── Reverse geocode ─────────────────────────────────────── */
 async function revGeo(lng,lat){
   try{
-    const u=`https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER}&language=ru`;
+    const u=`https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MT}&language=uz`;
     const {features=[]}=await fetch(u).then(r=>r.json());
-    if(features[0]) return features[0].place_name_ru||features[0].place_name||'';
+    if(features[0]) return features[0].place_name||features[0].text||'';
   }catch{}
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
+
+/* ── Hint overlay ────────────────────────────────────────── */
+let hintTimer;
+function showHint(txt){
+  const h=document.getElementById('map-hint');
+  h.textContent=txt; h.style.display='block';
+  clearTimeout(hintTimer);
+}
+function hideHint(){
+  hintTimer=setTimeout(()=>document.getElementById('map-hint').style.display='none',200);
+}
+
+/* ── Init render ─────────────────────────────────────────── */
+renderWps();
+checkGoBtn();
 </script>
 </body>
 </html>
