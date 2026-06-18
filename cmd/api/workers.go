@@ -10,16 +10,15 @@ import (
 	"karvon/internal/repository"
 )
 
+
 // startBackgroundWorkers запускает фоновые задачи (тикеры).
 func startBackgroundWorkers(
 	cargoRepo *repository.CargoRepo,
 	warehouseRepo *repository.WarehouseRepo,
-	otpRepo *repository.OTPRepo,
 	paymentRepo *repository.PaymentRepo,
 	notifRepo *repository.NotificationRepo,
 ) {
 	go boostExpiryWorker(cargoRepo, warehouseRepo)
-	go otpCleanupWorker(otpRepo)
 	go subscriptionExpiryWorker(paymentRepo, notifRepo)
 }
 
@@ -39,21 +38,6 @@ func boostExpiryWorker(cargoRepo *repository.CargoRepo, warehouseRepo *repositor
 		}
 		if nc+nw > 0 {
 			log.Info().Int64("cargo", nc).Int64("warehouse", nw).Msg("boosts expired")
-		}
-		<-ticker.C
-	}
-}
-
-// otpCleanupWorker раз в сутки удаляет OTP-коды старше 24 часов.
-func otpCleanupWorker(otpRepo *repository.OTPRepo) {
-	ticker := time.NewTicker(24 * time.Hour)
-	defer ticker.Stop()
-	for {
-		n, err := otpRepo.DeleteOlderThan(context.Background(), 24*time.Hour)
-		if err != nil {
-			log.Warn().Err(err).Msg("otp cleanup worker error")
-		} else if n > 0 {
-			log.Info().Int64("deleted", n).Msg("cleaned old OTP codes")
 		}
 		<-ticker.C
 	}

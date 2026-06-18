@@ -18,6 +18,8 @@ import (
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 
+	"github.com/redis/go-redis/v9"
+
 	"karvon/internal/config"
 	"karvon/internal/handler"
 	"karvon/internal/middleware"
@@ -27,6 +29,7 @@ import (
 	"karvon/pkg/email"
 	jwtpkg "karvon/pkg/jwt"
 	"karvon/pkg/notifier"
+	"karvon/pkg/otpstore"
 	"karvon/pkg/rahmat"
 	"karvon/pkg/storage"
 )
@@ -62,6 +65,29 @@ func main() {
 	sqlDB, _ := gormDB.DB()
 	_ = sqlx.NewDb(sqlDB, "pgx") // для будущих репозиториев через sqlx
 
+	// ── Redis ────────────────────────────────────────────────────────────────
+	rdb, err := connectRedis(cfg.RedisURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to connect to Redis")
+	}
+	log.Info().Str("url", cfg.RedisURL).Msg("redis connected")
+
+	otpStore := otpstore.NewOTPStore(rdb, otpstore.OTPConfig{
+		Secret:                 cfg.JWTSecret,
+		TTL:                    5 * time.Minute,
+		Cooldown:               60 * time.Second,
+		CooldownLong:           5 * time.Minute,
+		EscalateAfter:          3,
+		AttemptWindow:          time.Hour,
+		MaxAttempts:            5,
+		SendLimitPerPhone:      5,
+		SendWindow:             time.Hour,
+		VerifyAttemptsPerPhone: 10,
+		VerifyAttemptsWindow:   15 * time.Minute,
+		UniversalOTP:           cfg.UniversalOTP,
+		Prefix:                 "karvon:",
+	})
+
 	// ── Зависимости ──────────────────────────────────────────────────────────
 	jwtMgr := jwtpkg.NewManager(cfg.JWTSecret, cfg.JWTAccessTTL, cfg.JWTRefreshTTL)
 
@@ -79,7 +105,6 @@ func main() {
 	log.Info().Str("url", cfg.WhatsAppOTPBaseURL).Bool("bypass", cfg.WhatsAppOTPBypass).Msg("whatsapp notifier initialized")
 
 	userRepo      := repository.NewUserRepo(gormDB)
-	otpRepo       := repository.NewOTPRepo(gormDB)
 	tokenRepo     := repository.NewTokenRepo(gormDB)
 	companyRepo   := repository.NewCompanyRepo(gormDB)
 	notifRepo     := repository.NewNotificationRepo(gormDB)
@@ -96,7 +121,7 @@ func main() {
 
 	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
 
-	authSvc      := service.NewAuthService(userRepo, otpRepo, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier, cfg.UniversalOTP)
+	authSvc      := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier)
 	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
@@ -136,7 +161,7 @@ func main() {
 	superAdminMiddleware    := middleware.Role("super_admin")
 
 	// Фоновые задачи
-	startBackgroundWorkers(cargoRepo, warehouseRepo, otpRepo, paymentRepo, notifRepo)
+	startBackgroundWorkers(cargoRepo, warehouseRepo, paymentRepo, notifRepo)
 
 	// ── HTTP роутер ──────────────────────────────────────────────────────────
 	gin.SetMode(gin.ReleaseMode)
@@ -196,6 +221,20 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_ = srv.Shutdown(ctx)
+}
+
+func connectRedis(rawURL string) (*redis.Client, error) {
+	opt, err := redis.ParseURL(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("redis parse url: %w", err)
+	}
+	rdb := redis.NewClient(opt)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis ping: %w", err)
+	}
+	return rdb, nil
 }
 
 func connectGORM(dsn string) (*gorm.DB, error) {

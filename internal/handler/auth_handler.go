@@ -10,6 +10,7 @@ import (
 	"karvon/internal/dto"
 	"karvon/internal/service"
 	"karvon/pkg/i18n"
+	"karvon/pkg/otpstore"
 )
 
 type AuthHandler struct {
@@ -97,7 +98,27 @@ func (h *AuthHandler) CompleteRegistration(c *gin.Context) {
 }
 
 func (h *AuthHandler) handleErr(c *gin.Context, err error) {
+	var cooldownErr *otpstore.OTPCooldownError
+	var rateLimitErr *otpstore.OTPRateLimitError
 	switch {
+	case errors.As(err, &cooldownErr):
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":              "OTP_COOLDOWN",
+				"message":           i18n.T(c, "OTP_COOLDOWN"),
+				"retry_after_seconds": int(cooldownErr.RetryAfter.Seconds()),
+			},
+		})
+	case errors.As(err, &rateLimitErr):
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"error": gin.H{
+				"code":              "OTP_MAX_ATTEMPTS",
+				"message":           i18n.T(c, "OTP_MAX_ATTEMPTS"),
+				"retry_after_seconds": int(rateLimitErr.RetryAfter.Seconds()),
+			},
+		})
 	case errors.Is(err, service.ErrOTPRateLimit):
 		FailCode(c, http.StatusTooManyRequests, "OTP_MAX_ATTEMPTS")
 	case errors.Is(err, service.ErrOTPInvalid):

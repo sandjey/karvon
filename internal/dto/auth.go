@@ -29,7 +29,8 @@ type CompleteRegistrationRequest struct {
 // ── Responses ─────────────────────────────────────────────────────────────────
 
 type SendOTPResponse struct {
-	ExpiresIn int `json:"expires_in"` // секунды до истечения OTP
+	ExpiresIn       int `json:"expires_in"`       // секунды до истечения OTP
+	CooldownSeconds int `json:"cooldown_seconds"` // когда можно запросить следующий OTP
 }
 
 type TokenPair struct {

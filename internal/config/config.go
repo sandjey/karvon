@@ -13,7 +13,8 @@ type Config struct {
 	AppPort   string
 	PublicURL string // base URL returned in file upload responses
 
-	DBURL string
+	DBURL    string
+	RedisURL string
 
 	JWTSecret     string
 	JWTAccessTTL  time.Duration
@@ -64,6 +65,7 @@ func Load() (*Config, error) {
 		AppPort:   getEnv("APP_PORT", "8080"),
 		PublicURL: getEnv("PUBLIC_URL", ""),
 		DBURL:     mustEnv("DB_URL"),
+		RedisURL:  getEnv("REDIS_URL", "redis://localhost:6379"),
 		JWTSecret: mustEnv("JWT_SECRET"),
 
 		TelegramGatewayBaseURL: getEnv("TELEGRAM_GATEWAY_BASE_URL", "https://gatewayapi.telegram.org"),

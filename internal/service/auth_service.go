@@ -17,46 +17,40 @@ import (
 	"karvon/internal/repository"
 	jwtpkg "karvon/pkg/jwt"
 	"karvon/pkg/notifier"
+	"karvon/pkg/otpstore"
 )
 
-const (
-	otpTTL      = 5 * time.Minute
-	otpMaxAttempts = 5
-	otpRateLimit   = 3
-)
+const otpTTL = 5 * time.Minute
 
 var phoneRegexp = regexp.MustCompile(`[\s\-\(\)]`)
 
 type AuthService struct {
-	userRepo     *repository.UserRepo
-	otpRepo      *repository.OTPRepo
-	tokenRepo    *repository.TokenRepo
-	pricingRepo  *repository.PricingRepo
-	jwtMgr       *jwtpkg.Manager
-	whatsapp     notifier.Notifier
-	telegram     notifier.Notifier
-	universalOTP string
+	userRepo    *repository.UserRepo
+	otpStore    *otpstore.OTPStore
+	tokenRepo   *repository.TokenRepo
+	pricingRepo *repository.PricingRepo
+	jwtMgr      *jwtpkg.Manager
+	whatsapp    notifier.Notifier
+	telegram    notifier.Notifier
 }
 
 func NewAuthService(
 	userRepo *repository.UserRepo,
-	otpRepo *repository.OTPRepo,
+	otpStore *otpstore.OTPStore,
 	tokenRepo *repository.TokenRepo,
 	pricingRepo *repository.PricingRepo,
 	jwtMgr *jwtpkg.Manager,
 	whatsapp notifier.Notifier,
 	telegram notifier.Notifier,
-	universalOTP string,
 ) *AuthService {
 	return &AuthService{
-		userRepo:     userRepo,
-		otpRepo:      otpRepo,
-		tokenRepo:    tokenRepo,
-		pricingRepo:  pricingRepo,
-		jwtMgr:       jwtMgr,
-		whatsapp:     whatsapp,
-		telegram:     telegram,
-		universalOTP: universalOTP,
+		userRepo:    userRepo,
+		otpStore:    otpStore,
+		tokenRepo:   tokenRepo,
+		pricingRepo: pricingRepo,
+		jwtMgr:      jwtMgr,
+		whatsapp:    whatsapp,
+		telegram:    telegram,
 	}
 }
 
@@ -64,13 +58,9 @@ func NewAuthService(
 func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto.SendOTPResponse, error) {
 	phone := normalizePhone(req.Phone)
 
-	// Проверка rate limit
-	count, err := s.otpRepo.CountRecentByPhone(ctx, phone)
-	if err != nil {
+	// Pre-flight: cooldown + rate limit check (без изменения счётчиков).
+	if err := s.otpStore.CheckSendAllowed(ctx, phone); err != nil {
 		return nil, err
-	}
-	if count >= otpRateLimit {
-		return nil, ErrOTPRateLimit
 	}
 
 	channel := notifier.Channel(req.Channel)
@@ -78,7 +68,6 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		channel = notifier.ChannelWhatsApp
 	}
 
-	// Проверить, что канал настроен
 	switch channel {
 	case notifier.ChannelTelegram:
 		if s.telegram == nil {
@@ -90,40 +79,22 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		}
 	}
 
-	// Деактивировать старые коды
-	if err := s.otpRepo.InvalidateByPhone(ctx, phone); err != nil {
-		return nil, err
-	}
-
-	// Генерация кода
 	code, err := generateOTP()
 	if err != nil {
 		return nil, err
 	}
 
-	expiresAt := time.Now().Add(otpTTL)
-	if err := s.otpRepo.Create(ctx, &model.OTPCode{
-		Phone:     phone,
-		Code:      code,
-		ExpiresAt: expiresAt,
-	}); err != nil {
-		return nil, err
-	}
-
 	message := fmt.Sprintf("🔐 Ваш код подтверждения KARVON: *%s*\nКод действует 5 минут.", code)
 
-	// Отправка по выбранному каналу
+	var requestID string
+
 	switch channel {
 	case notifier.ChannelTelegram:
-		if s.telegram == nil {
-			return nil, ErrTelegramNotConfigured
-		}
 		if err := s.telegram.Send(ctx, phone, message); err != nil {
 			if errors.Is(err, notifier.ErrRateLimit) {
 				return nil, ErrOTPRateLimit
 			}
 			if errors.Is(err, notifier.ErrNumberNotRegistered) {
-				// Telegram Gateway cannot reach this number — fallback to WhatsApp
 				if s.whatsapp != nil {
 					if err2 := s.whatsapp.Send(ctx, phone, message); err2 != nil {
 						if errors.Is(err2, notifier.ErrRateLimit) {
@@ -131,7 +102,6 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 						}
 						return nil, ErrPhoneNotOnTelegram
 					}
-					// Delivered via WhatsApp fallback
 					break
 				}
 				return nil, ErrPhoneNotOnTelegram
@@ -139,9 +109,6 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 			return nil, err
 		}
 	default:
-		if s.whatsapp == nil {
-			return nil, ErrWhatsAppNotConfigured
-		}
 		if err := s.whatsapp.Send(ctx, phone, message); err != nil {
 			if errors.Is(err, notifier.ErrRateLimit) {
 				return nil, ErrOTPRateLimit
@@ -150,32 +117,37 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		}
 	}
 
-	return &dto.SendOTPResponse{ExpiresIn: int(otpTTL.Seconds())}, nil
+	// Сохранить в Redis (хэшированно), запустить cooldown.
+	cooldown, err := s.otpStore.SaveOTP(ctx, phone, code, requestID)
+	if err != nil {
+		return nil, err
+	}
+
+	cd := int(cooldown.Seconds())
+	return &dto.SendOTPResponse{
+		ExpiresIn:       int(otpTTL.Seconds()),
+		CooldownSeconds: cd,
+	}, nil
 }
 
 // VerifyOTP проверяет OTP и возвращает токены.
 func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (*dto.TokenPair, error) {
 	phone := normalizePhone(req.Phone)
 
-	// Универсальный OTP (QA): если задан в .env и совпадает — пропускаем проверку кода.
-	universal := s.universalOTP != "" && req.Code == s.universalOTP
-
-	if !universal {
-		otp, err := s.otpRepo.FindActive(ctx, phone, req.Code)
-		if err != nil {
+	_, err := s.otpStore.Verify(ctx, phone, req.Code)
+	if err != nil {
+		switch {
+		case errors.Is(err, otpstore.ErrOTPExpired):
+			return nil, ErrOTPExpired
+		case errors.Is(err, otpstore.ErrOTPInvalid):
+			return nil, ErrOTPInvalid
+		case errors.Is(err, otpstore.ErrOTPMaxAttempts), errors.Is(err, otpstore.ErrOTPVerifyRateLimited):
+			return nil, ErrOTPMaxAttempts
+		default:
 			return nil, err
 		}
-		if otp == nil {
-			return nil, ErrOTPInvalid
-		}
-		if otp.Attempts >= otpMaxAttempts {
-			return nil, ErrOTPMaxAttempts
-		}
-		// Помечаем как использованный.
-		_ = s.otpRepo.MarkUsed(ctx, otp.ID)
 	}
 
-	// Получить или создать пользователя
 	user, err := s.userRepo.FindByPhone(ctx, phone)
 	if err != nil {
 		return nil, err
@@ -194,7 +166,6 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (
 		}
 		user = newUser
 
-		// Начислить бонусные токены новому пользователю (сумма управляется супер-админом).
 		bonus := s.pricingRepo.TokensAmount(ctx, "tokens_registration", 5)
 		if bonus > 0 {
 			if err := s.userRepo.CreditTokens(ctx, user.ID, bonus, "registration"); err != nil {
@@ -220,7 +191,6 @@ func (s *AuthService) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto
 		return nil, ErrTokenInvalid
 	}
 
-	// Удалить старый refresh token
 	_ = s.tokenRepo.Delete(ctx, req.RefreshToken)
 
 	user, err := s.userRepo.FindByID(ctx, rt.UserID)
@@ -246,14 +216,13 @@ func (s *AuthService) Refresh(ctx context.Context, req dto.RefreshRequest) (*dto
 	return &dto.RefreshResponse{AccessToken: access, RefreshToken: refresh}, nil
 }
 
-// Logout инвалидирует все токены пользователя: удаляет refresh-токены и
-// увеличивает token_version, что делает все выданные access-токены невалидными.
+// Logout инвалидирует все токены пользователя.
 func (s *AuthService) Logout(ctx context.Context, refreshToken string, userID uuid.UUID) error {
 	_ = s.tokenRepo.DeleteByUserID(ctx, userID)
 	return s.userRepo.IncrementTokenVersion(ctx, userID)
 }
 
-// CompleteRegistration устанавливает имя и опциональные поля профиля новому пользователю.
+// CompleteRegistration устанавливает имя и опциональные поля профиля.
 func (s *AuthService) CompleteRegistration(ctx context.Context, userID uuid.UUID, req dto.CompleteRegistrationRequest) error {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil || user == nil {
