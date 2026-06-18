@@ -2,111 +2,124 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>Central Trade Market — Karta Demo</title>
+<title>Map — Central Trade Market</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: sans-serif; background: #1a1a2e; color: #fff; }
-#header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-  padding: 10px 16px; display: flex; align-items: center; gap: 12px;
-  border-bottom: 1px solid #333;
+html, body { width: 100%; height: 100%; overflow: hidden; background: #f0ede8; }
+#map { width: 100vw; height: 100vh; }
+
+#style-switcher {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  display: flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08);
 }
-#header h1 { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
-#style-selector {
-  display: flex; gap: 6px; flex-wrap: wrap;
-}
+
 .style-btn {
-  padding: 5px 12px; border-radius: 20px; border: 1px solid #555;
-  background: #222; color: #ccc; cursor: pointer; font-size: 13px;
-  transition: all 0.2s;
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  letter-spacing: 0.01em;
+  user-select: none;
 }
-.style-btn:hover { border-color: #888; color: #fff; }
-.style-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
-#map { width: 100vw; height: 100vh; padding-top: 50px; }
-#map > div { height: calc(100vh - 50px) !important; }
-#info {
-  position: fixed; bottom: 20px; right: 20px; z-index: 100;
-  background: rgba(0,0,0,0.8); padding: 10px 14px; border-radius: 10px;
-  font-size: 12px; color: #aaa; border: 1px solid #333;
+.style-btn:hover { background: rgba(0,0,0,0.06); color: #111; }
+.style-btn.active {
+  background: #1a73e8;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(26,115,232,0.35);
 }
-#info a { color: #60a5fa; text-decoration: none; }
+
+/* Navigation controls — clean */
+.maplibregl-ctrl-group {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+  border: none !important;
+  overflow: hidden;
+}
+.maplibregl-ctrl-group button {
+  width: 38px !important;
+  height: 38px !important;
+}
+.maplibregl-ctrl-scale {
+  background: rgba(255,255,255,0.9) !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(0,0,0,0.15) !important;
+  font-size: 11px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Hide attribution completely */
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib-button,
+.maplibregl-ctrl-logo { display: none !important; }
 </style>
 </head>
 <body>
 
-<div id="header">
-  <h1>🗺 CTM Karta</h1>
-  <div id="style-selector">
-    <button class="style-btn active" data-style="streets-v2">Streets</button>
-    <button class="style-btn" data-style="bright-v2">Bright</button>
-    <button class="style-btn" data-style="topo-v2">Topo</button>
-    <button class="style-btn" data-style="openstreetmap">OSM</button>
-    <button class="style-btn" data-style="dataviz">DataViz</button>
-    <button class="style-btn" data-style="satellite">Satellite</button>
-  </div>
+<div id="style-switcher">
+  <button class="style-btn active" data-style="streets-v2">Streets</button>
+  <button class="style-btn" data-style="topo-v2">Topo</button>
 </div>
 
-<div id="map">
-  <div id="mapContainer"></div>
-</div>
-
-<div id="info">
-  Powered by <a href="https://maptiler.com" target="_blank">MapTiler</a> + MapLibre GL JS
-</div>
+<div id="map"></div>
 
 <script>
 const KEY = 'IMtNu6UNxo2LBpjLSZpj';
-let currentStyle = 'streets-v2';
-let map;
 
-function getStyleUrl(style) {
-  if (style === 'satellite') {
-    return `https://api.maptiler.com/maps/hybrid/style.json?key=${KEY}`;
-  }
-  return `https://api.maptiler.com/maps/${style}/style.json?key=${KEY}`;
+function styleUrl(name) {
+  return `https://api.maptiler.com/maps/${name}/style.json?key=${KEY}`;
 }
 
-function initMap(style) {
-  if (map) map.remove();
-  map = new maplibregl.Map({
-    container: 'mapContainer',
-    style: getStyleUrl(style),
-    center: [69.2401, 41.2995], // Toshkent
-    zoom: 12,
-    attributionControl: false
-  });
-
-  map.addControl(new maplibregl.NavigationControl(), 'top-right');
-  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-  map.addControl(new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true },
-    trackUserLocation: true
-  }), 'top-right');
-
-  // Demo marker — Toshkent markazi
-  new maplibregl.Marker({ color: '#2563eb' })
-    .setLngLat([69.2401, 41.2995])
-    .setPopup(new maplibregl.Popup().setHTML('<b>Toshkent</b><br>O\'zbekiston poytaxti'))
-    .addTo(map);
-}
-
-// Style tugmalari
-document.querySelectorAll('.style-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const center = map ? map.getCenter() : null;
-    const zoom = map ? map.getZoom() : 12;
-    initMap(btn.dataset.style);
-    if (center) map.once('load', () => map.setCenter(center).setZoom(zoom));
-  });
+const map = new maplibregl.Map({
+  container: 'map',
+  style: styleUrl('streets-v2'),
+  center: [69.2401, 41.2995],
+  zoom: 12,
+  antialias: true,
+  fadeDuration: 200,
+  attributionControl: false,
+  renderWorldCopies: false,
+  maxPitch: 60
 });
 
-initMap(currentStyle);
+map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+map.addControl(new maplibregl.GeolocateControl({
+  positionOptions: { enableHighAccuracy: true },
+  trackUserLocation: true,
+  showUserHeading: true
+}), 'top-right');
+
+// Smooth style switch (no map recreation — instant)
+let current = 'streets-v2';
+document.querySelectorAll('.style-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const s = btn.dataset.style;
+    if (s === current) return;
+    current = s;
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    map.setStyle(styleUrl(s));
+  });
+});
 </script>
 </body>
 </html>
