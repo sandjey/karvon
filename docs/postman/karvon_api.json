@@ -4917,8 +4917,82 @@
       ]
     },
     {
-      "name": "Map",
+      "name": "🗺 Map — Карта (грузы и склады)",
+      "description": "Эндпоинты для карты. Возвращают raw GeoJSON FeatureCollection — совместимо с MapLibre GL JS, Leaflet, iOS/Android SDK.\n\n**Демо-страница карты:** https://api.centraltrademarket.com/docs/map-demo.html\n\nОтвет НЕ оборачивается в {success, data} — это чистый GeoJSON для прямого использования как map source.",
       "item": [
+        {
+          "name": "GET /map/markers — все маркеры (грузы + склады)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/map/markers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "map", "markers"],
+              "query": []
+            },
+            "description": "Возвращает **все** активные грузы И склады в виде GeoJSON FeatureCollection.\n\n**Пример ответа:**\n```json\n{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"uuid\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.24, 41.29] },\n      \"properties\": {\n        \"id\": \"uuid\",\n        \"kind\": \"cargo\",\n        \"title\": \"Замороженная говядина\",\n        \"city\": \"Самарканд\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"uuid2\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.35, 41.32] },\n      \"properties\": {\n        \"id\": \"uuid2\",\n        \"kind\": \"warehouse\",\n        \"title\": \"Chilonzor ombori\",\n        \"address\": \"Chilonzor ko'chasi 12\"\n      }\n    }\n  ]\n}\n```\n\n**Использование в MapLibre GL JS:**\n```js\nmap.addSource('ctm', {\n  type: 'geojson',\n  data: 'https://api.centraltrademarket.com/api/v1/map/markers'\n});\n```"
+          },
+          "response": [
+            {
+              "name": "200 — все маркеры",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [66.9597, 39.6542] },\n      \"properties\": { \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\", \"kind\": \"cargo\", \"title\": \"Замороженная говядина\", \"city\": \"Самарканд\" }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b00-0000-0000-0000-000000000001\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"c88f9b00-0000-0000-0000-000000000001\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /map/markers?kind=cargo — только грузы",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/map/markers?kind=cargo",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "map", "markers"],
+              "query": [
+                { "key": "kind", "value": "cargo", "description": "Только активные грузовые объявления с координатами" }
+              ]
+            },
+            "description": "Только **грузы** (cargo_listings). Фильтрует по:\n- `status = 'active'`\n- `is_template = false`\n- `is_admin_blocked = false`\n- `lat IS NOT NULL AND lng IS NOT NULL`\n\n**Properties каждого feature:**\n- `id` — UUID груза\n- `kind` — всегда `\"cargo\"`\n- `title` — название груза (cargo_name)\n- `city` — город отправки (from_city)"
+          },
+          "response": [
+            {
+              "name": "200 — только грузы",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [66.9597, 39.6542] },\n      \"properties\": { \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\", \"kind\": \"cargo\", \"title\": \"Замороженная говядина\", \"city\": \"Самарканд\" }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /map/markers?kind=warehouse — только склады",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/map/markers?kind=warehouse",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "map", "markers"],
+              "query": [
+                { "key": "kind", "value": "warehouse", "description": "Только активные склады с координатами" }
+              ]
+            },
+            "description": "Только **склады** (warehouse_listings). Фильтрует по:\n- `status = 'active'`\n- `is_admin_blocked = false`\n- `lat IS NOT NULL AND lng IS NOT NULL`\n\n**Properties каждого feature:**\n- `id` — UUID склада\n- `kind` — всегда `\"warehouse\"`\n- `title` — название склада (name)\n- `address` — адрес склада"
+          },
+          "response": [
+            {
+              "name": "200 — только склады",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b00-0000-0000-0000-000000000001\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"c88f9b00-0000-0000-0000-000000000001\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
+            }
+          ]
+        },
         {
           "name": "GET /map/markers — GeoJSON маркеры",
           "request": {
