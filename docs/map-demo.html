@@ -2,645 +2,651 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>CTM Map</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CTM Logistics Map</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
-<link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
+<link  href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
-:root{
-  --n900:#060E1C; --n800:#0C1A2E; --n700:#122440;
-  --b500:#1A6FE8; --b400:#3D8EF5; --b300:#6AADFF;
-  --b100:#E8F1FD; --b50:#F3F8FF;
-  --green:#16A34A; --red:#DC2626; --orange:#EA580C;
-  --text:#0C1A2E; --sub:#5B7390; --muted:#9BB2C8;
-  --border:#D0E2F5; --white:#fff;
-}
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);}
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
 
-/* ══ PANEL ══════════════════════════════════════════════ */
+/* ─── PANEL ─────────────────────────────────────── */
 #panel{
-  position:fixed;inset:0 auto 0 0;width:308px;z-index:500;
-  background:var(--white);
-  box-shadow:0 0 0 1px rgba(12,26,46,.08), 4px 0 28px rgba(0,0,0,.08);
-  display:flex;flex-direction:column;overflow:hidden;
+  position:fixed;left:0;top:0;bottom:0;width:300px;
+  background:#fff;z-index:500;
+  box-shadow:2px 0 16px rgba(0,0,0,.1);
+  display:flex;flex-direction:column;
 }
 
 /* Header */
-.hdr{
-  background:var(--n800);padding:14px 16px;
-  display:flex;align-items:center;gap:10px;flex-shrink:0;
-}
-.hdr-ic{
-  width:32px;height:32px;border-radius:8px;background:var(--b500);
+.hdr{background:#0C1A2E;padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.hdr-logo{
+  width:32px;height:32px;border-radius:8px;background:#1A6FE8;
   display:grid;place-items:center;flex-shrink:0;
 }
-.hdr-ic svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.hdr-name{color:#fff;font-size:14px;font-weight:700;}
-.hdr-sub {color:rgba(255,255,255,.38);font-size:11px;margin-top:1px;}
+.hdr-logo svg{width:16px;height:16px;fill:#fff;}
+.hdr h1{color:#fff;font-size:14px;font-weight:700;}
+.hdr p{color:rgba(255,255,255,.4);font-size:11px;}
 
 /* Search */
-.srch{padding:11px 13px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.sb{
-  display:flex;align-items:center;gap:9px;
-  border:1.5px solid var(--border);border-radius:10px;
-  padding:8px 12px;background:var(--b50);
-  transition:border-color .15s,box-shadow .15s;
-}
-.sb:focus-within{border-color:var(--b500);box-shadow:0 0 0 3px rgba(26,111,232,.1);}
-.sb svg{flex-shrink:0;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;}
-.sb input{flex:1;border:none;background:transparent;font-size:13px;color:var(--text);outline:none;}
-.sb input::placeholder{color:var(--muted);}
-#sr{display:none;margin-top:7px;border:1.5px solid var(--border);border-radius:10px;
-  overflow:hidden;background:var(--white);box-shadow:0 6px 20px rgba(0,0,0,.07);}
-.sri{padding:9px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:9px;
-  border-bottom:1px solid var(--b50);transition:background .1s;}
-.sri:last-child{border-bottom:none;}
-.sri:hover{background:var(--b50);}
-.sri svg{flex-shrink:0;margin-top:1px;stroke:var(--b500);fill:none;stroke-width:2;stroke-linecap:round;}
-.sri-n{font-size:13px;font-weight:500;}
-.sri-s{font-size:11px;color:var(--sub);margin-top:1px;}
-
-/* Scroll body */
-.body{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-
-/* Hint bar */
-#pick-bar{
-  margin:11px 13px 0;padding:9px 12px;
-  background:var(--b100);border-radius:9px;
-  font-size:12px;color:var(--b500);font-weight:500;
+.search-wrap{padding:10px 12px;border-bottom:1px solid #E2EBF6;}
+.search-box{
   display:flex;align-items:center;gap:8px;
-  border:1px solid var(--border);
-  transition:opacity .2s;
+  border:1.5px solid #D0E2F5;border-radius:9px;
+  padding:8px 11px;background:#F3F8FF;
 }
-#pick-bar svg{flex-shrink:0;stroke:var(--b500);fill:none;stroke-width:2;stroke-linecap:round;}
-#pick-bar.hide{display:none;}
+.search-box:focus-within{border-color:#1A6FE8;box-shadow:0 0 0 3px rgba(26,111,232,.1);}
+.search-box svg{flex-shrink:0;opacity:.4;}
+.search-box input{flex:1;border:none;background:transparent;font-size:13px;outline:none;color:#0C1A2E;}
+.search-box input::placeholder{color:#9BB2C8;}
+#search-results{
+  display:none;margin-top:6px;
+  border:1.5px solid #D0E2F5;border-radius:9px;overflow:hidden;background:#fff;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+}
+.sr-item{
+  padding:9px 12px;cursor:pointer;
+  border-bottom:1px solid #F3F8FF;
+  font-size:12px;color:#0C1A2E;
+  display:flex;align-items:center;gap:8px;
+}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:hover{background:#F3F8FF;}
+.sr-item small{display:block;color:#5B7390;font-size:11px;margin-top:1px;}
+
+/* Body scroll */
+.body{flex:1;overflow-y:auto;padding:10px 12px;}
+
+/* Hint */
+.hint{
+  background:#E8F1FD;border:1px solid #D0E2F5;border-radius:8px;
+  padding:9px 12px;margin-bottom:10px;
+  font-size:12px;color:#1A6FE8;font-weight:500;
+  display:flex;align-items:center;gap:7px;
+}
+.hint svg{flex-shrink:0;fill:#1A6FE8;opacity:.7;}
 
 /* Waypoints */
-.wp-wrap{padding:10px 13px 0;}
-.wp-list{display:flex;flex-direction:column;}
-
-.wp-item{}
+.wp-item{margin-bottom:4px;}
 .wp-row{
   display:flex;align-items:center;gap:8px;
-  padding:8px 10px;
-  border:1.5px solid var(--border);border-radius:10px;
-  cursor:pointer;background:var(--b50);
-  transition:border-color .15s,background .15s,box-shadow .15s;
+  padding:9px 10px;border-radius:9px;
+  border:1.5px solid #D0E2F5;background:#F3F8FF;
+  cursor:pointer;transition:all .15s;
 }
-.wp-row:hover{border-color:var(--b400);background:var(--b100);}
-.wp-row.active{
-  border-color:var(--b500);background:var(--b100);
-  box-shadow:0 0 0 3px rgba(26,111,232,.12);
-}
-.wp-row.done{border-color:#BBF7D0;background:#F0FDF4;}
+.wp-row:hover{border-color:#3D8EF5;background:#E8F1FD;}
+.wp-row.active{border-color:#1A6FE8;background:#E8F1FD;
+  box-shadow:0 0 0 3px rgba(26,111,232,.12);}
+.wp-row.set{border-color:#BBF7D0;background:#F0FDF4;}
 .wp-dot{
   width:22px;height:22px;border-radius:50%;
-  display:grid;place-items:center;
-  font-size:10px;font-weight:800;color:#fff;flex-shrink:0;
+  display:grid;place-items:center;flex-shrink:0;
+  color:#fff;font-size:10px;font-weight:800;
 }
-.wp-lbl{flex:1;font-size:12px;color:var(--sub);
-  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.3;}
-.wp-row.done .wp-lbl{color:var(--text);font-weight:500;}
-.wp-actions{display:flex;gap:3px;flex-shrink:0;}
-
-/* Action buttons on waypoint */
+.wp-lbl{flex:1;font-size:12px;color:#5B7390;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wp-row.set .wp-lbl{color:#0C1A2E;font-weight:500;}
+.wp-acts{display:flex;gap:3px;flex-shrink:0;}
 .wp-btn{
-  width:22px;height:22px;border-radius:6px;border:none;
-  display:grid;place-items:center;cursor:pointer;
-  font-size:13px;font-weight:700;background:transparent;
-  color:var(--muted);transition:color .1s,background .1s;
+  width:22px;height:22px;border-radius:5px;border:none;
+  background:transparent;cursor:pointer;font-size:13px;
+  color:#9BB2C8;font-weight:700;display:grid;place-items:center;
+  transition:all .1s;
 }
-.wp-btn:hover{background:#FEE2E2;color:var(--red);}
-.wp-btn.hide{display:none;}
+.wp-btn:hover{background:#FEE2E2;color:#DC2626;}
 
-/* Connector */
-.wp-conn{
-  width:2px;height:13px;background:var(--border);
-  margin:0 0 0 20px;
-}
+/* Connector line between waypoints */
+.wp-conn{width:2px;height:10px;background:#D0E2F5;margin:0 0 0 20px;}
 
-/* Add stop */
-.wp-add{
-  display:flex;align-items:center;gap:8px;
-  width:100%;margin-top:8px;
-  padding:8px 10px;background:transparent;
-  border:1.5px dashed var(--border);border-radius:10px;cursor:pointer;
-  font-size:12px;font-weight:600;color:var(--sub);
+/* Add stop button */
+.btn-add-stop{
+  width:100%;margin-top:6px;padding:8px 10px;
+  border:1.5px dashed #D0E2F5;border-radius:9px;background:transparent;
+  cursor:pointer;display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:600;color:#5B7390;
   transition:all .15s;
 }
-.wp-add:hover{border-color:var(--b500);color:var(--b500);background:var(--b50);}
-.wp-add svg{stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;width:14px;height:14px;}
+.btn-add-stop:hover{border-color:#1A6FE8;color:#1A6FE8;background:#F3F8FF;}
+
+/* Section label */
+.sec-lbl{
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:#5B7390;margin:12px 0 6px;
+}
 
 /* Vehicle */
-.v-section{padding:12px 13px 0;}
-.v-lbl{font-size:11px;color:var(--sub);font-weight:700;
-  text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
 .v-row{display:flex;gap:8px;}
 .v-btn{
-  flex:1;padding:11px 8px 10px;
-  border:1.5px solid var(--border);border-radius:11px;
-  background:var(--b50);cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
+  flex:1;padding:10px 6px;
+  border:1.5px solid #D0E2F5;border-radius:10px;background:#F3F8FF;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;
   transition:all .15s;
 }
-.v-btn:hover{border-color:var(--b400);background:var(--b100);}
-.v-btn.on{border-color:var(--b500);background:var(--b100);}
-.v-emoji{font-size:30px;line-height:1;display:block;}
-.v-btn .vn{font-size:11px;font-weight:700;color:var(--sub);}
-.v-btn.on .vn{color:var(--b500);}
-.v-tag{font-size:9px;font-weight:700;padding:1px 6px;
-  background:var(--b500);color:#fff;border-radius:4px;}
+.v-btn:hover{border-color:#3D8EF5;background:#E8F1FD;}
+.v-btn.on{border-color:#1A6FE8;background:#E8F1FD;}
+.v-btn.on .v-lbl-name{color:#1A6FE8;}
+.v-emoji{font-size:26px;line-height:1;}
+.v-lbl-name{font-size:11px;font-weight:700;color:#5B7390;}
+.v-tag{font-size:9px;font-weight:700;background:#1A6FE8;color:#fff;
+  padding:1px 5px;border-radius:4px;}
 
-/* Go button */
-.go-wrap{padding:12px 13px 0;}
+/* Go / Clear buttons */
 .btn-go{
-  width:100%;padding:12px;
-  background:var(--b500);color:#fff;border:none;
-  border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;
+  width:100%;margin-top:12px;padding:12px;
+  background:#1A6FE8;color:#fff;border:none;border-radius:10px;
+  font-size:13px;font-weight:700;cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:background .15s,opacity .15s;
+  transition:background .15s;
 }
-.btn-go:hover:not(:disabled){background:var(--n700);}
-.btn-go:disabled{opacity:.35;cursor:not-allowed;}
-.btn-go svg{stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;width:15px;height:15px;}
-.btn-clr{
-  width:100%;margin-top:7px;padding:9px;
-  background:none;border:1.5px solid var(--border);
-  border-radius:11px;font-size:12px;color:var(--sub);cursor:pointer;
-  transition:all .15s;display:none;
+.btn-go:hover:not(:disabled){background:#0C1A2E;}
+.btn-go:disabled{opacity:.3;cursor:not-allowed;}
+.btn-clear{
+  width:100%;margin-top:6px;padding:9px;
+  border:1.5px solid #D0E2F5;border-radius:10px;background:transparent;
+  font-size:12px;color:#5B7390;cursor:pointer;display:none;
+  transition:all .15s;
 }
-.btn-clr:hover{border-color:var(--red);color:var(--red);}
+.btn-clear:hover{border-color:#DC2626;color:#DC2626;}
 
 /* HGV note */
 .hgv-note{
-  display:none;margin:8px 13px 0;padding:9px 11px;
-  background:#FFF7ED;border-radius:8px;border-left:3px solid #F97316;
-  font-size:11px;color:#9A3412;line-height:1.55;
+  display:none;margin-top:8px;padding:8px 11px;
+  background:#FFF7ED;border-left:3px solid #F97316;border-radius:7px;
+  font-size:11px;color:#9A3412;line-height:1.5;
 }
 
-/* Result card */
-#r-card{
-  display:none;margin:10px 13px 0;
-  border:1.5px solid var(--border);border-radius:11px;overflow:hidden;
+/* Result */
+.result-card{
+  display:none;margin-top:10px;
+  border:1.5px solid #D0E2F5;border-radius:10px;overflow:hidden;
 }
-.rc-head{
-  background:var(--n800);padding:10px 13px;
-  font-size:12px;font-weight:700;color:#fff;
-  display:flex;align-items:center;gap:7px;
-}
-.rc-head svg{stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;width:14px;height:14px;}
-.rc-body{padding:10px 13px;}
-.rc-r{display:flex;justify-content:space-between;align-items:center;
-  padding:5px 0;border-bottom:1px solid var(--b50);}
-.rc-r:last-child{border-bottom:none;}
-.rc-k{font-size:11px;color:var(--sub);}
-.rc-v{font-size:13px;font-weight:700;}
-.rc-v.hi{color:var(--b500);}
+.rc-head{background:#0C1A2E;padding:10px 12px;color:#fff;
+  font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.rc-body{padding:10px 12px;}
+.rc-row{display:flex;justify-content:space-between;
+  padding:4px 0;border-bottom:1px solid #F3F8FF;}
+.rc-row:last-child{border-bottom:none;}
+.rc-k{font-size:11px;color:#5B7390;}
+.rc-v{font-size:13px;font-weight:700;color:#0C1A2E;}
+.rc-v.blue{color:#1A6FE8;}
 
-/* ══ MAP ════════════════════════════════════════════════ */
-#map{position:fixed;inset:0 0 0 308px;z-index:100;cursor:crosshair;}
-
-/* Overlay hint on map */
-#ovr{
-  position:absolute;top:13px;left:50%;transform:translateX(-50%);
-  background:rgba(6,14,28,.82);backdrop-filter:blur(8px);
-  color:#fff;padding:8px 18px;border-radius:30px;
-  font-size:12px;font-weight:500;
-  pointer-events:none;z-index:200;
-  display:none;white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,.25);
-}
-
+/* ─── MAP ────────────────────────────────────────── */
+#map{position:fixed;left:300px;top:0;right:0;bottom:0;z-index:100;cursor:crosshair;}
 .maplibregl-ctrl-attrib,.maplibregl-ctrl-logo{display:none!important;}
 .maplibregl-ctrl-group{border-radius:10px!important;overflow:hidden;
   box-shadow:0 2px 12px rgba(0,0,0,.12)!important;border:none!important;}
-.maplibregl-ctrl-scale{background:rgba(255,255,255,.92)!important;
-  border:1px solid rgba(0,0,0,.1)!important;border-radius:6px!important;font-size:10px!important;}
-.maplibregl-popup-content{border-radius:12px!important;padding:0!important;
-  box-shadow:0 8px 32px rgba(0,0,0,.14)!important;overflow:hidden;min-width:185px;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
+.maplibregl-popup-content{
+  border-radius:12px!important;padding:0!important;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-width:180px;box-shadow:0 8px 30px rgba(0,0,0,.14)!important;
+}
 .maplibregl-popup-close-button{display:none!important;}
-.pu-t{padding:11px 13px 9px;}
-.pu-k{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;}
-.pu-k.c{color:var(--orange);}.pu-k.w{color:var(--b500);}
-.pu-n{font-size:13px;font-weight:600;line-height:1.3;}
-.pu-s{font-size:11px;color:var(--sub);margin-top:2px;}
-.pu-f{padding:7px 13px;border-top:1px solid var(--b50);display:flex;justify-content:flex-end;}
-.pu-cl{font-size:12px;color:var(--b500);cursor:pointer;font-weight:600;}
-.wpm{width:18px;height:18px;border-radius:50%;border:3px solid #fff;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.pu-head{padding:10px 12px 8px;}
+.pu-kind{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;}
+.pu-kind.cargo{color:#EA580C;}.pu-kind.wh{color:#1A6FE8;}
+.pu-name{font-size:13px;font-weight:600;}
+.pu-sub{font-size:11px;color:#5B7390;margin-top:2px;}
+.pu-foot{padding:7px 12px;border-top:1px solid #F3F8FF;text-align:right;}
+.pu-close{font-size:12px;color:#1A6FE8;cursor:pointer;font-weight:600;}
 </style>
 </head>
 <body>
 
+<!-- ═══════════ PANEL ═══════════ -->
 <div id="panel">
 
-  <!-- Header -->
   <div class="hdr">
-    <div class="hdr-ic">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-        <circle cx="12" cy="9" r="2.5" stroke-width="0" fill="rgba(255,255,255,.5)"/>
-      </svg>
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
     </div>
-    <div>
-      <div class="hdr-name">CTM Logistics</div>
-      <div class="hdr-sub">Marshrut tuzuvchi</div>
-    </div>
+    <div><h1>CTM Logistics</h1><p>Marshrut tuzuvchi</p></div>
   </div>
 
   <!-- Search -->
-  <div class="srch">
-    <div class="sb">
-      <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="s-in" type="text" placeholder="Joy, manzil, shahar..." autocomplete="off">
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0C1A2E" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="s-inp" type="text" placeholder="Shahar, ko'cha, joy..." autocomplete="off">
     </div>
-    <div id="sr"></div>
+    <div id="search-results"></div>
   </div>
 
-  <!-- Scroll body -->
   <div class="body">
 
-    <!-- Pick hint -->
-    <div id="pick-bar">
-      <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      <span id="pick-txt">A nuqtani xaritada bosing</span>
+    <!-- Hint -->
+    <div class="hint" id="hint">
+      <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01" stroke="#1A6FE8" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      <span id="hint-txt">Xaritada A nuqtani bosing</span>
     </div>
 
-    <!-- Waypoints -->
-    <div class="wp-wrap">
-      <div class="wp-list" id="wp-list"></div>
-      <button class="wp-add" id="wp-add">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        Oraliq nuqta qo'shish
-      </button>
-    </div>
+    <!-- Waypoints list — rendered by JS -->
+    <div id="wp-list"></div>
+    <button class="btn-add-stop" id="btn-add-stop">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Oraliq nuqta qo'shish
+    </button>
 
     <!-- Vehicle -->
-    <div class="v-section">
-      <div class="v-lbl">Transport</div>
-      <div class="v-row">
-        <button class="v-btn on" data-v="driving-car">
-          <span class="v-emoji">🚗</span>
-          <span class="vn">Yengil</span>
-        </button>
-        <button class="v-btn" data-v="driving-hgv">
-          <span class="v-emoji">🚛</span>
-          <span class="vn">Yuk</span>
-          <span class="v-tag">HGV</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Go + Clear -->
-    <div class="go-wrap">
-      <button class="btn-go" id="btn-go" disabled>
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        Yo'lni ko'rsat
+    <div class="sec-lbl">Transport turi</div>
+    <div class="v-row">
+      <button class="v-btn on" id="v-car" onclick="setVehicle('driving-car',this)">
+        <span class="v-emoji">🚗</span>
+        <span class="v-lbl-name">Yengil</span>
       </button>
-      <button class="btn-clr" id="btn-clr">Tozalash</button>
+      <button class="v-btn" id="v-hgv" onclick="setVehicle('driving-hgv',this)">
+        <span class="v-emoji">🚛</span>
+        <span class="v-lbl-name">Yuk</span>
+        <span class="v-tag">HGV</span>
+      </button>
     </div>
 
-    <!-- HGV note -->
     <div class="hgv-note" id="hgv-note">
-      🚛 <b>HGV rejim:</b> ko'prik balandligi, yo'l vazni va kenglik cheklovlari hisobga olinadi (OpenRouteService).
+      🚛 Ko'prik balandligi, yo'l vazni va kenglik cheklovlari hisobga olinadi.
     </div>
 
-    <!-- Result -->
-    <div id="r-card">
-      <div class="rc-head">
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        <span id="rc-ttl">Marshrut</span>
-      </div>
+    <!-- Route button -->
+    <button class="btn-go" id="btn-go" disabled onclick="drawRoute()">
+      → Yo'lni ko'rsat
+    </button>
+    <button class="btn-clear" id="btn-clear" onclick="clearAll()">
+      Hammasini tozalash
+    </button>
+
+    <!-- Result card -->
+    <div class="result-card" id="result-card">
+      <div class="rc-head">📍 <span id="rc-title">Marshrut</span></div>
       <div class="rc-body">
-        <div class="rc-r"><span class="rc-k">Masofa</span><span class="rc-v hi" id="rc-d">—</span></div>
-        <div class="rc-r"><span class="rc-k">Vaqt</span><span class="rc-v" id="rc-t">—</span></div>
-        <div class="rc-r"><span class="rc-k">Nuqtalar</span><span class="rc-v" id="rc-s">—</span></div>
+        <div class="rc-row"><span class="rc-k">Masofa</span><span class="rc-v blue" id="rc-dist">—</span></div>
+        <div class="rc-row"><span class="rc-k">Taxminiy vaqt</span><span class="rc-v" id="rc-time">—</span></div>
+        <div class="rc-row"><span class="rc-k">Nuqtalar soni</span><span class="rc-v" id="rc-pts">—</span></div>
       </div>
     </div>
 
-    <div style="height:16px;flex-shrink:0;"></div>
+  </div>
+</div>
 
-  </div><!-- /body -->
-</div><!-- /panel -->
-
-<div id="map"><div id="ovr"></div></div>
+<!-- ═══════════ MAP ═══════════ -->
+<div id="map"></div>
 
 <script>
-const MT  = 'IMtNu6UNxo2LBpjLSZpj';
-const ORS = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgyYTEyYzczMWNmZjRkNGJiZTM2ZWE5MGU5ZWEzZWEyIiwiaCI6Im11cm11cjY0In0=';
-const BASE = window.location.origin;
+// ─── Config ─────────────────────────────────────────
+const MT_KEY = 'IMtNu6UNxo2LBpjLSZpj';
+const ORS_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgyYTEyYzczMWNmZjRkNGJiZTM2ZWE5MGU5ZWEzZWEyIiwiaCI6Im11cm11cjY0In0=';
+const API_BASE = window.location.origin;
 
-/* ── Waypoints ── */
-let wps = [
-  {id:0, color:'#16A34A', marker:null, data:null},
-  {id:1, color:'#DC2626', marker:null, data:null},
-];
-let idCtr   = 2;
-let activeI = 0;   // which index gets the next map click
+// ─── State ──────────────────────────────────────────
+// wps: [{lat, lng, label, marker}|null, ...]  — index 0 = A, last = B, middle = stops
+let wps = [null, null];          // A=0, B=1
+let wpIdCtr = 0;
 let vehicle = 'driving-car';
+let activeIdx = 0;               // which waypoint gets the next map click
 
-/* ── Map ── */
+// ─── Map ────────────────────────────────────────────
 const map = new maplibregl.Map({
-  container:'map',
-  style:`https://api.maptiler.com/maps/streets-v2/style.json?key=${MT}&language=uz`,
-  center:[69.2401,41.2995], zoom:11,
-  antialias:true, fadeDuration:200,
-  attributionControl:false, renderWorldCopies:false,
+  container: 'map',
+  style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MT_KEY}&language=uz`,
+  center: [69.2401, 41.2995],
+  zoom: 11,
+  attributionControl: false,
 });
-map.addControl(new maplibregl.NavigationControl({showCompass:true}),'top-right');
-map.addControl(new maplibregl.ScaleControl({unit:'metric'}),'bottom-left');
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+map.addControl(new maplibregl.ScaleControl({unit:'metric'}), 'bottom-left');
 map.addControl(new maplibregl.GeolocateControl({
-  positionOptions:{enableHighAccuracy:true},trackUserLocation:true,showUserHeading:true
-}),'top-right');
+  positionOptions:{enableHighAccuracy:true}, trackUserLocation:true
+}), 'top-right');
 
-function circleImg(hex){
-  const N=22,c=document.createElement('canvas');
-  c.width=N;c.height=N;
-  const x=c.getContext('2d'),r=N/2-2,cx=N/2;
-  x.shadowColor='rgba(0,0,0,.22)';x.shadowBlur=4;x.shadowOffsetY=2;
-  x.beginPath();x.arc(cx,cx,r,0,Math.PI*2);x.fillStyle=hex;x.fill();
-  x.shadowBlur=0;x.shadowOffsetY=0;
-  x.beginPath();x.arc(cx,cx,r,0,Math.PI*2);
-  x.strokeStyle='#fff';x.lineWidth=2.8;x.stroke();
-  return{data:x.getImageData(0,0,N,N),width:N,height:N};
+// ─── Register click IMMEDIATELY (before map load) ───
+map.on('click', handleMapClick);
+
+async function handleMapClick(e) {
+  // If clicked on a cargo/warehouse marker, show popup instead
+  let onMarker = false;
+  try {
+    const f = map.queryRenderedFeatures(e.point, {layers:['lc','lw']});
+    if (f && f.length > 0) { onMarker = true; showPopup(f[0], e.lngLat); }
+  } catch(_) {}
+  if (onMarker) return;
+
+  const {lng, lat} = e.lngLat;
+  placeWaypoint(activeIdx, lng, lat);
 }
 
-map.on('load',()=>{
-  map.addImage('ic',circleImg('#EA580C'));
-  map.addImage('iw',circleImg('#1A6FE8'));
+function placeWaypoint(idx, lng, lat) {
+  // Remove old marker if exists
+  if (wps[idx] && wps[idx].marker) wps[idx].marker.remove();
 
-  map.addSource('pts',{type:'geojson',data:`${BASE}/api/v1/map/markers`});
-  map.addLayer({id:'lc',type:'symbol',source:'pts',
-    filter:['==',['get','kind'],'cargo'],
-    layout:{'icon-image':'ic','icon-size':1,'icon-allow-overlap':true}});
-  map.addLayer({id:'lw',type:'symbol',source:'pts',
-    filter:['==',['get','kind'],'warehouse'],
-    layout:{'icon-image':'iw','icon-size':1,'icon-allow-overlap':true}});
+  // Create MapLibre built-in marker (color prop = colored pin, no custom element needed)
+  const colors = ['#16A34A','#DC2626','#1A6FE8','#9333EA','#EA580C'];
+  const color = idx === 0 ? '#16A34A' : idx === wps.length-1 ? '#DC2626' : '#1A6FE8';
+  const marker = new maplibregl.Marker({color, scale:0.9})
+    .setLngLat([lng, lat])
+    .addTo(map);
 
-  map.addSource('rt',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
-  map.addLayer({id:'rt-cs',type:'line',source:'rt',
-    layout:{'line-join':'round','line-cap':'round'},
-    paint:{'line-color':'#fff','line-width':9,'line-opacity':.85}});
-  map.addLayer({id:'rt-car',type:'line',source:'rt',
-    filter:['==',['get','v'],'driving-car'],
-    layout:{'line-join':'round','line-cap':'round'},
-    paint:{'line-color':'#1A6FE8','line-width':5}});
-  map.addLayer({id:'rt-hgv',type:'line',source:'rt',
-    filter:['==',['get','v'],'driving-hgv'],
-    layout:{'line-join':'round','line-cap':'butt'},
-    paint:{'line-color':'#EA580C','line-width':5,'line-dasharray':[2,1.5]}});
+  wps[idx] = {lng, lat, label:`${lat.toFixed(5)}, ${lng.toFixed(5)}`, marker};
+  renderPanel();
+  updateGoBtn();
 
-  /* Marker popups */
-  const popup=new maplibregl.Popup({offset:13,closeButton:false,maxWidth:'235px'});
-  ['lc','lw'].forEach(l=>{
-    map.on('click',l,e=>{
-      const p=e.features[0].properties;
-      const co=e.features[0].geometry.coordinates.slice();
-      const ic=p.kind==='cargo';
-      popup.setLngLat(co).setHTML(`
-        <div class="pu-t">
-          <div class="pu-k ${ic?'c':'w'}">${ic?"YUK E'LONI":"OMBOR"}</div>
-          <div class="pu-n">${p.title||'—'}</div>
-          ${(ic?p.city:p.address)?`<div class="pu-s">${ic?p.city:p.address}</div>`:''}
-        </div>
-        <div class="pu-f"><span class="pu-cl" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span></div>
-      `).addTo(map);
-    });
-    map.on('mouseenter',l,()=>map.getCanvas().style.cursor='pointer');
-    map.on('mouseleave',l,()=>map.getCanvas().style.cursor='crosshair');
-  });
+  // Advance to next empty slot
+  const next = wps.findIndex((w, i) => i > idx && w === null);
+  if (next !== -1) activeIdx = next;
+  else {
+    const any = wps.findIndex(w => w === null);
+    if (any !== -1) activeIdx = any;
+    // All set — keep activeIdx at last to allow override
+  }
 
-  /* Map click → set waypoint immediately, then geocode label in background */
-  map.on('click',async e=>{
-    let hits=[];
-    try{hits=map.queryRenderedFeatures(e.point,{layers:['lc','lw']});}catch{}
-    if(hits.length>0) return;
-    const {lng,lat}=e.lngLat;
-    const idx=activeI;
-    // 1. Set waypoint right away — don't wait for network
-    setWp(idx,{lng,lat,label:`${lat.toFixed(5)}, ${lng.toFixed(5)}`});
-    const next=wps.findIndex((w,i)=>i>idx&&!w.data);
-    if(next!==-1) setActive(next);
-    else{const any=wps.findIndex(w=>!w.data);if(any!==-1)setActive(any);}
-    renderWps();checkGo();
-    // 2. Reverse geocode in background, update label silently
-    try{
-      const label=await revGeo(lng,lat);
-      if(wps[idx]&&wps[idx].data){wps[idx].data.label=label;renderWps();}
-    }catch{}
-  });
-});
+  // Reverse geocode in background
+  revGeo(lng, lat).then(label => {
+    if (wps[idx]) { wps[idx].label = label; renderPanel(); }
+  }).catch(()=>{});
+}
 
-/* ── Render waypoints ── */
-function renderWps(){
-  const list=document.getElementById('wp-list');
-  list.innerHTML='';
-  wps.forEach((wp,i)=>{
-    const isFirst=i===0,isLast=i===wps.length-1,isMid=!isFirst&&!isLast;
-    const letter=isFirst?'A':isLast?'B':i.toString();
-    const placeholder=isFirst?"Boshlang'ich nuqta...":isLast?"Oxirgi nuqta...":"Oraliq nuqta...";
-    const label=wp.data?(wp.data.label||`${wp.data.lat.toFixed(4)}, ${wp.data.lng.toFixed(4)}`):placeholder;
-    const cls=['wp-row',wp.data?'done':'',activeI===i?'active':''].join(' ').trim();
-    const div=document.createElement('div');
-    div.className='wp-item';
-    div.innerHTML=`
-      <div class="${cls}" data-i="${i}">
-        <span class="wp-dot" style="background:${wp.color}">${letter}</span>
+// ─── Panel render ────────────────────────────────────
+function renderPanel() {
+  const list = document.getElementById('wp-list');
+  list.innerHTML = '';
+  const n = wps.length;
+
+  wps.forEach((wp, i) => {
+    const isFirst = i === 0;
+    const isLast  = i === n - 1;
+    const isMid   = !isFirst && !isLast;
+    const letter  = isFirst ? 'A' : isLast ? 'B' : String(i);
+    const placeholder = isFirst ? "Boshlang'ich nuqtani bosing..."
+                      : isLast  ? "Oxirgi nuqtani bosing..."
+                                : "Oraliq nuqtani bosing...";
+    const label = wp ? wp.label : placeholder;
+    const isActive = i === activeIdx;
+    const isSet    = !!wp;
+
+    const rowCls = ['wp-row', isSet?'set':'', isActive&&!isSet?'active':''].filter(Boolean).join(' ');
+    const dotColor = isFirst ? '#16A34A' : isLast ? '#DC2626' : '#1A6FE8';
+
+    const item = document.createElement('div');
+    item.className = 'wp-item';
+    item.innerHTML = `
+      <div class="${rowCls}" data-idx="${i}">
+        <span class="wp-dot" style="background:${dotColor}">${letter}</span>
         <span class="wp-lbl">${label}</span>
-        <span class="wp-actions">
-          ${wp.data?`<button class="wp-btn clr-btn" data-i="${i}" title="Tozalash">×</button>`:''}
-          ${isMid?`<button class="wp-btn del-btn" data-i="${i}" title="O'chirish">−</button>`:''}
+        <span class="wp-acts">
+          ${isSet ? `<button class="wp-btn" onclick="clearWp(${i})" title="Tozalash">✕</button>` : ''}
+          ${isMid ? `<button class="wp-btn" onclick="removeWp(${i})" title="O'chirish">−</button>` : ''}
         </span>
       </div>
-      ${!isLast?'<div class="wp-conn"></div>':''}
+      ${!isLast ? '<div class="wp-conn"></div>' : ''}
     `;
-    list.appendChild(div);
+    item.querySelector('.wp-row').addEventListener('click', ev => {
+      if (ev.target.closest('.wp-btn')) return;
+      activeIdx = i;
+      renderPanel();
+    });
+    list.appendChild(item);
   });
 
-  list.querySelectorAll('.wp-row').forEach(row=>{
-    row.addEventListener('click',e=>{
-      if(e.target.closest('.wp-btn')) return;
-      setActive(+row.dataset.i);
-    });
-  });
-  list.querySelectorAll('.clr-btn').forEach(b=>{
-    b.addEventListener('click',e=>{
-      e.stopPropagation();
-      const i=+b.dataset.i;
-      clearWpData(i);renderWps();checkGo();clearRoute();
-    });
-  });
-  list.querySelectorAll('.del-btn').forEach(b=>{
-    b.addEventListener('click',e=>{
-      e.stopPropagation();
-      const i=+b.dataset.i;
-      clearWpData(i);
-      wps.splice(i,1);
-      if(activeI>=wps.length)activeI=wps.length-1;
-      renderWps();checkGo();clearRoute();
-    });
-  });
-
-  updatePickBar();
-}
-
-function setActive(i){
-  activeI=i;renderWps();
-}
-function setWp(i,data){
-  wps[i].data=data;
-  if(wps[i].marker)wps[i].marker.remove();
-  const div=document.createElement('div');
-  div.className='wpm';div.style.background=wps[i].color;
-  wps[i].marker=new maplibregl.Marker({element:div,anchor:'center'})
-    .setLngLat([data.lng,data.lat]).addTo(map);
-}
-function clearWpData(i){
-  wps[i].data=null;
-  if(wps[i].marker){wps[i].marker.remove();wps[i].marker=null;}
-}
-function clearRoute(){
-  if(map.getSource('rt'))map.getSource('rt').setData({type:'FeatureCollection',features:[]});
-  document.getElementById('r-card').style.display='none';
-  document.getElementById('btn-clr').style.display='none';
-}
-function checkGo(){
-  document.getElementById('btn-go').disabled=wps.filter(w=>w.data).length<2;
-}
-
-function updatePickBar(){
-  const bar=document.getElementById('pick-bar');
-  const txt=document.getElementById('pick-txt');
-  const unset=wps.findIndex(w=>!w.data);
-  if(unset===-1){bar.classList.add('hide');return;}
-  bar.classList.remove('hide');
-  const isFirst=unset===0,isLast=unset===wps.length-1;
-  txt.textContent=isFirst?"A nuqtani xaritada bosing":
-    isLast?"B (oxirgi) nuqtani xaritada bosing":
-    `${unset}-oraliq nuqtani xaritada bosing`;
-}
-
-/* ── Add stop ── */
-document.getElementById('wp-add').addEventListener('click',()=>{
-  const mid={id:idCtr++,color:'#1A6FE8',marker:null,data:null};
-  wps.splice(wps.length-1,0,mid);
-  setActive(wps.length-2);
-  renderWps();checkGo();
-});
-
-/* ── Vehicle ── */
-document.querySelectorAll('.v-btn').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.v-btn').forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');vehicle=b.dataset.v;
-    document.getElementById('hgv-note').style.display=vehicle==='driving-hgv'?'block':'none';
-    if(wps.filter(w=>w.data).length>=2)drawRoute();
-  });
-});
-
-/* ── Route ── */
-document.getElementById('btn-go').addEventListener('click',drawRoute);
-document.getElementById('btn-clr').addEventListener('click',()=>{
-  wps.forEach((_,i)=>clearWpData(i));
-  wps=[{id:0,color:'#16A34A',marker:null,data:null},{id:1,color:'#DC2626',marker:null,data:null}];
-  idCtr=2;activeI=0;renderWps();checkGo();clearRoute();
-  document.getElementById('pick-bar').classList.remove('hide');
-});
-
-async function drawRoute(){
-  const pts=wps.filter(w=>w.data);
-  if(pts.length<2)return;
-  const btn=document.getElementById('btn-go');
-  btn.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Yuklanmoqda...';
-  btn.disabled=true;
-  try{
-    const coords=pts.map(w=>[w.data.lng,w.data.lat]);
-    const res=await fetch(`https://api.openrouteservice.org/v2/directions/${vehicle}/geojson`,{
-      method:'POST',
-      headers:{'Authorization':ORS,'Content-Type':'application/json','Accept':'application/geo+json, application/json'},
-      body:JSON.stringify({coordinates:coords})
-    });
-    if(!res.ok){const t=await res.text();throw new Error(`${res.status}: ${t}`);}
-    const data=await res.json();
-    if(!data.features||!data.features[0])throw new Error('route empty');
-    const feat=data.features[0];
-    const{distance,duration}=feat.properties.summary;
-    map.getSource('rt').setData({
-      type:'FeatureCollection',
-      features:[{type:'Feature',geometry:feat.geometry,properties:{v:vehicle}}]
-    });
-    const cs=feat.geometry.coordinates;
-    map.fitBounds([[Math.min(...cs.map(c=>c[0])),Math.min(...cs.map(c=>c[1]))],
-                   [Math.max(...cs.map(c=>c[0])),Math.max(...cs.map(c=>c[1]))]],
-      {padding:{top:50,bottom:50,left:60,right:80},duration:600});
-    document.getElementById('rc-ttl').textContent=vehicle==='driving-hgv'?'🚛 Yuk (HGV)':'🚗 Yengil';
-    document.getElementById('rc-d').textContent=distance>=1000?`${(distance/1e3).toFixed(1)} km`:`${Math.round(distance)} m`;
-    document.getElementById('rc-t').textContent=fmtD(duration);
-    document.getElementById('rc-s').textContent=`${pts.length} ta nuqta`;
-    document.getElementById('r-card').style.display='block';
-    document.getElementById('btn-clr').style.display='block';
-  }catch(e){
-    console.error('ORS error:',e);
-    alert(`Marshrut chizib bo'lmadi.\n\n${e.message}\n\nNuqtalar yo'l tarmog'ida bo'lishi kerak.`);
+  // Update hint
+  const hintEl = document.getElementById('hint');
+  const hintTxt = document.getElementById('hint-txt');
+  const emptyIdx = wps.findIndex(w => w === null);
+  if (emptyIdx === -1) {
+    hintEl.style.display = 'none';
+  } else {
+    hintEl.style.display = 'flex';
+    const letter = emptyIdx === 0 ? 'A' : emptyIdx === wps.length-1 ? 'B' : String(emptyIdx);
+    hintTxt.textContent = `Xaritada ${letter} nuqtani bosing`;
   }
-  btn.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15" stroke="white" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Yo\'lni ko\'rsat';
-  btn.disabled=wps.filter(w=>w.data).length<2;
 }
-function fmtD(s){const h=Math.floor(s/3600),m=Math.round((s%3600)/60);return h?`${h}h ${m}dq`:`${m} daqiqa`;}
 
-/* ── Search ── */
-let stmr;
-const sIn=document.getElementById('s-in'),srEl=document.getElementById('sr');
-sIn.addEventListener('input',()=>{
-  clearTimeout(stmr);const q=sIn.value.trim();
-  if(q.length<2){srEl.style.display='none';return;}
-  stmr=setTimeout(()=>doSearch(q),280);
+function clearWp(idx) {
+  if (wps[idx] && wps[idx].marker) wps[idx].marker.remove();
+  wps[idx] = null;
+  activeIdx = idx;
+  clearRouteLayer();
+  renderPanel();
+  updateGoBtn();
+}
+
+function removeWp(idx) {
+  if (wps[idx] && wps[idx].marker) wps[idx].marker.remove();
+  wps.splice(idx, 1);
+  if (activeIdx >= wps.length) activeIdx = wps.length - 1;
+  clearRouteLayer();
+  renderPanel();
+  updateGoBtn();
+}
+
+function clearAll() {
+  wps.forEach(w => { if(w&&w.marker) w.marker.remove(); });
+  wps = [null, null];
+  activeIdx = 0;
+  clearRouteLayer();
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('btn-clear').style.display = 'none';
+  renderPanel();
+  updateGoBtn();
+}
+
+function updateGoBtn() {
+  const ready = wps.filter(w => w !== null).length >= 2;
+  document.getElementById('btn-go').disabled = !ready;
+}
+
+// ─── Vehicle ─────────────────────────────────────────
+function setVehicle(v, btn) {
+  vehicle = v;
+  document.querySelectorAll('.v-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('hgv-note').style.display = v === 'driving-hgv' ? 'block' : 'none';
+  if (wps.filter(w=>w).length >= 2) drawRoute();
+}
+
+// ─── Route ───────────────────────────────────────────
+async function drawRoute() {
+  const pts = wps.filter(w => w !== null);
+  if (pts.length < 2) return;
+
+  const btn = document.getElementById('btn-go');
+  btn.textContent = '⏳ Yuklanmoqda...';
+  btn.disabled = true;
+
+  try {
+    const coords = pts.map(p => [p.lng, p.lat]);
+    const res = await fetch(
+      `https://api.openrouteservice.org/v2/directions/${vehicle}/geojson`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': ORS_KEY,
+          'Content-Type': 'application/json',
+          'Accept': 'application/geo+json, application/json',
+        },
+        body: JSON.stringify({coordinates: coords}),
+      }
+    );
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`ORS ${res.status}: ${txt}`);
+    }
+    const data = await res.json();
+    const feat = data.features[0];
+    const {distance, duration} = feat.properties.summary;
+
+    // Draw route
+    if (!map.getSource('route')) {
+      map.addSource('route', {type:'geojson', data: {type:'FeatureCollection',features:[]}});
+      map.addLayer({id:'route-shadow', type:'line', source:'route',
+        layout:{'line-join':'round','line-cap':'round'},
+        paint:{'line-color':'#fff','line-width':10,'line-opacity':.8}});
+      map.addLayer({id:'route-line', type:'line', source:'route',
+        layout:{'line-join':'round','line-cap':'round'},
+        paint:{'line-color': vehicle==='driving-hgv'?'#EA580C':'#1A6FE8',
+               'line-width':5,
+               ...(vehicle==='driving-hgv'?{'line-dasharray':[2,1.5]}:{})}});
+    } else {
+      map.getSource('route').setData({
+        type:'FeatureCollection',
+        features:[{type:'Feature', geometry:feat.geometry, properties:{}}]
+      });
+      map.setPaintProperty('route-line','line-color',vehicle==='driving-hgv'?'#EA580C':'#1A6FE8');
+    }
+    map.getSource('route').setData({
+      type:'FeatureCollection',
+      features:[{type:'Feature', geometry:feat.geometry, properties:{}}]
+    });
+
+    // Fit bounds
+    const cs = feat.geometry.coordinates;
+    const lons = cs.map(c=>c[0]), lats = cs.map(c=>c[1]);
+    map.fitBounds(
+      [[Math.min(...lons),Math.min(...lats)],[Math.max(...lons),Math.max(...lats)]],
+      {padding:{top:50,bottom:50,left:60,right:80},duration:700}
+    );
+
+    // Show result
+    const km = distance >= 1000 ? `${(distance/1000).toFixed(1)} km` : `${Math.round(distance)} m`;
+    const h = Math.floor(duration/3600), m = Math.round((duration%3600)/60);
+    const timeStr = h ? `${h} soat ${m} daqiqa` : `${m} daqiqa`;
+
+    document.getElementById('rc-title').textContent = vehicle==='driving-hgv'?'🚛 Yuk (HGV)':'🚗 Yengil mashina';
+    document.getElementById('rc-dist').textContent = km;
+    document.getElementById('rc-time').textContent = timeStr;
+    document.getElementById('rc-pts').textContent = `${pts.length} ta nuqta`;
+    document.getElementById('result-card').style.display = 'block';
+    document.getElementById('btn-clear').style.display = 'block';
+
+  } catch(err) {
+    alert(`Marshrut chizib bo'lmadi.\n${err.message}`);
+    console.error(err);
+  }
+
+  btn.textContent = '→ Yo\'lni ko\'rsat';
+  btn.disabled = wps.filter(w=>w).length < 2;
+}
+
+function clearRouteLayer() {
+  try {
+    if (map.getSource('route')) {
+      map.getSource('route').setData({type:'FeatureCollection',features:[]});
+    }
+  } catch(_){}
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('btn-clear').style.display = 'none';
+}
+
+// ─── Add intermediate stop ────────────────────────────
+document.getElementById('btn-add-stop').addEventListener('click', () => {
+  // Insert before last (B) point
+  const lastIdx = wps.length - 1;
+  wps.splice(lastIdx, 0, null);
+  activeIdx = lastIdx; // new middle stop is now at lastIdx
+  renderPanel();
+  updateGoBtn();
 });
-sIn.addEventListener('keydown',e=>{if(e.key==='Escape'){srEl.style.display='none';sIn.value='';}});
-document.addEventListener('click',e=>{if(!e.target.closest('.srch'))srEl.style.display='none';});
 
-async function doSearch(q){
-  try{
-    const u=`https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${MT}&language=uz&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
-    const{features=[]}=await fetch(u).then(r=>r.json());
-    if(!features.length){srEl.style.display='none';return;}
-    srEl.innerHTML=features.map(f=>{
-      const n=f.text||'';const s=(f.context||[]).map(c=>c.text).filter(Boolean).join(', ');
-      return `<div class="sri" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
-        <svg width="11" height="14" viewBox="0 0 12 16"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 11 5 11S11 8.75 11 5c0-2.76-2.24-5-5-5zm0 7.5C4.62 7.5 3.5 6.38 3.5 5S4.62 2.5 6 2.5 8.5 3.62 8.5 5 7.38 7.5 6 7.5z"/></svg>
-        <div><div class="sri-n">${n}</div>${s?`<div class="sri-s">${s}</div>`:''}</div>
+// ─── Map load: add cargo/warehouse markers ────────────
+map.on('load', () => {
+  // Custom circle images for markers
+  function circleImg(hex) {
+    const N=22, cv=document.createElement('canvas');
+    cv.width=N; cv.height=N;
+    const x=cv.getContext('2d'), r=N/2-2, c=N/2;
+    x.shadowColor='rgba(0,0,0,.2)'; x.shadowBlur=4; x.shadowOffsetY=2;
+    x.beginPath(); x.arc(c,c,r,0,Math.PI*2); x.fillStyle=hex; x.fill();
+    x.shadowBlur=0; x.shadowOffsetY=0;
+    x.beginPath(); x.arc(c,c,r,0,Math.PI*2);
+    x.strokeStyle='#fff'; x.lineWidth=2.5; x.stroke();
+    return {data:x.getImageData(0,0,N,N), width:N, height:N};
+  }
+  map.addImage('ic-cargo', circleImg('#EA580C'));
+  map.addImage('ic-wh', circleImg('#1A6FE8'));
+
+  map.addSource('pts', {
+    type:'geojson',
+    data:`${API_BASE}/api/v1/map/markers`,
+  });
+  map.addLayer({id:'lc', type:'symbol', source:'pts',
+    filter:['==',['get','kind'],'cargo'],
+    layout:{'icon-image':'ic-cargo','icon-size':1,'icon-allow-overlap':true}});
+  map.addLayer({id:'lw', type:'symbol', source:'pts',
+    filter:['==',['get','kind'],'warehouse'],
+    layout:{'icon-image':'ic-wh','icon-size':1,'icon-allow-overlap':true}});
+
+  map.on('mouseenter','lc',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','lc',()=>map.getCanvas().style.cursor='crosshair');
+  map.on('mouseenter','lw',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','lw',()=>map.getCanvas().style.cursor='crosshair');
+});
+
+// ─── Marker popup ─────────────────────────────────────
+const popup = new maplibregl.Popup({offset:12, closeButton:false, maxWidth:'220px'});
+function showPopup(feature, lngLat) {
+  const p = feature.properties;
+  const isCargo = p.kind === 'cargo';
+  popup.setLngLat(lngLat).setHTML(`
+    <div class="pu-head">
+      <div class="pu-kind ${isCargo?'cargo':'wh'}">${isCargo?"YUK E'LONI":"OMBOR"}</div>
+      <div class="pu-name">${p.title||'—'}</div>
+      ${(isCargo?p.city:p.address)?`<div class="pu-sub">${isCargo?p.city:p.address}</div>`:''}
+    </div>
+    <div class="pu-foot">
+      <span class="pu-close" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span>
+    </div>
+  `).addTo(map);
+}
+
+// ─── Search ───────────────────────────────────────────
+let searchTimer;
+const sInp = document.getElementById('s-inp');
+const sRes = document.getElementById('search-results');
+
+sInp.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = sInp.value.trim();
+  if (q.length < 2) { sRes.style.display='none'; return; }
+  searchTimer = setTimeout(() => doSearch(q), 300);
+});
+sInp.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { sRes.style.display='none'; sInp.value=''; }
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) sRes.style.display = 'none';
+});
+
+async function doSearch(q) {
+  try {
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${MT_KEY}&language=uz&limit=5&bbox=55,35,75,48&proximity=69.24,41.30`;
+    const {features=[]} = await fetch(url).then(r=>r.json());
+    if (!features.length) { sRes.style.display='none'; return; }
+    sRes.innerHTML = features.map(f => {
+      const name = f.text || '';
+      const sub  = (f.context||[]).map(c=>c.text).filter(Boolean).join(', ');
+      return `<div class="sr-item" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
+        <svg width="10" height="13" viewBox="0 0 12 16" fill="#1A6FE8"><path d="M6 0C3.24 0 1 2.24 1 5c0 3.75 5 11 5 11S11 8.75 11 5c0-2.76-2.24-5-5-5zm0 7.5C4.62 7.5 3.5 6.38 3.5 5S4.62 2.5 6 2.5 8.5 3.62 8.5 5 7.38 7.5 6 7.5z"/></svg>
+        <div><span>${name}</span>${sub?`<small>${sub}</small>`:''}</div>
       </div>`;
     }).join('');
-    srEl.style.display='block';
-    srEl.querySelectorAll('.sri').forEach(el=>{
-      el.addEventListener('click',()=>{
-        map.flyTo({center:[+el.dataset.lng,+el.dataset.lat],zoom:14,speed:1.4});
-        srEl.style.display='none';sIn.value=el.querySelector('.sri-n').textContent;
+    sRes.style.display = 'block';
+    sRes.querySelectorAll('.sr-item').forEach(el => {
+      el.addEventListener('click', () => {
+        map.flyTo({center:[+el.dataset.lng,+el.dataset.lat], zoom:14, speed:1.3});
+        sRes.style.display = 'none';
+        sInp.value = el.querySelector('span').textContent;
       });
     });
-  }catch{srEl.style.display='none';}
+  } catch(_) { sRes.style.display='none'; }
 }
 
-/* ── Reverse geo ── */
-async function revGeo(lng,lat){
-  try{
-    const u=`https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MT}&language=uz`;
-    const{features=[]}=await fetch(u).then(r=>r.json());
-    if(features[0])return features[0].place_name||features[0].text||'';
-  }catch{}
+// ─── Reverse geocoding ────────────────────────────────
+async function revGeo(lng, lat) {
+  const url = `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MT_KEY}&language=uz`;
+  const {features=[]} = await fetch(url).then(r=>r.json());
+  if (features[0]) return features[0].place_name || features[0].text || '';
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
 
-/* ── Overlay ── */
-let ovrT;
-function showOvr(t){const o=document.getElementById('ovr');o.textContent=t;o.style.display='block';clearTimeout(ovrT);}
-function hideOvr(){ovrT=setTimeout(()=>document.getElementById('ovr').style.display='none',300);}
-
-/* ── Init ── */
-renderWps();checkGo();
+// ─── Init ─────────────────────────────────────────────
+renderPanel();
+updateGoBtn();
 </script>
 </body>
 </html>
