@@ -232,3 +232,23 @@ func (r *CargoRepo) RemoveBoost(ctx context.Context, id uuid.UUID) error {
 		Where("id = ?", id).
 		Updates(map[string]interface{}{"is_boosted": false, "boost_expires_at": nil}).Error
 }
+
+// CargoMapRow — минимальные данные груза для карты.
+type CargoMapRow struct {
+	ID        string   `gorm:"column:id"`
+	CargoName string   `gorm:"column:cargo_name"`
+	Lat       float64  `gorm:"column:lat"`
+	Lng       float64  `gorm:"column:lng"`
+	FromCity  *string  `gorm:"column:from_city"`
+}
+
+// ListForMap возвращает активные грузы с координатами (только нужные поля).
+func (r *CargoRepo) ListForMap(ctx context.Context) ([]CargoMapRow, error) {
+	var rows []CargoMapRow
+	err := r.db.WithContext(ctx).
+		Table("cargo_listings").
+		Select("id::text, cargo_name, lat, lng, from_city").
+		Where("status = 'active' AND is_template = false AND is_admin_blocked = false AND lat IS NOT NULL AND lng IS NOT NULL").
+		Find(&rows).Error
+	return rows, err
+}

@@ -4915,6 +4915,36 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Map",
+      "item": [
+        {
+          "name": "GET /map/markers — GeoJSON маркеры",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/map/markers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "map", "markers"],
+              "query": [
+                { "key": "kind", "value": "cargo", "description": "Фильтр: cargo | warehouse. Без параметра — все.", "disabled": true }
+              ]
+            },
+            "description": "Возвращает **raw GeoJSON FeatureCollection** (без стандартной обёртки success/data) — пригоден для прямого использования в MapLibre, Leaflet, iOS/Android map SDK.\n\nКаждый Feature:\n```json\n{\n  \"type\": \"Feature\",\n  \"id\": \"uuid\",\n  \"geometry\": { \"type\": \"Point\", \"coordinates\": [lng, lat] },\n  \"properties\": {\n    \"id\": \"uuid\",\n    \"kind\": \"cargo\" | \"warehouse\",\n    \"title\": \"Название\",\n    \"city\": \"Ташкент\"   // cargo only\n    \"address\": \"ул. ...\" // warehouse only\n  }\n}\n```\n\n**Использование в MapLibre GL JS:**\n```js\nmap.addSource('ctm', {\n  type: 'geojson',\n  data: 'https://api.centraltrademarket.com/api/v1/map/markers',\n  cluster: true\n});\n```\n\n**Фильтр по типу:** `?kind=cargo` или `?kind=warehouse`."
+          },
+          "response": [
+            {
+              "name": "200 — FeatureCollection",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"b12e4a...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"b12e4a...\", \"kind\": \"cargo\", \"title\": \"Qand mahsulotlari\", \"city\": \"Toshkent\" }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.3500, 41.3200] },\n      \"properties\": { \"id\": \"c88f9b...\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

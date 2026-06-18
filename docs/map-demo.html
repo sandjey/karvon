@@ -2,102 +2,206 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>Map — Central Trade Market</title>
+<title>CTM Map</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #f0ede8; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
 #map { width: 100vw; height: 100vh; }
 
-#style-switcher {
+/* ── Search ────────────────────────────────────────────── */
+#search-wrap {
   position: fixed;
   top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 300;
+  width: min(460px, calc(100vw - 100px));
+}
+#search-input {
+  width: 100%;
+  padding: 13px 18px 13px 42px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08);
+  font-size: 14px;
+  color: #222;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+#search-input::placeholder { color: #aaa; }
+#search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #999;
+  font-size: 16px;
+}
+#search-results {
+  display: none;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.13);
+  margin-top: 6px;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sr-item {
+  padding: 11px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-bottom: 1px solid #f2f2f2;
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: #f5f8ff; }
+.sr-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+.sr-name { font-size: 13px; font-weight: 500; color: #1a1a2e; }
+.sr-sub { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* ── Legend ────────────────────────────────────────────── */
+#legend {
+  position: fixed;
+  bottom: 30px;
   left: 14px;
   z-index: 200;
-  display: flex;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
   border-radius: 12px;
-  padding: 5px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08);
-}
-
-.style-btn {
-  padding: 7px 18px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: #555;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.11);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-  letter-spacing: 0.01em;
-  user-select: none;
+  font-size: 12px;
+  color: #444;
 }
-.style-btn:hover { background: rgba(0,0,0,0.06); color: #111; }
-.style-btn.active {
-  background: #1a73e8;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(26,115,232,0.35);
-}
+.legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.legend-row:last-child { margin-bottom: 0; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
-/* Navigation controls — clean */
+/* ── MapLibre overrides ─────────────────────────────────── */
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
 .maplibregl-ctrl-group {
   border-radius: 12px !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
   border: none !important;
   overflow: hidden;
 }
-.maplibregl-ctrl-group button {
-  width: 38px !important;
-  height: 38px !important;
+.maplibregl-popup-content {
+  border-radius: 14px !important;
+  padding: 0 !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.16) !important;
+  min-width: 200px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-.maplibregl-ctrl-scale {
-  background: rgba(255,255,255,0.9) !important;
-  border-radius: 6px !important;
-  border: 1px solid rgba(0,0,0,0.15) !important;
-  font-size: 11px !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-}
+.maplibregl-popup-close-button { display: none; }
+.maplibregl-popup-tip { border-top-color: #fff !important; }
 
-/* Hide attribution completely */
-.maplibregl-ctrl-attrib,
-.maplibregl-ctrl-attrib-button,
-.maplibregl-ctrl-logo { display: none !important; }
+.popup-header {
+  padding: 12px 14px 0;
+}
+.popup-kind {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 4px;
+}
+.popup-kind.cargo { color: #f97316; }
+.popup-kind.warehouse { color: #2563eb; }
+.popup-title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.3; }
+.popup-sub { font-size: 12px; color: #777; margin-top: 3px; }
+.popup-footer {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: flex-end;
+}
+.popup-close {
+  font-size: 12px;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+}
 </style>
 </head>
 <body>
 
-<div id="style-switcher">
-  <button class="style-btn active" data-style="streets-v2">Streets</button>
-  <button class="style-btn" data-style="topo-v2">Topo</button>
+<div id="search-wrap">
+  <span id="search-icon">🔍</span>
+  <input id="search-input" type="text" placeholder="Shahar, ko'cha yoki joy qidiring..." autocomplete="off">
+  <div id="search-results"></div>
 </div>
 
 <div id="map"></div>
 
-<script>
-const KEY = 'IMtNu6UNxo2LBpjLSZpj';
+<div id="legend">
+  <div class="legend-row"><span class="legend-dot" style="background:#f97316"></span> Yuk e'loni</div>
+  <div class="legend-row"><span class="legend-dot" style="background:#2563eb"></span> Ombor</div>
+</div>
 
-function styleUrl(name) {
-  return `https://api.maptiler.com/maps/${name}/style.json?key=${KEY}&language=ru`;
+<script>
+const KEY   = 'IMtNu6UNxo2LBpjLSZpj';
+const BASE  = window.location.origin;
+
+/* ── Canvas pin icon ─────────────────────────────────── */
+function makePinImage(color, letter) {
+  const W = 30, H = 38, R = 13;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.shadowColor = 'rgba(0,0,0,0.22)';
+  ctx.shadowBlur = 5;
+  ctx.shadowOffsetY = 3;
+
+  ctx.beginPath();
+  ctx.arc(W / 2, R + 1, R, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 5, R * 2 - 2);
+  ctx.lineTo(W / 2 + 5, R * 2 - 2);
+  ctx.lineTo(W / 2, H - 1);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold 13px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(letter, W / 2, R + 1.5);
+
+  return { data: ctx.getImageData(0, 0, W, H), width: W, height: H };
 }
 
+/* ── Map init ────────────────────────────────────────── */
 const map = new maplibregl.Map({
   container: 'map',
-  style: styleUrl('streets-v2'),
+  style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${KEY}&language=ru`,
   center: [69.2401, 41.2995],
-  zoom: 14,
+  zoom: 11,
   antialias: true,
   fadeDuration: 200,
   attributionControl: false,
   renderWorldCopies: false,
-  maxPitch: 60
 });
 
 map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
@@ -105,21 +209,169 @@ map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 map.addControl(new maplibregl.GeolocateControl({
   positionOptions: { enableHighAccuracy: true },
   trackUserLocation: true,
-  showUserHeading: true
+  showUserHeading: true,
 }), 'top-right');
 
-// Smooth style switch (no map recreation — instant)
-let current = 'streets-v2';
-document.querySelectorAll('.style-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const s = btn.dataset.style;
-    if (s === current) return;
-    current = s;
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    map.setStyle(styleUrl(s));
+/* ── Load markers after style ready ─────────────────── */
+map.on('load', () => {
+  map.addImage('pin-cargo',     makePinImage('#f97316', 'Y'));
+  map.addImage('pin-warehouse', makePinImage('#2563eb', 'O'));
+
+  map.addSource('markers', {
+    type: 'geojson',
+    data: `${BASE}/api/v1/map/markers`,
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 48,
   });
+
+  // Cluster bubble
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'markers',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#1a73e8',
+      'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2.5,
+      'circle-opacity': 0.92,
+    },
+  });
+
+  // Cluster count
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'markers',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': '{point_count_abbreviated}',
+      'text-size': 13,
+      'text-font': ['Noto Sans Bold'],
+    },
+    paint: { 'text-color': '#fff' },
+  });
+
+  // Cargo pins
+  map.addLayer({
+    id: 'pins-cargo',
+    type: 'symbol',
+    source: 'markers',
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'kind'], 'cargo']],
+    layout: {
+      'icon-image': 'pin-cargo',
+      'icon-size': 1,
+      'icon-allow-overlap': true,
+      'icon-anchor': 'bottom',
+    },
+  });
+
+  // Warehouse pins
+  map.addLayer({
+    id: 'pins-warehouse',
+    type: 'symbol',
+    source: 'markers',
+    filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'kind'], 'warehouse']],
+    layout: {
+      'icon-image': 'pin-warehouse',
+      'icon-size': 1,
+      'icon-allow-overlap': true,
+      'icon-anchor': 'bottom',
+    },
+  });
+
+  // Cluster click → zoom in
+  map.on('click', 'clusters', (e) => {
+    const f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })[0];
+    map.getSource('markers').getClusterExpansionZoom(f.properties.cluster_id, (err, zoom) => {
+      if (!err) map.easeTo({ center: f.geometry.coordinates, zoom, duration: 400 });
+    });
+  });
+
+  // Pin click → popup
+  const popup = new maplibregl.Popup({ offset: 34, closeButton: false, maxWidth: '260px' });
+
+  ['pins-cargo', 'pins-warehouse'].forEach(layer => {
+    map.on('click', layer, (e) => {
+      const p = e.features[0].properties;
+      const coords = e.features[0].geometry.coordinates.slice();
+      const isCargo = p.kind === 'cargo';
+      const kindLabel = isCargo ? '🚛 Yuk e\'loni' : '🏭 Ombor';
+      const sub = isCargo ? (p.city || '') : (p.address || '');
+      popup
+        .setLngLat(coords)
+        .setHTML(`
+          <div class="popup-header">
+            <div class="popup-kind ${p.kind}">${kindLabel}</div>
+            <div class="popup-title">${p.title || '—'}</div>
+            ${sub ? `<div class="popup-sub">${sub}</div>` : ''}
+          </div>
+          <div class="popup-footer">
+            <span class="popup-close" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span>
+          </div>`)
+        .addTo(map);
+    });
+    map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
+  });
+
+  map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '');
 });
+
+/* ── Search (MapTiler Geocoding) ─────────────────────── */
+const searchInput   = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+let searchTimer;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchResults.style.display = 'none'; return; }
+  searchTimer = setTimeout(() => geocode(q), 280);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { searchResults.style.display = 'none'; searchInput.value = ''; }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#search-wrap')) searchResults.style.display = 'none';
+});
+
+async function geocode(q) {
+  try {
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json`
+      + `?key=${KEY}&language=ru&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
+    const data = await fetch(url).then(r => r.json());
+    renderResults(data.features || []);
+  } catch { searchResults.style.display = 'none'; }
+}
+
+function renderResults(features) {
+  if (!features.length) { searchResults.style.display = 'none'; return; }
+  searchResults.innerHTML = features.map(f => {
+    const name   = f.text_ru || f.text || '';
+    const region = (f.context || []).map(c => c.text_ru || c.text).filter(Boolean).join(', ');
+    return `<div class="sr-item" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
+      <span class="sr-icon">📍</span>
+      <div>
+        <div class="sr-name">${name}</div>
+        ${region ? `<div class="sr-sub">${region}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  searchResults.style.display = 'block';
+  searchResults.querySelectorAll('.sr-item').forEach(el => {
+    el.addEventListener('click', () => {
+      map.flyTo({ center: [+el.dataset.lng, +el.dataset.lat], zoom: 14, speed: 1.5 });
+      searchResults.style.display = 'none';
+      searchInput.value = el.querySelector('.sr-name').textContent;
+    });
+  });
+}
 </script>
 </body>
 </html>

@@ -186,6 +186,7 @@ func main() {
 	handler.NewUploadHandler(store, uploadBaseURL).RegisterRoutes(v1, authMiddleware)
 	handler.NewModeratorHandler(moderatorSvc).RegisterRoutes(v1, authMiddleware, moderatorRoleMiddleware)
 	handler.NewGeoHandler().RegisterRoutes(v1)
+	handler.NewMapHandler(cargoRepo, warehouseRepo).RegisterRoutes(v1)
 	handler.NewConfigHandler(cfg.MapTilesURL, categoryRepo).RegisterRoutes(v1)
 	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
 	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)

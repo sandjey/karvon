@@ -189,3 +189,23 @@ func (r *WarehouseRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset
 	err := q.Order("created_at DESC").Offset(offset).Limit(limit).Find(&list).Error
 	return list, total, err
 }
+
+// WarehouseMapRow — минимальные данные склада для карты.
+type WarehouseMapRow struct {
+	ID      string   `gorm:"column:id"`
+	Name    string   `gorm:"column:name"`
+	Lat     float64  `gorm:"column:lat"`
+	Lng     float64  `gorm:"column:lng"`
+	Address *string  `gorm:"column:address"`
+}
+
+// ListForMap возвращает активные склады с координатами (только нужные поля).
+func (r *WarehouseRepo) ListForMap(ctx context.Context) ([]WarehouseMapRow, error) {
+	var rows []WarehouseMapRow
+	err := r.db.WithContext(ctx).
+		Table("warehouse_listings").
+		Select("id::text, name, lat, lng, address").
+		Where("status = 'active' AND is_admin_blocked = false AND lat IS NOT NULL AND lng IS NOT NULL").
+		Find(&rows).Error
+	return rows, err
+}
