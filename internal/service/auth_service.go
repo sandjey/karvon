@@ -123,6 +123,17 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 				return nil, ErrOTPRateLimit
 			}
 			if errors.Is(err, notifier.ErrNumberNotRegistered) {
+				// Telegram Gateway cannot reach this number — fallback to WhatsApp
+				if s.whatsapp != nil {
+					if err2 := s.whatsapp.Send(ctx, phone, message); err2 != nil {
+						if errors.Is(err2, notifier.ErrRateLimit) {
+							return nil, ErrOTPRateLimit
+						}
+						return nil, ErrPhoneNotOnTelegram
+					}
+					// Delivered via WhatsApp fallback
+					break
+				}
 				return nil, ErrPhoneNotOnTelegram
 			}
 			return nil, err
