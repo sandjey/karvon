@@ -7,192 +7,475 @@
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; }
-#map { width: 100vw; height: 100vh; }
+:root {
+  --cargo:   #F97316;
+  --wh:      #2563EB;
+  --panel:   #FFFFFF;
+  --border:  #E8EDF2;
+  --text:    #1A1A2E;
+  --muted:   #64748B;
+  --hover:   #F1F5F9;
+  --accent:  #1A6FE8;
+  --radius:  12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
 
-/* ── Search ────────────────────────────────────────────── */
-#search-wrap {
+/* ─ Panel ─────────────────────────────────────────────── */
+#panel {
   position: fixed;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 300;
-  width: min(460px, calc(100vw - 100px));
+  top: 0; left: 0; bottom: 0;
+  width: 300px;
+  z-index: 400;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 20px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-#search-input {
-  width: 100%;
-  padding: 13px 18px 13px 42px;
-  border-radius: 14px;
-  border: none;
-  background: rgba(255,255,255,0.97);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08);
-  font-size: 14px;
-  color: #222;
-  outline: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+.panel-logo {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
-#search-input::placeholder { color: #aaa; }
-#search-icon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  color: #999;
+.logo-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
   font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
+.logo-text { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.logo-sub  { font-size: 11px; color: var(--muted); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1;
+  padding: 11px 8px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn:hover:not(.active) { background: var(--hover); }
+
+/* Sections */
+.tab-pane { display: none; flex: 1; overflow-y: auto; }
+.tab-pane.active { display: flex; flex-direction: column; }
+
+/* Search */
+.search-wrap {
+  padding: 14px 16px 8px;
+  flex-shrink: 0;
+}
+.search-field {
+  position: relative;
+}
+.search-field svg {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.search-field input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  background: #FAFBFD;
+}
+.search-field input:focus { border-color: var(--accent); background: #fff; }
+.search-field input::placeholder { color: #AAB4C0; }
+
 #search-results {
   display: none;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.13);
   margin-top: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
   overflow: hidden;
-  max-height: 280px;
-  overflow-y: auto;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
 }
 .sr-item {
-  padding: 11px 16px;
+  padding: 10px 14px;
   cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  border-bottom: 1px solid #f2f2f2;
+  display: flex; gap: 10px; align-items: flex-start;
+  border-bottom: 1px solid #F3F4F6;
+  transition: background 0.1s;
 }
 .sr-item:last-child { border-bottom: none; }
-.sr-item:hover { background: #f5f8ff; }
-.sr-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
-.sr-name { font-size: 13px; font-weight: 500; color: #1a1a2e; }
-.sr-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.sr-item:hover { background: var(--hover); }
+.sr-pin { color: var(--muted); font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+.sr-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.sr-sub  { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
-/* ── Legend ────────────────────────────────────────────── */
-#legend {
-  position: fixed;
-  bottom: 30px;
-  left: 14px;
-  z-index: 200;
-  background: rgba(255,255,255,0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 10px 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.11);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 12px;
-  color: #444;
+/* Legend */
+.section-label {
+  padding: 10px 16px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-.legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.legend-row:last-child { margin-bottom: 0; }
-.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.legend-items { padding: 0 16px 8px; }
+.legend-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0;
+  font-size: 13px; color: var(--text);
+  border-bottom: 1px solid #F6F7F9;
+}
+.legend-row:last-child { border-bottom: none; }
+.ldot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2.5px solid white;
+  box-shadow: 0 0 0 1.5px currentColor;
+  flex-shrink: 0;
+}
+.ldot.cargo     { background: var(--cargo);  color: var(--cargo); }
+.ldot.warehouse { background: var(--wh);     color: var(--wh); }
+.ldot.cluster   { background: var(--accent); color: var(--accent); }
+.legend-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--hover);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
 
-/* ── MapLibre overrides ─────────────────────────────────── */
+/* ─ Route tab ─────────────────────────────────────────── */
+.route-section { padding: 14px 16px 0; }
+.route-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+
+.route-point {
+  display: flex; align-items: center; gap: 10px;
+  background: #FAFBFD;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 13px; color: var(--muted);
+}
+.route-point:hover { border-color: var(--accent); background: #EFF6FF; }
+.route-point.set   { border-color: #4ADE80; background: #F0FDF4; color: var(--text); }
+.route-point.active { border-color: var(--accent); background: #EFF6FF; }
+.rp-badge {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.rp-badge.a { background: #22C55E; }
+.rp-badge.b { background: #EF4444; }
+.rp-text { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rp-clear { font-size: 14px; color: var(--muted); padding: 2px; cursor: pointer; flex-shrink: 0; display: none; }
+.route-point.set .rp-clear { display: block; }
+
+.vehicle-row {
+  display: flex; gap: 8px;
+  margin-bottom: 12px;
+}
+.vehicle-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #FAFBFD;
+  cursor: pointer;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all 0.15s;
+}
+.vehicle-btn:hover { border-color: var(--accent); color: var(--accent); }
+.vehicle-btn.active { border-color: var(--accent); background: #EFF6FF; color: var(--accent); font-weight: 600; }
+
+.btn-route {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  margin-bottom: 14px;
+}
+.btn-route:hover { background: #1558C0; }
+.btn-route:disabled { opacity: 0.45; cursor: default; }
+
+.btn-clear-route {
+  width: 100%;
+  padding: 9px;
+  background: none;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: none;
+  margin-bottom: 10px;
+}
+.btn-clear-route:hover { border-color: #EF4444; color: #EF4444; }
+
+/* Route info card */
+#route-info {
+  display: none;
+  margin: 0 16px 14px;
+  padding: 14px;
+  background: var(--hover);
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+}
+.ri-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.ri-row:last-child { margin-bottom: 0; }
+.ri-key { font-size: 11px; color: var(--muted); }
+.ri-val { font-size: 13px; font-weight: 600; color: var(--text); }
+.ri-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+.hint-box {
+  margin: 0 16px 12px;
+  padding: 10px 12px;
+  background: #EFF6FF;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1D4ED8;
+  line-height: 1.5;
+}
+.hint-box.hidden { display: none; }
+
+/* ─ Map ───────────────────────────────────────────────── */
+#map {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  left: 300px;
+  z-index: 100;
+}
+#map.route-mode { cursor: crosshair !important; }
+
+/* Controls override */
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
 .maplibregl-ctrl-group {
-  border-radius: 12px !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12) !important;
   border: none !important;
   overflow: hidden;
 }
-.maplibregl-popup-content {
-  border-radius: 14px !important;
-  padding: 0 !important;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.16) !important;
-  min-width: 200px;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.maplibregl-ctrl-scale {
+  background: rgba(255,255,255,0.9) !important;
+  border: 1.5px solid rgba(0,0,0,0.12) !important;
+  border-radius: 6px !important;
+  font-size: 10px !important;
 }
-.maplibregl-popup-close-button { display: none; }
-.maplibregl-popup-tip { border-top-color: #fff !important; }
 
-.popup-header {
-  padding: 12px 14px 0;
+/* Popup */
+.maplibregl-popup-content {
+  border-radius: 12px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.14) !important;
+  overflow: hidden;
+  min-width: 190px;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
-.popup-kind {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  margin-bottom: 4px;
+.maplibregl-popup-close-button { display: none !important; }
+.pu-top { padding: 12px 14px 10px; }
+.pu-kind { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 3px; }
+.pu-kind.cargo     { color: var(--cargo); }
+.pu-kind.warehouse { color: var(--wh); }
+.pu-title { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.pu-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.pu-foot  { padding: 8px 14px; border-top: 1px solid #F0F2F5; display: flex; justify-content: flex-end; }
+.pu-close { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+
+/* Route marker */
+.route-marker {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
-.popup-kind.cargo { color: #f97316; }
-.popup-kind.warehouse { color: #2563eb; }
-.popup-title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.3; }
-.popup-sub { font-size: 12px; color: #777; margin-top: 3px; }
-.popup-footer {
-  margin-top: 10px;
-  padding: 10px 14px;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: flex-end;
-}
-.popup-close {
-  font-size: 12px;
-  color: #2563eb;
-  cursor: pointer;
-  font-weight: 500;
-}
+.route-marker.start { background: #22C55E; }
+.route-marker.end   { background: #EF4444; }
 </style>
 </head>
 <body>
 
-<div id="search-wrap">
-  <span id="search-icon">🔍</span>
-  <input id="search-input" type="text" placeholder="Shahar, ko'cha yoki joy qidiring..." autocomplete="off">
-  <div id="search-results"></div>
+<!-- ─ Left Panel ──────────────────────────────────────── -->
+<div id="panel">
+
+  <div class="panel-logo">
+    <div class="logo-mark">C</div>
+    <div>
+      <div class="logo-text">Central Trade Market</div>
+      <div class="logo-sub">Logistics Map</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="search">Qidiruv</button>
+    <button class="tab-btn" data-tab="layers">Qatlamlar</button>
+    <button class="tab-btn" data-tab="route">Marshrut</button>
+  </div>
+
+  <!-- Search tab -->
+  <div class="tab-pane active" id="tab-search">
+    <div class="search-wrap">
+      <div class="search-field">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Shahar, ko'cha, joy..." autocomplete="off">
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <div class="section-label">Ko'rsatmalar</div>
+    <div style="padding:0 16px 12px; font-size:12px; color:var(--muted); line-height:1.6;">
+      Yuk e'lonlari va omborlar xaritada avtomatik ko'rsatiladi.<br>
+      Marker ustiga bosing — tafsilotlar ko'rsatiladi.<br>
+      Marshrut chizish uchun — <strong>Marshrut</strong> bo'limiga o'ting.
+    </div>
+  </div>
+
+  <!-- Layers tab -->
+  <div class="tab-pane" id="tab-layers">
+    <div class="section-label">Qatlamlar</div>
+    <div class="legend-items">
+      <div class="legend-row">
+        <span class="ldot cargo"></span>
+        Yuk e'lonlari
+        <span class="legend-count" id="count-cargo">—</span>
+      </div>
+      <div class="legend-row">
+        <span class="ldot warehouse"></span>
+        Omborlar
+        <span class="legend-count" id="count-wh">—</span>
+      </div>
+      <div class="legend-row">
+        <span class="ldot cluster"></span>
+        Guruh (cluster)
+      </div>
+    </div>
+
+    <div class="section-label">Ma'lumot manbasi</div>
+    <div style="padding:0 16px 12px; font-size:12px; color:var(--muted); line-height:1.6;">
+      Koordinatalar bazadan real vaqt rejimida yuklanadi.<br>
+      Faqat faol e'lonlar ko'rsatiladi.<br>
+      <br>
+      API endpoint:<br>
+      <code style="font-size:11px; color:var(--accent);">/api/v1/map/markers</code><br>
+      <code style="font-size:11px; color:var(--muted);">?kind=cargo|warehouse</code>
+    </div>
+  </div>
+
+  <!-- Route tab -->
+  <div class="tab-pane" id="tab-route">
+    <div class="route-section">
+
+      <div class="hint-box" id="route-hint">
+        Boshlang'ich va yakuniy nuqtani tanlang — xaritaga bosing yoki quyida belgilang.
+      </div>
+
+      <div class="route-label">Boshlang'ich nuqta</div>
+      <div class="route-point" id="rp-start" data-point="start">
+        <span class="rp-badge a">A</span>
+        <span class="rp-text" id="rp-start-text">Xaritada bosing...</span>
+        <span class="rp-clear" id="rp-start-clear" title="O'chirish">✕</span>
+      </div>
+
+      <div class="route-label">Yakuniy nuqta</div>
+      <div class="route-point" id="rp-end" data-point="end">
+        <span class="rp-badge b">B</span>
+        <span class="rp-text" id="rp-end-text">Xaritada bosing...</span>
+        <span class="rp-clear" id="rp-end-clear" title="O'chirish">✕</span>
+      </div>
+
+      <div class="route-label">Transport turi</div>
+      <div class="vehicle-row">
+        <button class="vehicle-btn active" data-vehicle="car">
+          <svg width="16" height="12" fill="currentColor" viewBox="0 0 24 16">
+            <path d="M23.5 8.5l-2-5.5a2 2 0 0 0-1.9-1.5H4.4A2 2 0 0 0 2.5 3L.5 8.5A1.5 1.5 0 0 0 0 9.5V13a1 1 0 0 0 1 1h1a3 3 0 0 0 6 0h8a3 3 0 0 0 6 0h1a1 1 0 0 0 1-1V9.5a1.5 1.5 0 0 0-.5-1zM5 13a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm14 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM3 8l1.7-4.7a.5.5 0 0 1 .47-.3h13.66a.5.5 0 0 1 .47.3L21 8H3z"/>
+          </svg>
+          Yengil
+        </button>
+        <button class="vehicle-btn" data-vehicle="truck">
+          <svg width="18" height="14" fill="currentColor" viewBox="0 0 28 18">
+            <path d="M0 2a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H0V2zm18 3h4.5l3.5 4v3H18V5zm-2 9a2.5 2.5 0 0 0 5 0M5 11a2.5 2.5 0 0 0 5 0"/>
+          </svg>
+          Yuk
+        </button>
+      </div>
+
+      <button class="btn-route" id="btn-draw-route" disabled>Yo'lni ko'rsat</button>
+      <button class="btn-clear-route" id="btn-clear-route">Tozalash</button>
+    </div>
+
+    <div id="route-info">
+      <div class="ri-row">
+        <span class="ri-key">Transport</span>
+        <span class="ri-val" id="ri-vehicle">—</span>
+      </div>
+      <div class="ri-divider"></div>
+      <div class="ri-row">
+        <span class="ri-key">Masofa</span>
+        <span class="ri-val" id="ri-dist">—</span>
+      </div>
+      <div class="ri-row">
+        <span class="ri-key">Taxminiy vaqt</span>
+        <span class="ri-val" id="ri-time">—</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
+<!-- ─ Map ─────────────────────────────────────────────── -->
 <div id="map"></div>
 
-<div id="legend">
-  <div class="legend-row"><span class="legend-dot" style="background:#f97316"></span> Yuk e'loni</div>
-  <div class="legend-row"><span class="legend-dot" style="background:#2563eb"></span> Ombor</div>
-</div>
-
 <script>
-const KEY   = 'IMtNu6UNxo2LBpjLSZpj';
-const BASE  = window.location.origin;
+const KEY  = 'IMtNu6UNxo2LBpjLSZpj';
+const BASE = window.location.origin;
 
-/* ── Canvas pin icon ─────────────────────────────────── */
-function makePinImage(color, letter) {
-  const W = 30, H = 38, R = 13;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, W, H);
+/* ─ State ──────────────────────────────────────────────── */
+const state = {
+  routeMode:   false,
+  start:       null, // { lng, lat, label }
+  end:         null,
+  vehicle:     'car',
+  startMarker: null,
+  endMarker:   null,
+  activePoint: 'start', // which point to set next
+};
 
-  ctx.shadowColor = 'rgba(0,0,0,0.22)';
-  ctx.shadowBlur = 5;
-  ctx.shadowOffsetY = 3;
-
-  ctx.beginPath();
-  ctx.arc(W / 2, R + 1, R, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(W / 2 - 5, R * 2 - 2);
-  ctx.lineTo(W / 2 + 5, R * 2 - 2);
-  ctx.lineTo(W / 2, H - 1);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold 13px -apple-system, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(letter, W / 2, R + 1.5);
-
-  return { data: ctx.getImageData(0, 0, W, H), width: W, height: H };
-}
-
-/* ── Map init ────────────────────────────────────────── */
+/* ─ Map init ────────────────────────────────────────────── */
 const map = new maplibregl.Map({
   container: 'map',
   style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${KEY}&language=ru`,
@@ -208,169 +491,357 @@ map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-rig
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
 map.addControl(new maplibregl.GeolocateControl({
   positionOptions: { enableHighAccuracy: true },
-  trackUserLocation: true,
-  showUserHeading: true,
+  trackUserLocation: true, showUserHeading: true,
 }), 'top-right');
 
-/* ── Load markers after style ready ─────────────────── */
-map.on('load', () => {
-  map.addImage('pin-cargo',     makePinImage('#f97316', 'Y'));
-  map.addImage('pin-warehouse', makePinImage('#2563eb', 'O'));
+/* ─ Marker images (canvas, no emoji) ──────────────────── */
+function makeCircleImage(color) {
+  const S = 24;
+  const canvas = document.createElement('canvas');
+  canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, S, S);
+  const cx = S / 2, r = S / 2 - 2;
+  ctx.shadowColor = 'rgba(0,0,0,0.28)';
+  ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
+  ctx.beginPath(); ctx.arc(cx, cx, r, 0, Math.PI * 2);
+  ctx.fillStyle = color; ctx.fill();
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.beginPath(); ctx.arc(cx, cx, r, 0, Math.PI * 2);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+  return { data: ctx.getImageData(0, 0, S, S), width: S, height: S };
+}
+
+/* ─ Load markers ────────────────────────────────────────── */
+map.on('load', async () => {
+  map.addImage('mc', makeCircleImage('#F97316')); // cargo  — orange
+  map.addImage('mw', makeCircleImage('#2563EB')); // warehouse — blue
 
   map.addSource('markers', {
     type: 'geojson',
     data: `${BASE}/api/v1/map/markers`,
-    cluster: true,
-    clusterMaxZoom: 14,
-    clusterRadius: 48,
+    cluster: true, clusterMaxZoom: 14, clusterRadius: 44,
   });
 
-  // Cluster bubble
+  // Cluster circle
   map.addLayer({
-    id: 'clusters',
-    type: 'circle',
-    source: 'markers',
+    id: 'clusters', type: 'circle', source: 'markers',
     filter: ['has', 'point_count'],
     paint: {
-      'circle-color': '#1a73e8',
-      'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 30],
-      'circle-stroke-color': '#fff',
-      'circle-stroke-width': 2.5,
+      'circle-color': '#1A6FE8',
+      'circle-radius': ['step', ['get', 'point_count'], 16, 10, 22, 50, 28],
+      'circle-stroke-color': '#fff', 'circle-stroke-width': 2.5,
       'circle-opacity': 0.92,
     },
   });
-
-  // Cluster count
   map.addLayer({
-    id: 'cluster-count',
-    type: 'symbol',
-    source: 'markers',
+    id: 'cluster-count', type: 'symbol', source: 'markers',
     filter: ['has', 'point_count'],
-    layout: {
-      'text-field': '{point_count_abbreviated}',
-      'text-size': 13,
-      'text-font': ['Noto Sans Bold'],
-    },
+    layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12, 'text-font': ['Noto Sans Bold'] },
     paint: { 'text-color': '#fff' },
   });
 
-  // Cargo pins
+  // Cargo dots
   map.addLayer({
-    id: 'pins-cargo',
-    type: 'symbol',
-    source: 'markers',
+    id: 'dots-cargo', type: 'symbol', source: 'markers',
     filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'kind'], 'cargo']],
-    layout: {
-      'icon-image': 'pin-cargo',
-      'icon-size': 1,
-      'icon-allow-overlap': true,
-      'icon-anchor': 'bottom',
-    },
+    layout: { 'icon-image': 'mc', 'icon-size': 1, 'icon-allow-overlap': true },
   });
 
-  // Warehouse pins
+  // Warehouse dots
   map.addLayer({
-    id: 'pins-warehouse',
-    type: 'symbol',
-    source: 'markers',
+    id: 'dots-wh', type: 'symbol', source: 'markers',
     filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'kind'], 'warehouse']],
-    layout: {
-      'icon-image': 'pin-warehouse',
-      'icon-size': 1,
-      'icon-allow-overlap': true,
-      'icon-anchor': 'bottom',
-    },
+    layout: { 'icon-image': 'mw', 'icon-size': 1, 'icon-allow-overlap': true },
   });
 
-  // Cluster click → zoom in
+  // Route layers (empty at start)
+  map.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+
+  // Car route — blue solid
+  map.addLayer({
+    id: 'route-car-border', type: 'line', source: 'route',
+    filter: ['==', ['get', 'vehicle'], 'car'],
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#fff', 'line-width': 8, 'line-opacity': 0.8 },
+  });
+  map.addLayer({
+    id: 'route-car', type: 'line', source: 'route',
+    filter: ['==', ['get', 'vehicle'], 'car'],
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#1A6FE8', 'line-width': 5 },
+  });
+
+  // Truck route — orange dashed
+  map.addLayer({
+    id: 'route-truck-border', type: 'line', source: 'route',
+    filter: ['==', ['get', 'vehicle'], 'truck'],
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#fff', 'line-width': 8, 'line-opacity': 0.8 },
+  });
+  map.addLayer({
+    id: 'route-truck', type: 'line', source: 'route',
+    filter: ['==', ['get', 'vehicle'], 'truck'],
+    layout: { 'line-join': 'round', 'line-cap': 'butt' },
+    paint: { 'line-color': '#F97316', 'line-width': 5, 'line-dasharray': [2, 2] },
+  });
+
+  // Update counts in legend
+  map.on('sourcedata', (e) => {
+    if (e.sourceId !== 'markers' || !e.isSourceLoaded) return;
+    const feats = map.querySourceFeatures('markers', { sourceLayer: '' });
+    let c = 0, w = 0;
+    feats.forEach(f => { if (f.properties.kind === 'cargo') c++; else if (f.properties.kind === 'warehouse') w++; });
+    if (c > 0) document.getElementById('count-cargo').textContent = c;
+    if (w > 0) document.getElementById('count-wh').textContent = w;
+  });
+
+  // Cluster click
   map.on('click', 'clusters', (e) => {
     const f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })[0];
     map.getSource('markers').getClusterExpansionZoom(f.properties.cluster_id, (err, zoom) => {
-      if (!err) map.easeTo({ center: f.geometry.coordinates, zoom, duration: 400 });
+      if (!err) map.easeTo({ center: f.geometry.coordinates, zoom, duration: 350 });
     });
   });
 
-  // Pin click → popup
-  const popup = new maplibregl.Popup({ offset: 34, closeButton: false, maxWidth: '260px' });
-
-  ['pins-cargo', 'pins-warehouse'].forEach(layer => {
+  // Marker click → popup
+  const popup = new maplibregl.Popup({ offset: 14, closeButton: false, maxWidth: '250px' });
+  ['dots-cargo', 'dots-wh'].forEach(layer => {
     map.on('click', layer, (e) => {
+      if (state.routeMode) return; // don't open popup while setting route points
       const p = e.features[0].properties;
       const coords = e.features[0].geometry.coordinates.slice();
       const isCargo = p.kind === 'cargo';
-      const kindLabel = isCargo ? '🚛 Yuk e\'loni' : '🏭 Ombor';
       const sub = isCargo ? (p.city || '') : (p.address || '');
-      popup
-        .setLngLat(coords)
-        .setHTML(`
-          <div class="popup-header">
-            <div class="popup-kind ${p.kind}">${kindLabel}</div>
-            <div class="popup-title">${p.title || '—'}</div>
-            ${sub ? `<div class="popup-sub">${sub}</div>` : ''}
-          </div>
-          <div class="popup-footer">
-            <span class="popup-close" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span>
-          </div>`)
-        .addTo(map);
+      popup.setLngLat(coords).setHTML(`
+        <div class="pu-top">
+          <div class="pu-kind ${p.kind}">${isCargo ? 'YUK E\'LONI' : 'OMBOR'}</div>
+          <div class="pu-title">${p.title || '—'}</div>
+          ${sub ? `<div class="pu-sub">${sub}</div>` : ''}
+        </div>
+        <div class="pu-foot"><span class="pu-close" onclick="this.closest('.maplibregl-popup').remove()">Yopish</span></div>
+      `).addTo(map);
     });
-    map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
-    map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
+    map.on('mouseenter', layer, () => { if (!state.routeMode) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', layer, () => { if (!state.routeMode) map.getCanvas().style.cursor = ''; });
   });
-
   map.on('mouseenter', 'clusters', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'clusters', () => map.getCanvas().style.cursor = '');
+
+  // Map click for route
+  map.on('click', async (e) => {
+    if (!state.routeMode) return;
+    const { lng, lat } = e.lngLat;
+    const label = await reverseGeocode(lng, lat);
+
+    if (state.activePoint === 'start' && !state.start) {
+      setRoutePoint('start', { lng, lat, label });
+      if (!state.end) state.activePoint = 'end';
+    } else if (state.activePoint === 'end' && !state.end) {
+      setRoutePoint('end', { lng, lat, label });
+      state.activePoint = 'start';
+    } else if (!state.start) {
+      setRoutePoint('start', { lng, lat, label });
+      state.activePoint = 'end';
+    } else if (!state.end) {
+      setRoutePoint('end', { lng, lat, label });
+      state.activePoint = 'start';
+    }
+
+    updateDrawBtn();
+  });
 });
 
-/* ── Search (MapTiler Geocoding) ─────────────────────── */
+/* ─ Tabs ───────────────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+
+    state.routeMode = (tab === 'route');
+    const mapEl = document.getElementById('map');
+    mapEl.classList.toggle('route-mode', state.routeMode);
+  });
+});
+
+/* ─ Search ─────────────────────────────────────────────── */
+let searchTimer;
 const searchInput   = document.getElementById('search-input');
 const searchResults = document.getElementById('search-results');
-let searchTimer;
 
 searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchInput.value.trim();
   if (q.length < 2) { searchResults.style.display = 'none'; return; }
-  searchTimer = setTimeout(() => geocode(q), 280);
+  searchTimer = setTimeout(() => doSearch(q), 280);
 });
-
-searchInput.addEventListener('keydown', (e) => {
+searchInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { searchResults.style.display = 'none'; searchInput.value = ''; }
 });
-
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('#search-wrap')) searchResults.style.display = 'none';
+document.addEventListener('click', e => {
+  if (!e.target.closest('#tab-search')) searchResults.style.display = 'none';
 });
 
-async function geocode(q) {
+async function doSearch(q) {
   try {
-    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json`
-      + `?key=${KEY}&language=ru&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
-    const data = await fetch(url).then(r => r.json());
-    renderResults(data.features || []);
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${KEY}&language=ru&limit=5&proximity=69.24,41.30&bbox=55,35,75,48`;
+    const { features = [] } = await fetch(url).then(r => r.json());
+    if (!features.length) { searchResults.style.display = 'none'; return; }
+    searchResults.innerHTML = features.map(f => {
+      const name   = f.text_ru || f.text || '';
+      const region = (f.context || []).map(c => c.text_ru || c.text).filter(Boolean).join(', ');
+      return `<div class="sr-item" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
+        <span class="sr-pin">📍</span>
+        <div><div class="sr-name">${name}</div>${region ? `<div class="sr-sub">${region}</div>` : ''}</div>
+      </div>`;
+    }).join('');
+    searchResults.style.display = 'block';
+    searchResults.querySelectorAll('.sr-item').forEach(el => {
+      el.addEventListener('click', () => {
+        map.flyTo({ center: [+el.dataset.lng, +el.dataset.lat], zoom: 14, speed: 1.5 });
+        searchResults.style.display = 'none';
+        searchInput.value = el.querySelector('.sr-name').textContent;
+      });
+    });
   } catch { searchResults.style.display = 'none'; }
 }
 
-function renderResults(features) {
-  if (!features.length) { searchResults.style.display = 'none'; return; }
-  searchResults.innerHTML = features.map(f => {
-    const name   = f.text_ru || f.text || '';
-    const region = (f.context || []).map(c => c.text_ru || c.text).filter(Boolean).join(', ');
-    return `<div class="sr-item" data-lng="${f.center[0]}" data-lat="${f.center[1]}">
-      <span class="sr-icon">📍</span>
-      <div>
-        <div class="sr-name">${name}</div>
-        ${region ? `<div class="sr-sub">${region}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  searchResults.style.display = 'block';
-  searchResults.querySelectorAll('.sr-item').forEach(el => {
-    el.addEventListener('click', () => {
-      map.flyTo({ center: [+el.dataset.lng, +el.dataset.lat], zoom: 14, speed: 1.5 });
-      searchResults.style.display = 'none';
-      searchInput.value = el.querySelector('.sr-name').textContent;
-    });
+/* ─ Route ──────────────────────────────────────────────── */
+document.querySelectorAll('.vehicle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.vehicle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.vehicle = btn.dataset.vehicle;
+    if (state.start && state.end) drawRoute();
   });
+});
+
+function setRoutePoint(point, data) {
+  state[point] = data;
+  const el    = document.getElementById(`rp-${point}`);
+  const text  = document.getElementById(`rp-${point}-text`);
+  text.textContent = data.label || `${data.lat.toFixed(5)}, ${data.lng.toFixed(5)}`;
+  el.classList.add('set');
+  el.classList.remove('active');
+
+  // Update/create map marker
+  const markerKey = `${point}Marker`;
+  if (state[markerKey]) state[markerKey].remove();
+  const div = document.createElement('div');
+  div.className = `route-marker ${point === 'start' ? 'start' : 'end'}`;
+  state[markerKey] = new maplibregl.Marker({ element: div, anchor: 'center' })
+    .setLngLat([data.lng, data.lat])
+    .addTo(map);
+}
+
+document.getElementById('rp-start-clear').addEventListener('click', (e) => {
+  e.stopPropagation();
+  clearPoint('start');
+});
+document.getElementById('rp-end-clear').addEventListener('click', (e) => {
+  e.stopPropagation();
+  clearPoint('end');
+});
+
+function clearPoint(point) {
+  state[point] = null;
+  const markerKey = `${point}Marker`;
+  if (state[markerKey]) { state[markerKey].remove(); state[markerKey] = null; }
+  document.getElementById(`rp-${point}`).classList.remove('set');
+  document.getElementById(`rp-${point}-text`).textContent = 'Xaritada bosing...';
+  clearRouteLayer();
+  document.getElementById('route-info').style.display = 'none';
+  document.getElementById('btn-clear-route').style.display = 'none';
+  updateDrawBtn();
+}
+
+function updateDrawBtn() {
+  document.getElementById('btn-draw-route').disabled = !(state.start && state.end);
+}
+
+document.getElementById('btn-draw-route').addEventListener('click', drawRoute);
+
+document.getElementById('btn-clear-route').addEventListener('click', () => {
+  clearPoint('start'); clearPoint('end');
+  document.getElementById('btn-clear-route').style.display = 'none';
+  document.getElementById('route-info').style.display = 'none';
+});
+
+function clearRouteLayer() {
+  if (map.getSource('route')) {
+    map.getSource('route').setData({ type: 'FeatureCollection', features: [] });
+  }
+}
+
+async function drawRoute() {
+  if (!state.start || !state.end) return;
+  const { start, end, vehicle } = state;
+  const btn = document.getElementById('btn-draw-route');
+  btn.textContent = 'Yuklanmoqda...'; btn.disabled = true;
+
+  try {
+    const coords = `${start.lng},${start.lat};${end.lng},${end.lat}`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+    const data = await fetch(url).then(r => r.json());
+
+    if (!data.routes || !data.routes[0]) throw new Error('No route');
+    const route = data.routes[0];
+    const geom  = route.geometry;
+    const dist  = route.distance;  // metres
+    const dur   = route.duration;  // seconds
+
+    // Truck: same path but ~30% longer time + heavier weight warning
+    const adjDur = vehicle === 'truck' ? dur * 1.3 : dur;
+
+    // Draw on map
+    map.getSource('route').setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', geometry: geom, properties: { vehicle } }],
+    });
+
+    // Fit bounds
+    const coords2 = geom.coordinates;
+    const lngs = coords2.map(c => c[0]);
+    const lats = coords2.map(c => c[1]);
+    map.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { padding: { top: 40, bottom: 40, left: 40, right: 100 }, duration: 600 }
+    );
+
+    // Show info
+    document.getElementById('ri-vehicle').textContent = vehicle === 'truck' ? '🚛 Yuk mashinasi' : '🚗 Yengil mashina';
+    document.getElementById('ri-dist').textContent = dist >= 1000
+      ? `${(dist / 1000).toFixed(1)} km`
+      : `${Math.round(dist)} m`;
+    document.getElementById('ri-time').textContent = formatDuration(adjDur);
+    document.getElementById('route-info').style.display = 'block';
+    document.getElementById('btn-clear-route').style.display = 'block';
+    document.getElementById('route-hint').classList.add('hidden');
+
+  } catch {
+    alert("Marshrut topilmadi. Internet aloqasini tekshiring.");
+  }
+
+  btn.textContent = 'Yo\'lni ko\'rsat'; btn.disabled = false;
+}
+
+function formatDuration(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.round((secs % 3600) / 60);
+  if (h > 0) return `${h} soat ${m} daqiqa`;
+  return `${m} daqiqa`;
+}
+
+async function reverseGeocode(lng, lat) {
+  try {
+    const url = `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${KEY}&language=ru`;
+    const { features = [] } = await fetch(url).then(r => r.json());
+    if (features[0]) return features[0].place_name_ru || features[0].place_name || '';
+  } catch {}
+  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
 </script>
 </body>
