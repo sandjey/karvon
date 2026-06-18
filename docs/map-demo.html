@@ -147,11 +147,9 @@ html,body{width:100%;height:100%;overflow:hidden;
 }
 .v-btn:hover{border-color:var(--b400);background:var(--b100);}
 .v-btn.on{border-color:var(--b500);background:var(--b100);}
-.v-icon{width:44px;height:44px;display:grid;place-items:center;}
-.v-icon svg{width:38px;height:38px;stroke:currentColor;fill:none;
-  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.v-emoji{font-size:30px;line-height:1;display:block;}
 .v-btn .vn{font-size:11px;font-weight:700;color:var(--sub);}
-.v-btn.on .vn,.v-btn.on .v-icon{color:var(--b500);}
+.v-btn.on .vn{color:var(--b500);}
 .v-tag{font-size:9px;font-weight:700;padding:1px 6px;
   background:var(--b500);color:#fff;border-radius:4px;}
 
@@ -284,28 +282,12 @@ html,body{width:100%;height:100%;overflow:hidden;
     <div class="v-section">
       <div class="v-lbl">Transport</div>
       <div class="v-row">
-        <!-- Car — Tabler icon -->
         <button class="v-btn on" data-v="driving-car">
-          <div class="v-icon">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <circle cx="7" cy="17" r="2"/>
-              <circle cx="17" cy="17" r="2"/>
-              <path d="M5 17h-2v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0h-6m-6 -6h15m-6 0v-5"/>
-            </svg>
-          </div>
+          <span class="v-emoji">🚗</span>
           <span class="vn">Yengil</span>
         </button>
-        <!-- Truck HGV — Tabler icon -->
         <button class="v-btn" data-v="driving-hgv">
-          <div class="v-icon">
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <circle cx="5" cy="17" r="2"/>
-              <circle cx="17" cy="17" r="2"/>
-              <path d="M7 17h6m4 0h2v-6a5 5 0 0 0-5-5h-1v11m-4 0v-11h-6l-2 6v5h2"/>
-            </svg>
-          </div>
+          <span class="v-emoji">🚛</span>
           <span class="vn">Yuk</span>
           <span class="v-tag">HGV</span>
         </button>
@@ -431,21 +413,24 @@ map.on('load',()=>{
     map.on('mouseleave',l,()=>map.getCanvas().style.cursor='crosshair');
   });
 
-  /* Map click → set waypoint (skip if clicked on a marker) */
+  /* Map click → set waypoint immediately, then geocode label in background */
   map.on('click',async e=>{
     let hits=[];
     try{hits=map.queryRenderedFeatures(e.point,{layers:['lc','lw']});}catch{}
     if(hits.length>0) return;
     const {lng,lat}=e.lngLat;
-    showOvr('Manzil aniqlanmoqda...');
-    const label=await revGeo(lng,lat);
-    hideOvr();
-    setWp(activeI,{lng,lat,label});
-    // advance active to next unset
-    const next=wps.findIndex((w,i)=>i>activeI&&!w.data);
+    const idx=activeI;
+    // 1. Set waypoint right away — don't wait for network
+    setWp(idx,{lng,lat,label:`${lat.toFixed(5)}, ${lng.toFixed(5)}`});
+    const next=wps.findIndex((w,i)=>i>idx&&!w.data);
     if(next!==-1) setActive(next);
     else{const any=wps.findIndex(w=>!w.data);if(any!==-1)setActive(any);}
     renderWps();checkGo();
+    // 2. Reverse geocode in background, update label silently
+    try{
+      const label=await revGeo(lng,lat);
+      if(wps[idx]&&wps[idx].data){wps[idx].data.label=label;renderWps();}
+    }catch{}
   });
 });
 
