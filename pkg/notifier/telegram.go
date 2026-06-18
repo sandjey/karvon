@@ -56,12 +56,16 @@ func (t *TelegramGatewayNotifier) CheckNumber(ctx context.Context, phone string)
 		Error string `json:"error"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		// не можем разобрать ответ — не блокируем
 		return nil
 	}
-	// Блокируем только при явном "номер не найден в Telegram".
-	// Ошибки баланса, rate-limit, 5xx — пропускаем (пусть Send сам вернёт ошибку).
-	if !result.OK && (result.Error == "PHONE_NOT_FOUND" || result.Error == "PHONE_NUMBER_INVALID") {
+	// Real Telegram Gateway errors for non-existent numbers:
+	// PHONE_NUMBER_NOT_AVAILABLE — number not registered on Telegram
+	// PHONE_NUMBER_INVALID — malformed number
+	// PHONE_NOT_FOUND — legacy alias
+	// FLOOD_WAIT_*, balance errors, 5xx — don't block (let Send handle it)
+	if !result.OK && (result.Error == "PHONE_NUMBER_NOT_AVAILABLE" ||
+		result.Error == "PHONE_NOT_FOUND" ||
+		result.Error == "PHONE_NUMBER_INVALID") {
 		return ErrNumberNotRegistered
 	}
 	return nil
