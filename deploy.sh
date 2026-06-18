@@ -1,9 +1,9 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Prevent two simultaneous deploys (CI + manual overlap causes "removal already in progress")
 exec 9>/tmp/ctm_deploy.lock
-flock -w 600 9 || { echo "[ctm] ERROR: deploy lock timeout вЂ” another deploy has been running > 10 min"; exit 1; }
+flock -w 600 9 || { echo "[ctm] ERROR: deploy lock timeout — another deploy has been running > 10 min"; exit 1; }
 
 APP_DIR=/home/dev_backend/karvon
 
@@ -17,29 +17,20 @@ echo "[ctm] Building and restarting containers..."
 COMPOSE="docker-compose"
 docker compose version &>/dev/null 2>&1 && COMPOSE="docker compose"
 
-# Ensure postgres and whatsapp are running (start if not, no recreate)
-$COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
+# Ensure postgres, redis, whatsapp are running (start if not, no recreate)
+$COMPOSE up -d --no-recreate postgres redis whatsapp 2>/dev/null || true
 
-# Build new images
-$COMPOSE build app admin
+# Build new app image
+$COMPOSE build app
 
-# Let compose manage the full lifecycle вЂ” it stops, removes, and starts containers itself.
-# Do NOT manually docker stop/rm before this: compose tracks containers by ID in image
-# labels, and removing them externally causes "No such container" on recreate.
-$COMPOSE up -d --no-deps --force-recreate app admin
+# Let compose manage the full lifecycle
+$COMPOSE up -d --no-deps --force-recreate app
 
 echo "[ctm] Waiting for app to be healthy..."
 sleep 15
 if curl -sf http://127.0.0.1:8082/health > /dev/null 2>&1; then
-  echo "[ctm] OK вЂ” app is running at :8082"
+  echo "[ctm] OK — app is running at :8082"
 else
-  echo "[ctm] WARNING вЂ” health check failed, check logs:"
+  echo "[ctm] WARNING — health check failed, check logs:"
   $COMPOSE logs app --tail=30
-fi
-
-if curl -sf http://127.0.0.1:8085/ > /dev/null 2>&1; then
-  echo "[ctm] OK вЂ” admin panel is running at :8085"
-else
-  echo "[ctm] WARNING вЂ” admin panel health check failed, check logs:"
-  $COMPOSE logs admin --tail=20
 fi
