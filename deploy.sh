@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Prevent two simultaneous deploys (CI + manual overlap causes "removal already in progress")
+exec 9>/tmp/karvon_deploy.lock
+flock -w 600 9 || { echo "[karvon] ERROR: deploy lock timeout — another deploy has been running > 10 min"; exit 1; }
+
 APP_DIR=/home/dev_backend/karvon
 
 cd $APP_DIR
