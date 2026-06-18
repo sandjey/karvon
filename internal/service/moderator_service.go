@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"karvon/internal/model"
-	"karvon/internal/repository"
-	"karvon/pkg/email"
+	"ctm/internal/model"
+	"ctm/internal/repository"
+	"ctm/pkg/email"
 )
 
 type EmailSender interface {
@@ -82,7 +82,7 @@ func (s *ModeratorService) Approve(ctx context.Context, moderatorID, companyID u
 		Body:   &body,
 	})
 	s.sendEmail(c.Email,
-		"Компания одобрена — KARVON",
+		"Компания одобрена — Central Trade Market",
 		"Ваша компания «"+c.Name+"» прошла проверку и одобрена. Теперь вы можете публиковать объявления.",
 	)
 	return nil
@@ -111,7 +111,7 @@ func (s *ModeratorService) Reject(ctx context.Context, moderatorID, companyID uu
 		Body:   &body,
 	})
 	s.sendEmail(c.Email,
-		"Компания отклонена — KARVON",
+		"Компания отклонена — Central Trade Market",
 		"Ваша компания «"+c.Name+"» отклонена.\nПричина: "+reason+"\n\nПодайте заявку повторно с исправленными данными.",
 	)
 	return nil
@@ -139,7 +139,7 @@ func (s *ModeratorService) RequestDocs(ctx context.Context, moderatorID, company
 		Body:   &message,
 	})
 	s.sendEmail(c.Email,
-		"Требуются дополнительные документы — KARVON",
+		"Требуются дополнительные документы — Central Trade Market",
 		"По компании «"+c.Name+"» запрошены дополнительные документы.\n\n"+message+
 			"\n\nОтправьте документы через Telegram на аккаунт поддержки.",
 	)

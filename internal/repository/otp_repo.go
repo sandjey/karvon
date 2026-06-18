@@ -7,7 +7,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"karvon/internal/model"
+	"ctm/internal/model"
 )
 
 type OTPRepo struct {

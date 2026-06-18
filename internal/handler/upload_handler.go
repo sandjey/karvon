@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"karvon/pkg/i18n"
-	"karvon/pkg/storage"
+	"ctm/pkg/i18n"
+	"ctm/pkg/storage"
 )
 
 const maxUploadSize = 10 << 20 // 10 MB

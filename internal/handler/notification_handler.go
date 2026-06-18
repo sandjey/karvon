@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"karvon/internal/service"
+	"ctm/internal/service"
 )
 
 type NotificationHandler struct {

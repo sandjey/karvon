@@ -8,7 +8,7 @@ import (
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 
-	"karvon/internal/model"
+	"ctm/internal/model"
 )
 
 type WarehouseRepo struct {

@@ -1,6 +1,6 @@
-// Package rahmat — клиент платёжной системы Multicard (Rahmat).
-// Реализует Вариант А: создание инвойса → редирект на checkout_url.
-// Токен авторизации кешируется и обновляется автоматически при истечении.
+// Package rahmat вЂ” РєР»РёРµРЅС‚ РїР»Р°С‚С‘Р¶РЅРѕР№ СЃРёСЃС‚РµРјС‹ Multicard (Rahmat).
+// Р РµР°Р»РёР·СѓРµС‚ Р’Р°СЂРёР°РЅС‚ Рђ: СЃРѕР·РґР°РЅРёРµ РёРЅРІРѕР№СЃР° в†’ СЂРµРґРёСЂРµРєС‚ РЅР° checkout_url.
+// РўРѕРєРµРЅ Р°РІС‚РѕСЂРёР·Р°С†РёРё РєРµС€РёСЂСѓРµС‚СЃСЏ Рё РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїСЂРё РёСЃС‚РµС‡РµРЅРёРё.
 package rahmat
 
 import (
@@ -15,19 +15,19 @@ import (
 	"time"
 )
 
-// Config содержит реквизиты Multicard.
+// Config СЃРѕРґРµСЂР¶РёС‚ СЂРµРєРІРёР·РёС‚С‹ Multicard.
 type Config struct {
 	BaseURL     string // https://dev-mesh.multicard.uz (sandbox) | https://mesh.multicard.uz (prod)
-	AppID       string // application_id, выданный Multicard
-	Secret      string // secret (пароль приложения)
-	StoreID     int    // store_id кассы
-	MXIK        string // ИКПУ из tasnif.soliq.uz
-	PackageCode string // код упаковки из tasnif.soliq.uz
-	CallbackURL string // куда Multicard шлёт callback при оплате
-	ReturnURL   string // куда вернуть пользователя после оплаты
+	AppID       string // application_id, РІС‹РґР°РЅРЅС‹Р№ Multicard
+	Secret      string // secret (РїР°СЂРѕР»СЊ РїСЂРёР»РѕР¶РµРЅРёСЏ)
+	StoreID     int    // store_id РєР°СЃСЃС‹
+	MXIK        string // РРљРџРЈ РёР· tasnif.soliq.uz
+	PackageCode string // РєРѕРґ СѓРїР°РєРѕРІРєРё РёР· tasnif.soliq.uz
+	CallbackURL string // РєСѓРґР° Multicard С€Р»С‘С‚ callback РїСЂРё РѕРїР»Р°С‚Рµ
+	ReturnURL   string // РєСѓРґР° РІРµСЂРЅСѓС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕСЃР»Рµ РѕРїР»Р°С‚С‹
 }
 
-// Client — потокобезопасный клиент Multicard API.
+// Client вЂ” РїРѕС‚РѕРєРѕР±РµР·РѕРїР°СЃРЅС‹Р№ РєР»РёРµРЅС‚ Multicard API.
 type Client struct {
 	cfg    Config
 	hc     *http.Client
@@ -36,7 +36,7 @@ type Client struct {
 	expiry time.Time
 }
 
-// NewClient создаёт клиент. Работает в режиме заглушки, если AppID или Secret пусты.
+// NewClient СЃРѕР·РґР°С‘С‚ РєР»РёРµРЅС‚. Р Р°Р±РѕС‚Р°РµС‚ РІ СЂРµР¶РёРјРµ Р·Р°РіР»СѓС€РєРё, РµСЃР»Рё AppID РёР»Рё Secret РїСѓСЃС‚С‹.
 func NewClient(cfg Config) *Client {
 	return &Client{
 		cfg: cfg,
@@ -44,12 +44,12 @@ func NewClient(cfg Config) *Client {
 	}
 }
 
-// Configured сообщает, заданы ли реквизиты (иначе — режим заглушки).
+// Configured СЃРѕРѕР±С‰Р°РµС‚, Р·Р°РґР°РЅС‹ Р»Рё СЂРµРєРІРёР·РёС‚С‹ (РёРЅР°С‡Рµ вЂ” СЂРµР¶РёРј Р·Р°РіР»СѓС€РєРё).
 func (c *Client) Configured() bool {
 	return c.cfg.AppID != "" && c.cfg.Secret != ""
 }
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Auth в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 type authReq struct {
 	ApplicationID string `json:"application_id"`
@@ -61,12 +61,12 @@ type authResp struct {
 	Expiry string `json:"expiry"` // "2023-03-18 16:40:31" GMT+5
 }
 
-// getToken возвращает действующий JWT, обновляя его при необходимости.
+// getToken РІРѕР·РІСЂР°С‰Р°РµС‚ РґРµР№СЃС‚РІСѓСЋС‰РёР№ JWT, РѕР±РЅРѕРІР»СЏСЏ РµРіРѕ РїСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё.
 func (c *Client) getToken(ctx context.Context) (string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// 2-минутный запас перед истечением
+	// 2-РјРёРЅСѓС‚РЅС‹Р№ Р·Р°РїР°СЃ РїРµСЂРµРґ РёСЃС‚РµС‡РµРЅРёРµРј
 	if c.token != "" && time.Now().Before(c.expiry.Add(-2*time.Minute)) {
 		return c.token, nil
 	}
@@ -89,7 +89,7 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("multicard auth: invalid response (status %d)", resp.StatusCode)
 	}
 
-	// Парсим время истечения; формат: "2006-01-02 15:04:05", часовой пояс GMT+5
+	// РџР°СЂСЃРёРј РІСЂРµРјСЏ РёСЃС‚РµС‡РµРЅРёСЏ; С„РѕСЂРјР°С‚: "2006-01-02 15:04:05", С‡Р°СЃРѕРІРѕР№ РїРѕСЏСЃ GMT+5
 	loc := time.FixedZone("UZT", 5*3600)
 	exp, err := time.ParseInLocation("2006-01-02 15:04:05", ar.Expiry, loc)
 	if err != nil {
@@ -99,7 +99,7 @@ func (c *Client) getToken(ctx context.Context) (string, error) {
 	return c.token, nil
 }
 
-// ─── Invoice (Вариант А) ─────────────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Invoice (Р’Р°СЂРёР°РЅС‚ Рђ) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
 type ofdItem struct {
 	Qty         int    `json:"qty"`
@@ -108,17 +108,17 @@ type ofdItem struct {
 	Total       int64  `json:"total"`
 	PackageCode string `json:"package_code"`
 	Name        string `json:"name"`
-	VAT         int    `json:"vat,omitempty"`  // НДС в %
-	TIN         string `json:"tin,omitempty"`  // ИНН продавца
-	Mark        string `json:"mark,omitempty"` // маркировка товара
+	VAT         int    `json:"vat,omitempty"`  // РќР”РЎ РІ %
+	TIN         string `json:"tin,omitempty"`  // РРќРќ РїСЂРѕРґР°РІС†Р°
+	Mark        string `json:"mark,omitempty"` // РјР°СЂРєРёСЂРѕРІРєР° С‚РѕРІР°СЂР°
 }
 
 type invoiceReq struct {
 	StoreID     int       `json:"store_id"`
-	Amount      int64     `json:"amount"`               // в тийинах (1 UZS = 100 тийин)
-	InvoiceID   string    `json:"invoice_id"`           // наш UUID заказа
+	Amount      int64     `json:"amount"`               // РІ С‚РёР№РёРЅР°С… (1 UZS = 100 С‚РёР№РёРЅ)
+	InvoiceID   string    `json:"invoice_id"`           // РЅР°С€ UUID Р·Р°РєР°Р·Р°
 	Lang        string    `json:"lang"`
-	TTL         int       `json:"ttl,omitempty"`        // время жизни инвойса в секундах
+	TTL         int       `json:"ttl,omitempty"`        // РІСЂРµРјСЏ Р¶РёР·РЅРё РёРЅРІРѕР№СЃР° РІ СЃРµРєСѓРЅРґР°С…
 	ReturnURL   string    `json:"return_url,omitempty"`
 	CallbackURL string    `json:"callback_url"`
 	OFD         []ofdItem `json:"ofd"`
@@ -136,13 +136,13 @@ type invoiceResp struct {
 	} `json:"error"`
 }
 
-// CreatePayment создаёт инвойс в Multicard и возвращает (invoiceUUID, checkoutURL).
-// amountUZS — сумма в UZS; itemName — название услуги для ОФД.
-// returnURL переопределяет дефолтный ReturnURL из конфига; передайте "", чтобы использовать конфиг.
-// Если клиент не сконфигурирован — возвращает stub-данные для локального тестирования.
+// CreatePayment СЃРѕР·РґР°С‘С‚ РёРЅРІРѕР№СЃ РІ Multicard Рё РІРѕР·РІСЂР°С‰Р°РµС‚ (invoiceUUID, checkoutURL).
+// amountUZS вЂ” СЃСѓРјРјР° РІ UZS; itemName вЂ” РЅР°Р·РІР°РЅРёРµ СѓСЃР»СѓРіРё РґР»СЏ РћР¤Р”.
+// returnURL РїРµСЂРµРѕРїСЂРµРґРµР»СЏРµС‚ РґРµС„РѕР»С‚РЅС‹Р№ ReturnURL РёР· РєРѕРЅС„РёРіР°; РїРµСЂРµРґР°Р№С‚Рµ "", С‡С‚РѕР±С‹ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєРѕРЅС„РёРі.
+// Р•СЃР»Рё РєР»РёРµРЅС‚ РЅРµ СЃРєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅ вЂ” РІРѕР·РІСЂР°С‰Р°РµС‚ stub-РґР°РЅРЅС‹Рµ РґР»СЏ Р»РѕРєР°Р»СЊРЅРѕРіРѕ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ.
 func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS float64, lang, itemName, returnURL string) (invoiceUUID, checkoutURL string, err error) {
 	if !c.Configured() {
-		return "stub-" + orderID, "https://pay.karvon.uz/stub/" + orderID, nil
+		return "stub-" + orderID, "https://pay.centraltrademarket.com/stub/" + orderID, nil
 	}
 
 	token, err := c.getToken(ctx)
@@ -154,12 +154,12 @@ func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS fl
 		lang = "ru"
 	}
 	if itemName == "" {
-		itemName = "Сервис платформы Karvon"
+		itemName = "РЎРµСЂРІРёСЃ РїР»Р°С‚С„РѕСЂРјС‹ Karvon"
 	}
 	if returnURL == "" {
 		returnURL = c.cfg.ReturnURL
 	}
-	// Конвертируем UZS → тийины с округлением (исключаем float-артефакты)
+	// РљРѕРЅРІРµСЂС‚РёСЂСѓРµРј UZS в†’ С‚РёР№РёРЅС‹ СЃ РѕРєСЂСѓРіР»РµРЅРёРµРј (РёСЃРєР»СЋС‡Р°РµРј float-Р°СЂС‚РµС„Р°РєС‚С‹)
 	amountTiyin := int64(math.Round(amountUZS * 100))
 
 	body, _ := json.Marshal(invoiceReq{
@@ -207,21 +207,21 @@ func (c *Client) CreatePayment(ctx context.Context, orderID string, amountUZS fl
 	return ir.Data.UUID, ir.Data.CheckoutURL, nil
 }
 
-// ─── Callback ────────────────────────────────────────────────────────────────
+// в”Ђв”Ђв”Ђ Callback в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 
-// CallbackPayload — полное тело callback-запроса (PaymentModel) от Multicard.
-// Статусы: draft | progress | billing | success | error | revert.
+// CallbackPayload вЂ” РїРѕР»РЅРѕРµ С‚РµР»Рѕ callback-Р·Р°РїСЂРѕСЃР° (PaymentModel) РѕС‚ Multicard.
+// РЎС‚Р°С‚СѓСЃС‹: draft | progress | billing | success | error | revert.
 type CallbackPayload struct {
-	UUID             string `json:"uuid"`              // UUID транзакции в Multicard
-	StoreInvoiceID   string `json:"store_invoice_id"`  // наш UUID заказа
+	UUID             string `json:"uuid"`              // UUID С‚СЂР°РЅР·Р°РєС†РёРё РІ Multicard
+	StoreInvoiceID   string `json:"store_invoice_id"`  // РЅР°С€ UUID Р·Р°РєР°Р·Р°
 	Status           string `json:"status"`            // draft|progress|billing|success|error|revert
 	PS               string `json:"ps"`                // uzcard|humo|visa|mastercard|...
-	PaymentAmount    int64  `json:"payment_amount"`    // сумма оплаты в тийинах
-	TotalAmount      int64  `json:"total_amount"`      // итого с комиссией в тийинах
-	CommissionAmount int64  `json:"commission_amount"` // комиссия в тийинах
-	CardPan          string `json:"card_pan"`          // маскированный номер карты
-	Phone            string `json:"phone"`             // телефон плательщика
-	ReceiptURL       string `json:"receipt_url"`       // URL ОФД-чека
-	OtpHash          string `json:"otp_hash"`          // хэш OTP-подтверждения
-	PaymentTime      string `json:"payment_time"`      // время оплаты ("2006-01-02 15:04:05")
+	PaymentAmount    int64  `json:"payment_amount"`    // СЃСѓРјРјР° РѕРїР»Р°С‚С‹ РІ С‚РёР№РёРЅР°С…
+	TotalAmount      int64  `json:"total_amount"`      // РёС‚РѕРіРѕ СЃ РєРѕРјРёСЃСЃРёРµР№ РІ С‚РёР№РёРЅР°С…
+	CommissionAmount int64  `json:"commission_amount"` // РєРѕРјРёСЃСЃРёСЏ РІ С‚РёР№РёРЅР°С…
+	CardPan          string `json:"card_pan"`          // РјР°СЃРєРёСЂРѕРІР°РЅРЅС‹Р№ РЅРѕРјРµСЂ РєР°СЂС‚С‹
+	Phone            string `json:"phone"`             // С‚РµР»РµС„РѕРЅ РїР»Р°С‚РµР»СЊС‰РёРєР°
+	ReceiptURL       string `json:"receipt_url"`       // URL РћР¤Р”-С‡РµРєР°
+	OtpHash          string `json:"otp_hash"`          // С…СЌС€ OTP-РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ
+	PaymentTime      string `json:"payment_time"`      // РІСЂРµРјСЏ РѕРїР»Р°С‚С‹ ("2006-01-02 15:04:05")
 }

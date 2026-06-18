@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"karvon/internal/model"
+	"ctm/internal/model"
 )
 
 type TokenRepo struct {

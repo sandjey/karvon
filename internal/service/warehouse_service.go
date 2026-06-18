@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
 )
 
 type WarehouseService struct {

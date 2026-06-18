@@ -7,9 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"karvon/internal/dto"
-	"karvon/internal/service"
-	"karvon/pkg/i18n"
+	"ctm/internal/dto"
+	"ctm/internal/service"
+	"ctm/pkg/i18n"
 )
 
 type PaymentsHandler struct {

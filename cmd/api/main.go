@@ -20,18 +20,18 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"karvon/internal/config"
-	"karvon/internal/handler"
-	"karvon/internal/middleware"
-	"karvon/internal/model"
-	"karvon/internal/repository"
-	"karvon/internal/service"
-	"karvon/pkg/email"
-	jwtpkg "karvon/pkg/jwt"
-	"karvon/pkg/notifier"
-	"karvon/pkg/otpstore"
-	"karvon/pkg/rahmat"
-	"karvon/pkg/storage"
+	"ctm/internal/config"
+	"ctm/internal/handler"
+	"ctm/internal/middleware"
+	"ctm/internal/model"
+	"ctm/internal/repository"
+	"ctm/internal/service"
+	"ctm/pkg/email"
+	jwtpkg "ctm/pkg/jwt"
+	"ctm/pkg/notifier"
+	"ctm/pkg/otpstore"
+	"ctm/pkg/rahmat"
+	"ctm/pkg/storage"
 )
 
 func main() {
@@ -85,7 +85,7 @@ func main() {
 		VerifyAttemptsPerPhone: 10,
 		VerifyAttemptsWindow:   15 * time.Minute,
 		UniversalOTP:           cfg.UniversalOTP,
-		Prefix:                 "karvon:",
+		Prefix:                 "ctm:",
 	})
 
 	// ── Зависимости ──────────────────────────────────────────────────────────

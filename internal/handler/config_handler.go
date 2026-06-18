@@ -3,8 +3,8 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
-	"karvon/internal/repository"
-	"karvon/pkg/i18n"
+	"ctm/internal/repository"
+	"ctm/pkg/i18n"
 )
 
 type ConfigHandler struct {

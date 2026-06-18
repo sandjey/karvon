@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
 )
 
 const contactViewWindow = 30 * 24 * time.Hour

@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
-	"karvon/internal/repository"
+	"ctm/internal/repository"
 )
 
 type StatsHandler struct {

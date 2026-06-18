@@ -5,9 +5,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
 )
 
 type CompanyService struct {

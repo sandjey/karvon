@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
-	jwtpkg "karvon/pkg/jwt"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
+	jwtpkg "ctm/pkg/jwt"
 )
 
 var adminPhoneRe = regexp.MustCompile(`[^0-9+]`)

@@ -1,4 +1,4 @@
-version: "3.9"
+﻿version: "3.9"
 
 services:
   postgres:
@@ -52,7 +52,7 @@ services:
       context: ./admin
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-https://fan.sarbon.me/api/v1}
+        VITE_API_URL: ${VITE_API_URL:-https://api.centraltrademarket.com/api/v1}
     container_name: karvon_admin
     restart: unless-stopped
     ports:
@@ -60,10 +60,10 @@ services:
     depends_on:
       - app
 
-  # Своя карта — self-hosted сервер тайлов OpenStreetMap (Leaflet на фронте указывает сюда).
-  # Положите регион-экстракт в ./services/tiles/tiles.mbtiles (например Узбекистан+СНГ из openmaptiles/geofabrik),
-  # затем запустите: docker compose up -d tiles
-  # Карта будет доступна на http://<host>:8083  (фронт: MAP_TILES_URL=https://maps.fan.sarbon.me)
+  # РЎРІРѕСЏ РєР°СЂС‚Р° вЂ” self-hosted СЃРµСЂРІРµСЂ С‚Р°Р№Р»РѕРІ OpenStreetMap (Leaflet РЅР° С„СЂРѕРЅС‚Рµ СѓРєР°Р·С‹РІР°РµС‚ СЃСЋРґР°).
+  # РџРѕР»РѕР¶РёС‚Рµ СЂРµРіРёРѕРЅ-СЌРєСЃС‚СЂР°РєС‚ РІ ./services/tiles/tiles.mbtiles (РЅР°РїСЂРёРјРµСЂ РЈР·Р±РµРєРёСЃС‚Р°РЅ+РЎРќР“ РёР· openmaptiles/geofabrik),
+  # Р·Р°С‚РµРј Р·Р°РїСѓСЃС‚РёС‚Рµ: docker compose up -d tiles
+  # РљР°СЂС‚Р° Р±СѓРґРµС‚ РґРѕСЃС‚СѓРїРЅР° РЅР° http://<host>:8083  (С„СЂРѕРЅС‚: MAP_TILES_URL=https://maps.fan.sarbon.me)
   tiles:
     image: maptiler/tileserver-gl:latest
     container_name: karvon_tiles

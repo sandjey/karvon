@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
-	"karvon/internal/service"
-	"karvon/pkg/i18n"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
+	"ctm/internal/service"
+	"ctm/pkg/i18n"
 )
 
 type CargoHandler struct {

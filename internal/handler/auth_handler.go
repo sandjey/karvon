@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/service"
-	"karvon/pkg/i18n"
-	"karvon/pkg/otpstore"
+	"ctm/internal/dto"
+	"ctm/internal/service"
+	"ctm/pkg/i18n"
+	"ctm/pkg/otpstore"
 )
 
 type AuthHandler struct {

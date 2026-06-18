@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/service"
-	"karvon/pkg/i18n"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/service"
+	"ctm/pkg/i18n"
 )
 
 type AdminHandler struct {

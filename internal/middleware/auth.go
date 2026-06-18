@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"karvon/internal/handler"
-	"karvon/internal/repository"
-	jwtpkg "karvon/pkg/jwt"
+	"ctm/internal/handler"
+	"ctm/internal/repository"
+	jwtpkg "ctm/pkg/jwt"
 )
 
 // Auth проверяет JWT и кладёт user_id + role в контекст Gin.

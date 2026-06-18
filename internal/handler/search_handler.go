@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"karvon/internal/repository"
-	"karvon/internal/service"
-	"karvon/pkg/geo"
+	"ctm/internal/repository"
+	"ctm/internal/service"
+	"ctm/pkg/geo"
 )
 
 type SearchHandler struct {

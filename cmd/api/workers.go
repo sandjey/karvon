@@ -6,8 +6,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"karvon/internal/model"
-	"karvon/internal/repository"
+	"ctm/internal/model"
+	"ctm/internal/repository"
 )
 
 

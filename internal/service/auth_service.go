@@ -12,12 +12,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"karvon/internal/dto"
-	"karvon/internal/model"
-	"karvon/internal/repository"
-	jwtpkg "karvon/pkg/jwt"
-	"karvon/pkg/notifier"
-	"karvon/pkg/otpstore"
+	"ctm/internal/dto"
+	"ctm/internal/model"
+	"ctm/internal/repository"
+	jwtpkg "ctm/pkg/jwt"
+	"ctm/pkg/notifier"
+	"ctm/pkg/otpstore"
 )
 
 const otpTTL = 5 * time.Minute
@@ -84,7 +84,7 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		return nil, err
 	}
 
-	message := fmt.Sprintf("🔐 Ваш код подтверждения KARVON: *%s*\nКод действует 5 минут.", code)
+	message := fmt.Sprintf("🔐 Ваш код подтверждения Central Trade Market: *%s*\nКод действует 5 минут.", code)
 
 	var requestID string
 

@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"karvon/internal/model"
-	"karvon/internal/repository"
+	"ctm/internal/model"
+	"ctm/internal/repository"
 )
 
 type NotificationService struct {

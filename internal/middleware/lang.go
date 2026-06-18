@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"karvon/pkg/i18n"
+	"ctm/pkg/i18n"
 )
 
 var supportedLangs = map[string]bool{

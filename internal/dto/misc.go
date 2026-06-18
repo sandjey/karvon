@@ -3,7 +3,7 @@ package dto
 import (
 	"github.com/google/uuid"
 
-	"karvon/internal/model"
+	"ctm/internal/model"
 )
 
 type FavoriteRequest struct {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"karvon/pkg/geo"
+	"ctm/pkg/geo"
 )
 
 type GeoHandler struct{}

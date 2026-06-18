@@ -28,10 +28,10 @@ type Config struct {
 	WhatsAppOTPToken   string
 	WhatsAppOTPBypass  bool
 
-	// Универсальный OTP-код (QA): проходит для любого телефона, если задан
+	// РЈРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№ OTP-РєРѕРґ (QA): РїСЂРѕС…РѕРґРёС‚ РґР»СЏ Р»СЋР±РѕРіРѕ С‚РµР»РµС„РѕРЅР°, РµСЃР»Рё Р·Р°РґР°РЅ
 	UniversalOTP string
 
-	// URL своего сервера карт (tileserver) для фронтенда
+	// URL СЃРІРѕРµРіРѕ СЃРµСЂРІРµСЂР° РєР°СЂС‚ (tileserver) РґР»СЏ С„СЂРѕРЅС‚РµРЅРґР°
 	MapTilesURL string
 
 	MulticardBaseURL     string
@@ -46,11 +46,11 @@ type Config struct {
 	StorageType string
 	StoragePath string
 
-	// Скрытый статик-админ для входа в админку
+	// РЎРєСЂС‹С‚С‹Р№ СЃС‚Р°С‚РёРє-Р°РґРјРёРЅ РґР»СЏ РІС…РѕРґР° РІ Р°РґРјРёРЅРєСѓ
 	AdminLogin    string
 	AdminPassword string
 
-	// SMTP для email-уведомлений (опционально)
+	// SMTP РґР»СЏ email-СѓРІРµРґРѕРјР»РµРЅРёР№ (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ)
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUser     string
@@ -91,7 +91,7 @@ func Load() (*Config, error) {
 		StoragePath:      getEnv("STORAGE_PATH", "./uploads"),
 
 		AdminLogin:    getEnv("ADMIN_LOGIN", "superadmin"),
-		AdminPassword: getEnv("ADMIN_PASSWORD", "karvon_admin_2026"),
+		AdminPassword: getEnv("ADMIN_PASSWORD", "ctm_admin_2026"),
 
 		SMTPHost:     os.Getenv("SMTP_HOST"),
 		SMTPPort:     getEnv("SMTP_PORT", "587"),
