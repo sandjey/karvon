@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Central Trade Market — Karta Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: sans-serif; background: #1a1a2e; color: #fff; }
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+  padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid #333;
+}
+#header h1 { font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap; }
+#style-selector {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.style-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid #555;
+  background: #222; color: #ccc; cursor: pointer; font-size: 13px;
+  transition: all 0.2s;
+}
+.style-btn:hover { border-color: #888; color: #fff; }
+.style-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+#map { width: 100vw; height: 100vh; padding-top: 50px; }
+#map > div { height: calc(100vh - 50px) !important; }
+#info {
+  position: fixed; bottom: 20px; right: 20px; z-index: 100;
+  background: rgba(0,0,0,0.8); padding: 10px 14px; border-radius: 10px;
+  font-size: 12px; color: #aaa; border: 1px solid #333;
+}
+#info a { color: #60a5fa; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🗺 CTM Karta</h1>
+  <div id="style-selector">
+    <button class="style-btn active" data-style="streets-v2">Streets</button>
+    <button class="style-btn" data-style="bright-v2">Bright</button>
+    <button class="style-btn" data-style="topo-v2">Topo</button>
+    <button class="style-btn" data-style="openstreetmap">OSM</button>
+    <button class="style-btn" data-style="dataviz">DataViz</button>
+    <button class="style-btn" data-style="satellite">Satellite</button>
+  </div>
+</div>
+
+<div id="map">
+  <div id="mapContainer"></div>
+</div>
+
+<div id="info">
+  Powered by <a href="https://maptiler.com" target="_blank">MapTiler</a> + MapLibre GL JS
+</div>
+
+<script>
+const KEY = 'IMtNu6UNxo2LBpjLSZpj';
+let currentStyle = 'streets-v2';
+let map;
+
+function getStyleUrl(style) {
+  if (style === 'satellite') {
+    return `https://api.maptiler.com/maps/hybrid/style.json?key=${KEY}`;
+  }
+  return `https://api.maptiler.com/maps/${style}/style.json?key=${KEY}`;
+}
+
+function initMap(style) {
+  if (map) map.remove();
+  map = new maplibregl.Map({
+    container: 'mapContainer',
+    style: getStyleUrl(style),
+    center: [69.2401, 41.2995], // Toshkent
+    zoom: 12,
+    attributionControl: false
+  });
+
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+  map.addControl(new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true
+  }), 'top-right');
+
+  // Demo marker — Toshkent markazi
+  new maplibregl.Marker({ color: '#2563eb' })
+    .setLngLat([69.2401, 41.2995])
+    .setPopup(new maplibregl.Popup().setHTML('<b>Toshkent</b><br>O\'zbekiston poytaxti'))
+    .addTo(map);
+}
+
+// Style tugmalari
+document.querySelectorAll('.style-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const center = map ? map.getCenter() : null;
+    const zoom = map ? map.getZoom() : 12;
+    initMap(btn.dataset.style);
+    if (center) map.once('load', () => map.setCenter(center).setZoom(zoom));
+  });
+});
+
+initMap(currentStyle);
+</script>
+</body>
+</html>
