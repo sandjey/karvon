@@ -2,7 +2,7 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
-<title>CTM Logistics Map</title>
+<title>CTM Map</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.js"></script>
 <link  href="https://unpkg.com/maplibre-gl@4.7.0/dist/maplibre-gl.css" rel="stylesheet">
@@ -760,36 +760,89 @@ document.getElementById('btn-add-stop').addEventListener('click', () => {
 
 // ─── Map load: add cargo/warehouse markers ────────────
 map.on('load', () => {
-  // Custom circle images for markers
-  function circleImg(hex) {
-    const N=22, cv=document.createElement('canvas');
-    cv.width=N; cv.height=N;
-    const x=cv.getContext('2d'), r=N/2-2, c=N/2;
-    x.shadowColor='rgba(0,0,0,.2)'; x.shadowBlur=4; x.shadowOffsetY=2;
-    x.beginPath(); x.arc(c,c,r,0,Math.PI*2); x.fillStyle=hex; x.fill();
-    x.shadowBlur=0; x.shadowOffsetY=0;
-    x.beginPath(); x.arc(c,c,r,0,Math.PI*2);
-    x.strokeStyle='#fff'; x.lineWidth=2.5; x.stroke();
-    return {data:x.getImageData(0,0,N,N), width:N, height:N};
-  }
-  map.addImage('ic-cargo', circleImg('#EA580C'));
-  map.addImage('ic-wh', circleImg('#1A6FE8'));
-
   map.addSource('pts', {
-    type:'geojson',
-    data:`${API_BASE}/api/v1/map/markers`,
+    type: 'geojson',
+    data: `${API_BASE}/api/v1/map/markers`,
   });
-  map.addLayer({id:'lc', type:'symbol', source:'pts',
-    filter:['==',['get','kind'],'cargo'],
-    layout:{'icon-image':'ic-cargo','icon-size':1,'icon-allow-overlap':true}});
-  map.addLayer({id:'lw', type:'symbol', source:'pts',
-    filter:['==',['get','kind'],'warehouse'],
-    layout:{'icon-image':'ic-wh','icon-size':1,'icon-allow-overlap':true}});
 
-  map.on('mouseenter','lc',()=>map.getCanvas().style.cursor='pointer');
-  map.on('mouseleave','lc',()=>map.getCanvas().style.cursor='crosshair');
-  map.on('mouseenter','lw',()=>map.getCanvas().style.cursor='pointer');
-  map.on('mouseleave','lw',()=>map.getCanvas().style.cursor='crosshair');
+  // Circle layers — no image needed, always render correctly
+  map.addLayer({
+    id: 'lc',
+    type: 'circle',
+    source: 'pts',
+    filter: ['==', ['get', 'kind'], 'cargo'],
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 8,5, 12,9, 16,13],
+      'circle-color': '#EA580C',
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.92,
+    }
+  });
+
+  map.addLayer({
+    id: 'lw',
+    type: 'circle',
+    source: 'pts',
+    filter: ['==', ['get', 'kind'], 'warehouse'],
+    paint: {
+      'circle-radius': ['interpolate',['linear'],['zoom'], 8,5, 12,9, 16,13],
+      'circle-color': '#1A6FE8',
+      'circle-stroke-color': '#fff',
+      'circle-stroke-width': 2,
+      'circle-opacity': 0.92,
+    }
+  });
+
+  // Labels (show at zoom 13+)
+  map.addLayer({
+    id: 'lc-label',
+    type: 'symbol',
+    source: 'pts',
+    filter: ['==', ['get', 'kind'], 'cargo'],
+    minzoom: 13,
+    layout: {
+      'text-field': ['get', 'title'],
+      'text-size': 11,
+      'text-offset': [0, 1.4],
+      'text-anchor': 'top',
+      'text-max-width': 10,
+    },
+    paint: {
+      'text-color': '#EA580C',
+      'text-halo-color': '#fff',
+      'text-halo-width': 1.5,
+    }
+  });
+
+  map.addLayer({
+    id: 'lw-label',
+    type: 'symbol',
+    source: 'pts',
+    filter: ['==', ['get', 'kind'], 'warehouse'],
+    minzoom: 13,
+    layout: {
+      'text-field': ['get', 'title'],
+      'text-size': 11,
+      'text-offset': [0, 1.4],
+      'text-anchor': 'top',
+      'text-max-width': 10,
+    },
+    paint: {
+      'text-color': '#1A6FE8',
+      'text-halo-color': '#fff',
+      'text-halo-width': 1.5,
+    }
+  });
+
+  ['lc','lw'].forEach(l => {
+    map.on('mouseenter', l, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', l, () => map.getCanvas().style.cursor = 'crosshair');
+    map.on('click', l, e => {
+      const f = e.features[0];
+      showPopup(f, e.lngLat);
+    });
+  });
 });
 
 // ─── Marker popup ─────────────────────────────────────
