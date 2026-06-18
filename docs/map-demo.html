@@ -280,7 +280,7 @@ const API_BASE = window.location.origin;
 let wps = [null, null];          // A=0, B=1
 let wpIdCtr = 0;
 let vehicle = 'driving-car';
-let activeIdx = 0;               // which waypoint gets the next map click
+let activeIdx = 0;               // -1 = no active (all set); 0..n = next click target
 
 // ─── Map ────────────────────────────────────────────
 const map = new maplibregl.Map({
@@ -307,6 +307,7 @@ async function handleMapClick(e) {
     if (f && f.length > 0) { onMarker = true; showPopup(f[0], e.lngLat); }
   } catch(_) {}
   if (onMarker) return;
+  if (activeIdx < 0) return;   // all points set — require explicit row click to re-select
 
   const {lng, lat} = e.lngLat;
   placeWaypoint(activeIdx, lng, lat);
@@ -327,13 +328,12 @@ function placeWaypoint(idx, lng, lat) {
   renderPanel();
   updateGoBtn();
 
-  // Advance to next empty slot
+  // Advance to next empty slot; -1 when all filled
   const next = wps.findIndex((w, i) => i > idx && w === null);
-  if (next !== -1) activeIdx = next;
+  if (next !== -1) { activeIdx = next; }
   else {
     const any = wps.findIndex(w => w === null);
-    if (any !== -1) activeIdx = any;
-    // All set — keep activeIdx at last to allow override
+    activeIdx = (any !== -1) ? any : -1;   // -1 = all set, clicks do nothing
   }
 
   // Reverse geocode in background
@@ -378,21 +378,24 @@ function renderPanel() {
     `;
     item.querySelector('.wp-row').addEventListener('click', ev => {
       if (ev.target.closest('.wp-btn')) return;
-      activeIdx = i;
+      activeIdx = i;   // select this slot → next map click overwrites it
       renderPanel();
     });
     list.appendChild(item);
   });
 
-  // Update hint
+  // Update hint — show which point the NEXT click will fill
   const hintEl = document.getElementById('hint');
   const hintTxt = document.getElementById('hint-txt');
-  const emptyIdx = wps.findIndex(w => w === null);
-  if (emptyIdx === -1) {
-    hintEl.style.display = 'none';
+  if (activeIdx < 0) {
+    hintEl.style.background = '#F0FDF4';
+    hintEl.style.borderColor = '#BBF7D0';
+    hintTxt.style.color = '#16A34A';
+    hintTxt.textContent = 'Barcha nuqtalar belgilandi. Marshrutni ko\'rsating!';
   } else {
-    hintEl.style.display = 'flex';
-    const letter = emptyIdx === 0 ? 'A' : emptyIdx === wps.length-1 ? 'B' : String(emptyIdx);
+    hintEl.style.background = ''; hintEl.style.borderColor = '';
+    hintTxt.style.color = '';
+    const letter = activeIdx === 0 ? 'A' : activeIdx === wps.length-1 ? 'B' : 'oraliq';
     hintTxt.textContent = `Xaritada ${letter} nuqtani bosing`;
   }
 }
@@ -400,7 +403,7 @@ function renderPanel() {
 function clearWp(idx) {
   if (wps[idx] && wps[idx].marker) wps[idx].marker.remove();
   wps[idx] = null;
-  activeIdx = idx;
+  activeIdx = idx;  // this slot is now empty → next click fills it
   clearRouteLayer();
   renderPanel();
   updateGoBtn();
@@ -409,7 +412,9 @@ function clearWp(idx) {
 function removeWp(idx) {
   if (wps[idx] && wps[idx].marker) wps[idx].marker.remove();
   wps.splice(idx, 1);
-  if (activeIdx >= wps.length) activeIdx = wps.length - 1;
+  // pick the first empty slot as active, or -1
+  const empty = wps.findIndex(w => w === null);
+  activeIdx = empty !== -1 ? empty : -1;
   clearRouteLayer();
   renderPanel();
   updateGoBtn();
@@ -448,6 +453,14 @@ async function drawRoute() {
   const btn = document.getElementById('btn-go');
   btn.textContent = '⏳ Yuklanmoqda...';
   btn.disabled = true;
+  // Reset result card to original structure
+  document.getElementById('result-card').innerHTML = `
+    <div class="rc-head">📍 <span id="rc-title">Marshrut</span></div>
+    <div class="rc-body">
+      <div class="rc-row"><span class="rc-k">Masofa</span><span class="rc-v blue" id="rc-dist">—</span></div>
+      <div class="rc-row"><span class="rc-k">Taxminiy vaqt</span><span class="rc-v" id="rc-time">—</span></div>
+      <div class="rc-row"><span class="rc-k">Nuqtalar soni</span><span class="rc-v" id="rc-pts">—</span></div>
+    </div>`;
 
   try {
     const coords = pts.map(p => [p.lng, p.lat]);
@@ -515,8 +528,17 @@ async function drawRoute() {
     document.getElementById('btn-clear').style.display = 'block';
 
   } catch(err) {
-    alert(`Marshrut chizib bo'lmadi.\n${err.message}`);
     console.error(err);
+    // Show inline error instead of alert
+    const card = document.getElementById('result-card');
+    card.style.display = 'block';
+    card.innerHTML = `
+      <div style="padding:12px 13px;background:#FEF2F2;border-top:3px solid #DC2626;">
+        <div style="font-size:12px;font-weight:700;color:#DC2626;margin-bottom:4px;">⚠ Marshrut topilmadi</div>
+        <div style="font-size:11px;color:#7F1D1D;line-height:1.55;">
+          Belgilangan joy yo'l tarmog'idan uzoqda. Markerni <b>yo'l ustiga</b> (ko'cha, magistral) qo'ying.
+        </div>
+      </div>`;
   }
 
   btn.textContent = '→ Yo\'lni ko\'rsat';
