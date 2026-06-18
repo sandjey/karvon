@@ -1,4 +1,4 @@
-﻿version: "3.9"
+version: "3.9"
 
 services:
   postgres:
@@ -16,6 +16,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: karvon_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
 
   whatsapp:
     image: node:20-alpine
@@ -46,6 +53,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
 
   admin:
     build:
@@ -60,10 +69,6 @@ services:
     depends_on:
       - app
 
-  # РЎРІРѕСЏ РєР°СЂС‚Р° вЂ” self-hosted СЃРµСЂРІРµСЂ С‚Р°Р№Р»РѕРІ OpenStreetMap (Leaflet РЅР° С„СЂРѕРЅС‚Рµ СѓРєР°Р·С‹РІР°РµС‚ СЃСЋРґР°).
-  # РџРѕР»РѕР¶РёС‚Рµ СЂРµРіРёРѕРЅ-СЌРєСЃС‚СЂР°РєС‚ РІ ./services/tiles/tiles.mbtiles (РЅР°РїСЂРёРјРµСЂ РЈР·Р±РµРєРёСЃС‚Р°РЅ+РЎРќР“ РёР· openmaptiles/geofabrik),
-  # Р·Р°С‚РµРј Р·Р°РїСѓСЃС‚РёС‚Рµ: docker compose up -d tiles
-  # РљР°СЂС‚Р° Р±СѓРґРµС‚ РґРѕСЃС‚СѓРїРЅР° РЅР° http://<host>:8083  (С„СЂРѕРЅС‚: MAP_TILES_URL=https://maps.fan.sarbon.me)
   tiles:
     image: maptiler/tileserver-gl:latest
     container_name: karvon_tiles
@@ -76,5 +81,6 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   whatsapp_auth:
   whatsapp_modules:
