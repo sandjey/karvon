@@ -33,3 +33,8 @@ docs/postman/.postman/
 # Postman OpenAPI export artifacts (root)
 Default module.md
 Default module.openapi.json
+
+# Temp / scripts
+tmp_*.py
+qa_audit*.py
+qa_audit_results*.json

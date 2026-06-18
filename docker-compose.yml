@@ -56,19 +56,6 @@ services:
       redis:
         condition: service_started
 
-  admin:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-https://api.centraltrademarket.com/api/v1}
-    container_name: karvon_admin
-    restart: unless-stopped
-    ports:
-      - "8085:80"
-    depends_on:
-      - app
-
   tiles:
     image: maptiler/tileserver-gl:latest
     container_name: karvon_tiles
