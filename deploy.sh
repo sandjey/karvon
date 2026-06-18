@@ -18,11 +18,9 @@ $COMPOSE up -d --no-recreate postgres whatsapp 2>/dev/null || true
 # Build new images
 $COMPOSE build app admin
 
-# Stop and remove old containers via plain docker to avoid compose state tracking issues
-docker stop karvon_app karvon_admin 2>/dev/null || true
-docker rm   karvon_app karvon_admin 2>/dev/null || true
-
-# Start fresh containers (--force-recreate bypasses stale container ID in compose labels)
+# Let compose manage the full lifecycle — it stops, removes, and starts containers itself.
+# Do NOT manually docker stop/rm before this: compose tracks containers by ID in image
+# labels, and removing them externally causes "No such container" on recreate.
 $COMPOSE up -d --no-deps --force-recreate app admin
 
 echo "[karvon] Waiting for app to be healthy..."
