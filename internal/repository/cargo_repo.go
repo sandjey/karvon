@@ -179,11 +179,11 @@ func (r *CargoRepo) IncrementContactsBought(ctx context.Context, id uuid.UUID) e
 		UpdateColumn("contacts_bought_count", gorm.Expr("contacts_bought_count + 1")).Error
 }
 
-// CountFreeActive считает активные бесплатные объявления-грузов пользователя.
+// CountFreeActive считает активные объявления-грузов пользователя (paid или нет — неважно).
 func (r *CargoRepo) CountFreeActive(ctx context.Context, userID uuid.UUID) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.CargoListing{}).
-		Where("user_id = ? AND is_paid = false AND status = 'active' AND is_template = false", userID).
+		Where("user_id = ? AND status = 'active' AND is_template = false", userID).
 		Count(&count).Error
 	return count, err
 }

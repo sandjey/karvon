@@ -76,11 +76,11 @@ func (r *WarehouseRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&model.WarehouseListing{}, "id = ?", id).Error
 }
 
-// CountFreeActive считает активные бесплатные склады пользователя.
+// CountFreeActive считает активные склады пользователя (paid или нет — неважно).
 func (r *WarehouseRepo) CountFreeActive(ctx context.Context, userID uuid.UUID) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
-		Where("user_id = ? AND is_paid = false AND status = 'active'", userID).
+		Where("user_id = ? AND status = 'active'", userID).
 		Count(&count).Error
 	return count, err
 }

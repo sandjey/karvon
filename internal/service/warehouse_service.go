@@ -106,19 +106,16 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	if err != nil {
 		return nil, err
 	}
-	initialStatus := "active"
-	isPaid := false
 	if freeCargo+freeWarehouse > 0 {
-		initialStatus = "archived"
-		isPaid = false
+		return nil, ErrFreeListingUsed
 	}
 
 	w := &model.WarehouseListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
-		Status:    initialStatus,
-		IsPaid:    isPaid,
+		Status:    "active",
+		IsPaid:    false,
 	}
 	applyWarehouse(&req, w)
 	if err := s.repo.Create(ctx, w); err != nil {

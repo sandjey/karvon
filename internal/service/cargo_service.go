@@ -93,20 +93,16 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if err != nil {
 		return nil, err
 	}
-	initialStatus := "active"
-	isPaid := false
 	if freeCargo+freeWarehouse > 0 {
-		// Бесплатный слот занят — объявление ждёт оплаты.
-		initialStatus = "archived"
-		isPaid = false
+		return nil, ErrFreeListingUsed
 	}
 
 	m := &model.CargoListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
-		Status:    initialStatus,
-		IsPaid:    isPaid,
+		Status:    "active",
+		IsPaid:    false,
 		InStock:   true,
 		Type:      "domestic", // legacy NOT NULL
 	}

@@ -231,6 +231,8 @@ func handleWarehouseErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusForbidden, "COMPANY_NOT_VERIFIED")
 	case isErr(err, service.ErrPhotoLimitExceeded):
 		FailCode(c, http.StatusBadRequest, "PHOTO_LIMIT_EXCEEDED")
+	case isErr(err, service.ErrFreeListingUsed):
+		FailCode(c, http.StatusPaymentRequired, "FREE_LISTING_USED")
 	default:
 		InternalError(c)
 	}
