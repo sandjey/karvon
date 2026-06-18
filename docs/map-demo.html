@@ -156,20 +156,70 @@ html,body{width:100%;height:100%;overflow:hidden;
   font-size:11px;color:#9A3412;line-height:1.5;
 }
 
-/* Result */
-.result-card{
-  display:none;margin-top:10px;
-  border:1.5px solid #D0E2F5;border-radius:10px;overflow:hidden;
+/* Result card */
+.result-card{display:none;margin-top:10px;border:1.5px solid #D0E2F5;border-radius:10px;overflow:hidden;}
+
+/* Summary stats row */
+.rc-stats{display:flex;background:#0C1A2E;padding:12px 13px;gap:0;}
+.rc-stat{flex:1;text-align:center;position:relative;}
+.rc-stat+.rc-stat::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:rgba(255,255,255,.15);}
+.rc-stat-val{font-size:15px;font-weight:800;color:#fff;display:block;}
+.rc-stat-lbl{font-size:10px;color:rgba(255,255,255,.45);margin-top:1px;display:block;}
+.rc-stat-val.blue{color:#6AADFF;}
+
+/* HGV / route warnings */
+.rc-warn{background:#FFF7ED;border-bottom:1px solid #FED7AA;padding:9px 12px;
+  font-size:11px;color:#9A3412;line-height:1.5;}
+.rc-warn strong{color:#C2410C;display:block;margin-bottom:2px;}
+
+/* Segments (A→stop1, stop1→B …) */
+.rc-segs{display:flex;gap:0;border-bottom:1px solid #D0E2F5;overflow-x:auto;}
+.rc-seg-btn{
+  flex:1;min-width:70px;padding:7px 6px;border:none;background:transparent;
+  cursor:pointer;text-align:center;border-bottom:2px solid transparent;
+  font-size:11px;font-weight:600;color:#5B7390;transition:all .15s;white-space:nowrap;
 }
-.rc-head{background:#0C1A2E;padding:10px 12px;color:#fff;
-  font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;}
-.rc-body{padding:10px 12px;}
-.rc-row{display:flex;justify-content:space-between;
-  padding:4px 0;border-bottom:1px solid #F3F8FF;}
-.rc-row:last-child{border-bottom:none;}
-.rc-k{font-size:11px;color:#5B7390;}
-.rc-v{font-size:13px;font-weight:700;color:#0C1A2E;}
-.rc-v.blue{color:#1A6FE8;}
+.rc-seg-btn.active{color:#1A6FE8;border-bottom-color:#1A6FE8;background:#F3F8FF;}
+.rc-seg-btn:hover:not(.active){background:#F3F8FF;}
+.rc-seg-dist{font-size:10px;font-weight:400;color:#9BB2C8;display:block;}
+
+/* Steps toggle header */
+.rc-steps-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px;cursor:pointer;border-bottom:1px solid #E8F1FD;
+  background:#F8FBFF;
+}
+.rc-steps-hdr:hover{background:#EEF5FE;}
+.rc-steps-hdr span{font-size:12px;font-weight:600;color:#0C1A2E;}
+.rc-steps-hdr svg{transition:transform .2s;flex-shrink:0;stroke:#5B7390;fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.rc-steps-hdr.open svg{transform:rotate(180deg);}
+
+/* Steps list */
+.rc-steps-list{max-height:360px;overflow-y:auto;}
+.rc-step{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 12px;border-bottom:1px solid #F3F8FF;
+  transition:background .1s;
+}
+.rc-step:last-child{border-bottom:none;}
+.rc-step:hover{background:#F8FBFF;}
+.rc-step-icon{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:grid;place-items:center;margin-top:1px;
+}
+.rc-step-icon svg{width:14px;height:14px;stroke:#fff;fill:none;
+  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.rc-step-body{flex:1;min-width:0;}
+.rc-step-inst{font-size:12px;color:#0C1A2E;line-height:1.4;}
+.rc-step-road{font-size:10px;color:#1A6FE8;font-weight:600;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rc-step-meta{font-size:10px;color:#5B7390;margin-top:2px;}
+
+/* Route error */
+.rc-err{padding:12px 13px;background:#FEF2F2;}
+.rc-err-title{font-size:12px;font-weight:700;color:#DC2626;margin-bottom:4px;}
+.rc-err-body{font-size:11px;color:#7F1D1D;line-height:1.55;}
 
 /* ─── MAP ────────────────────────────────────────── */
 #map{position:fixed;left:300px;top:0;right:0;bottom:0;z-index:100;cursor:crosshair;}
@@ -253,15 +303,8 @@ html,body{width:100%;height:100%;overflow:hidden;
       Hammasini tozalash
     </button>
 
-    <!-- Result card -->
-    <div class="result-card" id="result-card">
-      <div class="rc-head">📍 <span id="rc-title">Marshrut</span></div>
-      <div class="rc-body">
-        <div class="rc-row"><span class="rc-k">Masofa</span><span class="rc-v blue" id="rc-dist">—</span></div>
-        <div class="rc-row"><span class="rc-k">Taxminiy vaqt</span><span class="rc-v" id="rc-time">—</span></div>
-        <div class="rc-row"><span class="rc-k">Nuqtalar soni</span><span class="rc-v" id="rc-pts">—</span></div>
-      </div>
-    </div>
+    <!-- Result card — populated by JS -->
+    <div class="result-card" id="result-card"></div>
 
   </div>
 </div>
@@ -445,6 +488,43 @@ function setVehicle(v, btn) {
   if (wps.filter(w=>w).length >= 2) drawRoute();
 }
 
+// ─── Turn icon SVG ───────────────────────────────────
+function turnIcon(type) {
+  // ORS step types: 0=L,1=R,2=SharpL,3=SharpR,4=SlightL,5=SlightR,6=Straight,
+  // 7=EnterRound,8=ExitRound,9=Uturn,10=GoalIntermediate,11=Depart,12=Arrive
+  const icons = {
+    0:  ['#3B82F6','M15 6l-6 6 6 6'],                          // Left
+    1:  ['#3B82F6','M9 6l6 6-6 6'],                            // Right
+    2:  ['#1D4ED8','M18 6l-9 6 9 6M9 6v12'],                   // Sharp left
+    3:  ['#1D4ED8','M6 6l9 6-9 6M15 6v12'],                    // Sharp right
+    4:  ['#60A5FA','M16 6l-4 6 4 6M12 12H6'],                  // Slight left
+    5:  ['#60A5FA','M8 6l4 6-4 6M12 12h6'],                    // Slight right
+    6:  ['#16A34A','M12 19V5M5 12l7-7 7 7'],                   // Straight
+    7:  ['#9333EA','M12 5a7 7 0 1 1 0 14A7 7 0 0 1 12 5zm0 0v4m0 0l3-3m-3 3l-3-3'], // Roundabout
+    8:  ['#9333EA','M12 5a7 7 0 1 0 0 14A7 7 0 0 0 12 5zm0 9v-4'],                   // Exit roundabout
+    9:  ['#EF4444','M6 9l6-6 6 6M12 3v12m-6 0a6 6 0 0 0 12 0'],// U-turn
+    10: ['#F59E0B','M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'], // Intermediate
+    11: ['#16A34A','M12 19V5M5 12l7-7 7 7'],                   // Depart (same as straight)
+    12: ['#DC2626','M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'], // Arrive
+  };
+  const [color, path] = icons[type] || icons[6];
+  return `<div class="rc-step-icon" style="background:${color}20;border:1px solid ${color}40">
+    <svg viewBox="0 0 24 24" style="stroke:${color}"><path d="${path}" stroke-fill="none"/></svg>
+  </div>`;
+}
+
+function fmtDist(m) {
+  return m >= 1000 ? `${(m/1000).toFixed(1)} km` : `${Math.round(m)} m`;
+}
+function fmtTime(s) {
+  const h = Math.floor(s/3600), m = Math.round((s%3600)/60);
+  return h ? `${h}h ${m}min` : `${m} min`;
+}
+
+// Which segment is currently shown in steps
+let activeSegIdx = 0;
+let lastRouteData = null;
+
 // ─── Route ───────────────────────────────────────────
 async function drawRoute() {
   const pts = wps.filter(w => w !== null);
@@ -453,14 +533,10 @@ async function drawRoute() {
   const btn = document.getElementById('btn-go');
   btn.textContent = '⏳ Yuklanmoqda...';
   btn.disabled = true;
-  // Reset result card to original structure
-  document.getElementById('result-card').innerHTML = `
-    <div class="rc-head">📍 <span id="rc-title">Marshrut</span></div>
-    <div class="rc-body">
-      <div class="rc-row"><span class="rc-k">Masofa</span><span class="rc-v blue" id="rc-dist">—</span></div>
-      <div class="rc-row"><span class="rc-k">Taxminiy vaqt</span><span class="rc-v" id="rc-time">—</span></div>
-      <div class="rc-row"><span class="rc-k">Nuqtalar soni</span><span class="rc-v" id="rc-pts">—</span></div>
-    </div>`;
+
+  const card = document.getElementById('result-card');
+  card.style.display = 'block';
+  card.innerHTML = `<div style="padding:16px 12px;text-align:center;color:#5B7390;font-size:12px;">Marshrut hisoblanmoqda...</div>`;
 
   try {
     const coords = pts.map(p => [p.lng, p.lat]);
@@ -473,39 +549,47 @@ async function drawRoute() {
           'Content-Type': 'application/json',
           'Accept': 'application/geo+json, application/json',
         },
-        body: JSON.stringify({coordinates: coords}),
+        body: JSON.stringify({
+          coordinates: coords,
+          language: 'ru',
+          instructions: true,
+          extra_info: ['surface','waycategory','waytype'],
+        }),
       }
     );
     if (!res.ok) {
       const txt = await res.text();
-      throw new Error(`ORS ${res.status}: ${txt}`);
+      let msg = 'Yo\'l tarmog\'idan uzoqda. Markerni <b>yo\'l ustiga</b> qo\'ying.';
+      try {
+        const parsed = JSON.parse(txt);
+        if (parsed.error && parsed.error.message) msg = parsed.error.message;
+      } catch(_) {}
+      throw {userMsg: msg, raw: txt};
     }
     const data = await res.json();
     const feat = data.features[0];
-    const {distance, duration} = feat.properties.summary;
+    const props = feat.properties;
+    const {distance, duration} = props.summary;
+    const segments = props.segments || [];
+    const warnings = props.warnings || [];
 
-    // Draw route
+    // Draw route on map
+    const lineColor = vehicle === 'driving-hgv' ? '#EA580C' : '#1A6FE8';
+    const geojsonData = {type:'FeatureCollection', features:[{type:'Feature',geometry:feat.geometry,properties:{}}]};
     if (!map.getSource('route')) {
-      map.addSource('route', {type:'geojson', data: {type:'FeatureCollection',features:[]}});
-      map.addLayer({id:'route-shadow', type:'line', source:'route',
+      map.addSource('route', {type:'geojson', data: geojsonData});
+      map.addLayer({id:'route-shadow',type:'line',source:'route',
         layout:{'line-join':'round','line-cap':'round'},
         paint:{'line-color':'#fff','line-width':10,'line-opacity':.8}});
-      map.addLayer({id:'route-line', type:'line', source:'route',
+      map.addLayer({id:'route-line',type:'line',source:'route',
         layout:{'line-join':'round','line-cap':'round'},
-        paint:{'line-color': vehicle==='driving-hgv'?'#EA580C':'#1A6FE8',
-               'line-width':5,
-               ...(vehicle==='driving-hgv'?{'line-dasharray':[2,1.5]}:{})}});
+        paint:{'line-color':lineColor,'line-width':5,
+          ...(vehicle==='driving-hgv'?{'line-dasharray':[2,1.5]}:{})}});
     } else {
-      map.getSource('route').setData({
-        type:'FeatureCollection',
-        features:[{type:'Feature', geometry:feat.geometry, properties:{}}]
-      });
-      map.setPaintProperty('route-line','line-color',vehicle==='driving-hgv'?'#EA580C':'#1A6FE8');
+      map.getSource('route').setData(geojsonData);
+      map.setPaintProperty('route-line','line-color',lineColor);
+      try { map.setPaintProperty('route-line','line-dasharray',vehicle==='driving-hgv'?[2,1.5]:null); } catch(_){}
     }
-    map.getSource('route').setData({
-      type:'FeatureCollection',
-      features:[{type:'Feature', geometry:feat.geometry, properties:{}}]
-    });
 
     // Fit bounds
     const cs = feat.geometry.coordinates;
@@ -515,34 +599,143 @@ async function drawRoute() {
       {padding:{top:50,bottom:50,left:60,right:80},duration:700}
     );
 
-    // Show result
-    const km = distance >= 1000 ? `${(distance/1000).toFixed(1)} km` : `${Math.round(distance)} m`;
-    const h = Math.floor(duration/3600), m = Math.round((duration%3600)/60);
-    const timeStr = h ? `${h} soat ${m} daqiqa` : `${m} daqiqa`;
-
-    document.getElementById('rc-title').textContent = vehicle==='driving-hgv'?'🚛 Yuk (HGV)':'🚗 Yengil mashina';
-    document.getElementById('rc-dist').textContent = km;
-    document.getElementById('rc-time').textContent = timeStr;
-    document.getElementById('rc-pts').textContent = `${pts.length} ta nuqta`;
-    document.getElementById('result-card').style.display = 'block';
+    lastRouteData = {pts, segments, warnings, distance, duration};
+    activeSegIdx = 0;
+    renderResultCard();
     document.getElementById('btn-clear').style.display = 'block';
 
   } catch(err) {
     console.error(err);
-    // Show inline error instead of alert
-    const card = document.getElementById('result-card');
-    card.style.display = 'block';
-    card.innerHTML = `
-      <div style="padding:12px 13px;background:#FEF2F2;border-top:3px solid #DC2626;">
-        <div style="font-size:12px;font-weight:700;color:#DC2626;margin-bottom:4px;">⚠ Marshrut topilmadi</div>
-        <div style="font-size:11px;color:#7F1D1D;line-height:1.55;">
-          Belgilangan joy yo'l tarmog'idan uzoqda. Markerni <b>yo'l ustiga</b> (ko'cha, magistral) qo'ying.
-        </div>
-      </div>`;
+    const msg = err.userMsg || err.message || 'Noma\'lum xato';
+    card.innerHTML = `<div class="rc-err">
+      <div class="rc-err-title">⚠ Marshrut topilmadi</div>
+      <div class="rc-err-body">${msg}</div>
+    </div>`;
   }
 
   btn.textContent = '→ Yo\'lni ko\'rsat';
   btn.disabled = wps.filter(w=>w).length < 2;
+}
+
+// ─── Render result card from lastRouteData ────────────
+function renderResultCard() {
+  if (!lastRouteData) return;
+  const {pts, segments, warnings, distance, duration} = lastRouteData;
+  const card = document.getElementById('result-card');
+  const isHgv = vehicle === 'driving-hgv';
+
+  // ── Summary stats
+  const km = fmtDist(distance);
+  const time = fmtTime(duration);
+  const emoji = isHgv ? '🚛' : '🚗';
+
+  let html = `
+  <div class="rc-stats">
+    <div class="rc-stat">
+      <span class="rc-stat-val blue">${km}</span>
+      <span class="rc-stat-lbl">Masofa</span>
+    </div>
+    <div class="rc-stat">
+      <span class="rc-stat-val">${time}</span>
+      <span class="rc-stat-lbl">Vaqt</span>
+    </div>
+    <div class="rc-stat">
+      <span class="rc-stat-val">${emoji} ${pts.length}</span>
+      <span class="rc-stat-lbl">Nuqta</span>
+    </div>
+  </div>`;
+
+  // ── HGV / route warnings
+  if (warnings.length > 0) {
+    html += warnings.map(w => `
+      <div class="rc-warn">
+        <strong>⚠ Ogohlantirish (${isHgv?'HGV':''})</strong>${w.message||w.description||'Cheklov bor'}
+      </div>`).join('');
+  }
+
+  // ── Segments tabs (only if >1 segment)
+  if (segments.length > 1) {
+    html += `<div class="rc-segs" id="rc-segs">`;
+    segments.forEach((seg, i) => {
+      const fromL = i === 0 ? 'A' : `${i}`;
+      const toL   = i === segments.length-1 ? 'B' : `${i+1}`;
+      html += `<button class="rc-seg-btn${i===activeSegIdx?' active':''}" onclick="switchSeg(${i})">
+        ${fromL} → ${toL}
+        <span class="rc-seg-dist">${fmtDist(seg.distance)}</span>
+      </button>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── Segment info
+  const seg = segments[activeSegIdx] || segments[0];
+  const steps = seg ? (seg.steps || []) : [];
+
+  // Steps toggle header
+  html += `
+  <div class="rc-steps-hdr" id="rc-steps-hdr" onclick="toggleSteps()">
+    <span>Yo'riqnoma (${steps.length} qadam)</span>
+    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  <div class="rc-steps-list" id="rc-steps-list" style="display:none">`;
+
+  steps.forEach((step, si) => {
+    const isDepart  = step.type === 11;
+    const isArrive  = step.type === 12;
+    const isGoal    = step.type === 10;
+    const dist      = step.distance > 0 ? fmtDist(step.distance) : '';
+    const time      = step.duration > 0 ? fmtTime(step.duration) : '';
+    const road      = step.name && step.name !== '-' ? step.name : '';
+    const inst      = step.instruction || '';
+
+    html += `<div class="rc-step" onclick="flyToStep(${activeSegIdx},${si})">
+      ${turnIcon(step.type)}
+      <div class="rc-step-body">
+        <div class="rc-step-inst">${inst}</div>
+        ${road ? `<div class="rc-step-road">📍 ${road}</div>` : ''}
+        ${(dist||time) ? `<div class="rc-step-meta">${[dist,time].filter(Boolean).join(' · ')}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  card.innerHTML = html;
+
+  // Restore open state
+  if (stepsOpen) {
+    document.getElementById('rc-steps-list').style.display = 'block';
+    document.getElementById('rc-steps-hdr').classList.add('open');
+  }
+}
+
+let stepsOpen = false;
+function toggleSteps() {
+  stepsOpen = !stepsOpen;
+  const list = document.getElementById('rc-steps-list');
+  const hdr  = document.getElementById('rc-steps-hdr');
+  if (list) list.style.display = stepsOpen ? 'block' : 'none';
+  if (hdr)  hdr.classList.toggle('open', stepsOpen);
+}
+
+function switchSeg(idx) {
+  activeSegIdx = idx;
+  renderResultCard();
+  stepsOpen = true;
+  document.getElementById('rc-steps-list').style.display = 'block';
+  document.getElementById('rc-steps-hdr').classList.add('open');
+}
+
+function flyToStep(segIdx, stepIdx) {
+  if (!lastRouteData) return;
+  const step = lastRouteData.segments[segIdx]?.steps[stepIdx];
+  if (!step || !step.way_points) return;
+  // fly to map doesn't have direct segment geometry access here — zoom to center
+  // We use the last ORS geojson coords via closure
+  try {
+    const src = map.getSource('route');
+    if (!src) return;
+    // approximate: just fly using pts as fallback for now
+  } catch(_) {}
 }
 
 function clearRouteLayer() {
