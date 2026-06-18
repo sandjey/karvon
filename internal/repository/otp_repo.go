@@ -18,11 +18,13 @@ func NewOTPRepo(db *gorm.DB) *OTPRepo {
 	return &OTPRepo{db: db}
 }
 
-// CountRecentByPhone считает активные (не использованные) OTP за последний час.
+// CountRecentByPhone считает все OTP-запросы (включая использованные) за последние 10 минут.
+// Используется для rate limiting: не зависит от статуса used, чтобы накопленные старые
+// неиспользованные записи не блокировали пользователя навсегда.
 func (r *OTPRepo) CountRecentByPhone(ctx context.Context, phone string) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.OTPCode{}).
-		Where("phone = ? AND used = false AND created_at > ?", phone, time.Now().Add(-time.Hour)).
+		Where("phone = ? AND created_at > ?", phone, time.Now().Add(-10*time.Minute)).
 		Count(&count).Error
 	return count, err
 }
