@@ -78,25 +78,15 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		channel = notifier.ChannelWhatsApp
 	}
 
-	// Проверить, зарегистрирован ли номер на выбранном канале
+	// Проверить, что канал настроен
 	switch channel {
 	case notifier.ChannelTelegram:
 		if s.telegram == nil {
 			return nil, ErrTelegramNotConfigured
 		}
-		if checker, ok := s.telegram.(notifier.NumberChecker); ok {
-			if err := checker.CheckNumber(ctx, phone); err != nil {
-				return nil, ErrPhoneNotOnTelegram
-			}
-		}
 	default:
 		if s.whatsapp == nil {
 			return nil, ErrWhatsAppNotConfigured
-		}
-		if checker, ok := s.whatsapp.(notifier.NumberChecker); ok {
-			if err := checker.CheckNumber(ctx, phone); err != nil {
-				return nil, ErrPhoneNotOnWhatsApp
-			}
 		}
 	}
 
@@ -131,6 +121,9 @@ func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto
 		if err := s.telegram.Send(ctx, phone, message); err != nil {
 			if errors.Is(err, notifier.ErrRateLimit) {
 				return nil, ErrOTPRateLimit
+			}
+			if errors.Is(err, notifier.ErrNumberNotRegistered) {
+				return nil, ErrPhoneNotOnTelegram
 			}
 			return nil, err
 		}

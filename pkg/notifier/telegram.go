@@ -121,6 +121,11 @@ func (t *TelegramGatewayNotifier) Send(_ context.Context, phone, message string)
 		if strings.HasPrefix(result.Error, "FLOOD_WAIT") {
 			return ErrRateLimit
 		}
+		if result.Error == "PHONE_NUMBER_NOT_AVAILABLE" ||
+			result.Error == "PHONE_NOT_FOUND" ||
+			result.Error == "PHONE_NUMBER_INVALID" {
+			return ErrNumberNotRegistered
+		}
 		return fmt.Errorf("telegram gateway: %s — %s", result.Error, result.Descr)
 	}
 
