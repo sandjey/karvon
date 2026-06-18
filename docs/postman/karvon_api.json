@@ -4582,6 +4582,66 @@
           "response": []
         },
         {
+          "name": "PATCH /admin/pricing/free_listing_quota — бесплатных объявлений (квота)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tokens_amount\": 5\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/pricing/free_listing_quota",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "pricing", "free_listing_quota"]
+            },
+            "description": "Изменить количество бесплатных объявлений на аккаунт.\n`tokens_amount` = количество бесплатных активных объявлений (cargo + warehouse суммарно).\n\nПо умолчанию: 1. Например, чтобы дать 5 бесплатных — передать `{\"tokens_amount\": 5}`.\nВступает в силу сразу, без перезапуска сервера."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Тариф обновлён\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "PATCH /admin/pricing/listing_paid — цена платного объявления",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price_uzs\": 50000,\n  \"price_usd\": 4\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/pricing/listing_paid",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "pricing", "listing_paid"]
+            },
+            "description": "Изменить цену платного объявления (2-е и последующие).\nПо умолчанию: 30 000 UZS / $3."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Тариф обновлён\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
           "name": "DELETE /admin/pricing/:key — удалить тариф",
           "request": {
             "method": "DELETE",
