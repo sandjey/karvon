@@ -12,11 +12,12 @@ import (
 )
 
 type WarehouseService struct {
-	repo      *repository.WarehouseRepo
-	company   *repository.CompanyRepo
-	media     *repository.MediaRepo
-	cargoRepo *repository.CargoRepo
-	favorites *repository.FavoriteRepo
+	repo        *repository.WarehouseRepo
+	company     *repository.CompanyRepo
+	media       *repository.MediaRepo
+	cargoRepo   *repository.CargoRepo
+	favorites   *repository.FavoriteRepo
+	pricingRepo *repository.PricingRepo
 }
 
 func NewWarehouseService(
@@ -25,8 +26,9 @@ func NewWarehouseService(
 	media *repository.MediaRepo,
 	cargoRepo *repository.CargoRepo,
 	favorites *repository.FavoriteRepo,
+	pricingRepo *repository.PricingRepo,
 ) *WarehouseService {
-	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites}
+	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites, pricingRepo: pricingRepo}
 }
 
 func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -106,7 +108,8 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	if err != nil {
 		return nil, err
 	}
-	if freeCargo+freeWarehouse > 0 {
+	freeQuota := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
+	if int(freeCargo+freeWarehouse) >= freeQuota {
 		return nil, ErrFreeListingUsed
 	}
 

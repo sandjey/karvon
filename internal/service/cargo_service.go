@@ -21,6 +21,7 @@ type CargoService struct {
 	favorites     *repository.FavoriteRepo
 	media         *repository.MediaRepo
 	warehouseRepo *repository.WarehouseRepo
+	pricingRepo   *repository.PricingRepo
 }
 
 func NewCargoService(
@@ -31,8 +32,9 @@ func NewCargoService(
 	favorites *repository.FavoriteRepo,
 	media *repository.MediaRepo,
 	warehouseRepo *repository.WarehouseRepo,
+	pricingRepo *repository.PricingRepo,
 ) *CargoService {
-	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media, warehouseRepo: warehouseRepo}
+	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media, warehouseRepo: warehouseRepo, pricingRepo: pricingRepo}
 }
 
 func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -93,7 +95,8 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if err != nil {
 		return nil, err
 	}
-	if freeCargo+freeWarehouse > 0 {
+	freeQuota := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
+	if int(freeCargo+freeWarehouse) >= freeQuota {
 		return nil, ErrFreeListingUsed
 	}
 

@@ -122,11 +122,11 @@ func main() {
 	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
 
 	authSvc      := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier)
-	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo)
+	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
-	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo)
-	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo)
+	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo)
+	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo)
 	pricingSvc   := service.NewPricingService(pricingRepo)
 	rahmatClient := rahmat.NewClient(rahmat.Config{
 		BaseURL:     cfg.MulticardBaseURL,
@@ -376,6 +376,7 @@ func seedPricingConfig(db *gorm.DB) error {
 		{Key: "sub_month", Label: "Подписка на месяц", DurationDays: 30, PriceUZS: 150000, PriceUSD: 13},
 		{Key: "sub_year", Label: "Подписка на год", DurationDays: 365, PriceUZS: 1000000, PriceUSD: 90},
 		{Key: "listing_paid", Label: "Платное объявление", PriceUZS: 30000, PriceUSD: 3},
+		{Key: "free_listing_quota", Label: "Бесплатных объявлений (квота)", TokensAmount: 1},
 		{Key: "boost_1day", Label: "Буст на 1 день", DurationDays: 1, PriceUZS: 20000, PriceUSD: 2},
 		{Key: "boost_3day", Label: "Буст на 3 дня", DurationDays: 3, PriceUZS: 50000, PriceUSD: 4.5},
 		{Key: "boost_7day", Label: "Буст на 7 дней", DurationDays: 7, PriceUZS: 100000, PriceUSD: 9},

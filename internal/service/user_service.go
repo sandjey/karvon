@@ -15,6 +15,7 @@ type UserService struct {
 	companyRepo   *repository.CompanyRepo
 	cargoRepo     *repository.CargoRepo
 	warehouseRepo *repository.WarehouseRepo
+	pricingRepo   *repository.PricingRepo
 }
 
 func NewUserService(
@@ -22,12 +23,14 @@ func NewUserService(
 	companyRepo *repository.CompanyRepo,
 	cargoRepo *repository.CargoRepo,
 	warehouseRepo *repository.WarehouseRepo,
+	pricingRepo *repository.PricingRepo,
 ) *UserService {
 	return &UserService{
 		userRepo:      userRepo,
 		companyRepo:   companyRepo,
 		cargoRepo:     cargoRepo,
 		warehouseRepo: warehouseRepo,
+		pricingRepo:   pricingRepo,
 	}
 }
 
@@ -127,7 +130,7 @@ func (s *UserService) GetListingQuota(ctx context.Context, userID uuid.UUID) (*d
 		return nil, err
 	}
 	freeUsed := int(freeCargo + freeWarehouse)
-	const freeTotal = 1
+	freeTotal := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
 	return &dto.ListingQuotaResponse{
 		FreeUsed:    freeUsed,
 		FreeTotal:   freeTotal,
