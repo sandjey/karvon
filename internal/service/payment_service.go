@@ -68,12 +68,18 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 		switch in.ListingType {
 		case "cargo":
 			c, e := s.cargo.FindByID(ctx, listingID)
-			if e != nil || c == nil {
+			if e != nil {
+				return nil, "", e
+			}
+			if c == nil {
 				return nil, "", ErrNotFound
 			}
 		case "warehouse":
 			w, e := s.warehouse.FindByID(ctx, listingID)
-			if e != nil || w == nil {
+			if e != nil {
+				return nil, "", e
+			}
+			if w == nil {
 				return nil, "", ErrNotFound
 			}
 		default:
