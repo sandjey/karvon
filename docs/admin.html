@@ -824,7 +824,7 @@ async function loadListings(page=1) {
     body.innerHTML = items.map(item=>{
       const from = type==='cargo' ? (item.from_city||item.from||'—') : (item.city||'—')
       const to   = type==='cargo' ? (item.to_city||item.to||'—') : '—'
-      const desc = type==='cargo' ? (item.cargo_name||item.category_key||'Груз') : (item.name||'Склад')
+      const desc = type==='cargo' ? (item.cargo_name||item.category||'Груз') : (item.name||'Склад')
       const st   = item.status || (item.is_active?'active':'archived')
       return `<tr>
         <td><code style="font-size:11px;color:var(--muted)">${(item.id||'').substr(0,8)}…</code></td>

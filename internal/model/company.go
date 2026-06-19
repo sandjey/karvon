@@ -7,39 +7,34 @@ import (
 )
 
 type Company struct {
-	ID     uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID uuid.UUID `gorm:"type:uuid;not null;index"`
-	User   *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	ID     uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID uuid.UUID `gorm:"type:uuid;not null;index"                       json:"user_id"`
+	User   *User     `gorm:"foreignKey:UserID"                              json:"user,omitempty"`
 
-	// Компания
-	Country       string     `gorm:"type:varchar(100);not null"`            // Страна регистрации
-	OrgType       string     `gorm:"type:company_org_type;not null"`        // ООО/АО/ИП/Ltd/GmbH/Co.Ltd
-	Name          string     `gorm:"type:varchar(200);not null"`            // Полное юридическое название
-	INN           string     `gorm:"type:varchar(30);not null;column:inn"`  // ИНН/БИН/VAT/USCC
-	INNVerified   bool       `gorm:"not null;default:false;column:inn_verified"` // Прошёл автопроверку по реестру
-	INNVerifiedAt *time.Time `gorm:"column:inn_verified_at"`
+	Country       string     `gorm:"type:varchar(100);not null"                          json:"country"`
+	OrgType       string     `gorm:"type:company_org_type;not null"                      json:"org_type"`
+	Name          string     `gorm:"type:varchar(200);not null"                          json:"name"`
+	INN           string     `gorm:"type:varchar(30);not null;column:inn"                json:"inn"`
+	INNVerified   bool       `gorm:"not null;default:false;column:inn_verified"          json:"inn_verified"`
+	INNVerifiedAt *time.Time `gorm:"column:inn_verified_at"                              json:"inn_verified_at"`
 
-	// Контакты
-	Phone string `gorm:"type:varchar(20);not null"`
-	Email string `gorm:"type:varchar(100);not null"`
+	Phone string `gorm:"type:varchar(20);not null"  json:"phone"`
+	Email string `gorm:"type:varchar(100);not null" json:"email"`
 
-	// Адрес
-	City       string  `gorm:"type:varchar(100);not null"` // Город / район
-	Region     *string `gorm:"type:varchar(100)"`          // Область / провинция (необяз.)
-	Street     string  `gorm:"type:varchar(200);not null"` // Улица, дом, офис
-	PostalCode *string `gorm:"type:varchar(20);column:postal_code"`
+	City       string  `gorm:"type:varchar(100);not null"           json:"city"`
+	Region     *string `gorm:"type:varchar(100)"                    json:"region"`
+	Street     string  `gorm:"type:varchar(200);not null"           json:"street"`
+	PostalCode *string `gorm:"type:varchar(20);column:postal_code"  json:"postal_code"`
 
-	// Документы
-	RegDocURL string  `gorm:"type:text;not null;column:reg_doc_url"` // Свидетельство о регистрации
-	InnDocURL *string `gorm:"type:text;column:inn_doc_url"`           // Скан ИНН / свидетельства налогоплательщика
+	RegDocURL string  `gorm:"type:text;not null;column:reg_doc_url" json:"reg_doc_url"`
+	InnDocURL *string `gorm:"type:text;column:inn_doc_url"          json:"inn_doc_url"`
 
-	// Модерация
-	Status          string     `gorm:"type:company_status;not null;default:'pending';index"`
-	RejectionReason *string    `gorm:"type:text"`
-	DocsRequestNote *string    `gorm:"type:text;column:docs_request_note"`
-	ModeratorID     *uuid.UUID `gorm:"type:uuid"`
-	VerifiedAt      *time.Time
+	Status          string     `gorm:"type:company_status;not null;default:'pending';index" json:"status"`
+	RejectionReason *string    `gorm:"type:text"                                            json:"rejection_reason"`
+	DocsRequestNote *string    `gorm:"type:text;column:docs_request_note"                   json:"docs_request_note"`
+	ModeratorID     *uuid.UUID `gorm:"type:uuid"                                            json:"moderator_id"`
+	VerifiedAt      *time.Time `json:"verified_at"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
