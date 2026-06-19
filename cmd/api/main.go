@@ -156,6 +156,7 @@ func main() {
 	store := storage.NewLocal(cfg.StoragePath)
 
 	authMiddleware          := middleware.Auth(jwtMgr, userRepo)
+	optionalAuthMiddleware  := middleware.OptionalAuth(jwtMgr, userRepo)
 	verifiedMiddleware      := middleware.CompanyVerified(companyRepo)
 	moderatorRoleMiddleware := middleware.Role("moderator", "super_admin")
 	superAdminMiddleware    := middleware.Role("super_admin")
@@ -189,7 +190,7 @@ func main() {
 	handler.NewMapHandler(cargoRepo, warehouseRepo).RegisterRoutes(v1)
 	handler.NewConfigHandler(cfg.MapTilesURL, categoryRepo).RegisterRoutes(v1)
 	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
-	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
+	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware, optionalAuthMiddleware)
 	handler.NewContactHandler(contactSvc, pricingSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewPaymentsHandler(pricingSvc, paymentSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewFavoriteHandler(favoriteSvc).RegisterRoutes(v1, authMiddleware)

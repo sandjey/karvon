@@ -62,6 +62,37 @@ func Auth(jwtMgr *jwtpkg.Manager, userRepo *repository.UserRepo) gin.HandlerFunc
 	}
 }
 
+// OptionalAuth — токен бўлса user_id set қилади, бўлмаса давом этади (abort қилмайди).
+func OptionalAuth(jwtMgr *jwtpkg.Manager, userRepo *repository.UserRepo) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		header := c.GetHeader("Authorization")
+		if !strings.HasPrefix(header, "Bearer ") {
+			c.Next()
+			return
+		}
+		tokenStr := strings.TrimPrefix(header, "Bearer ")
+		claims, err := jwtMgr.Parse(tokenStr)
+		if err != nil {
+			c.Next()
+			return
+		}
+		userID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			c.Next()
+			return
+		}
+		user, err := userRepo.FindByID(c.Request.Context(), userID)
+		if err != nil || user == nil || user.IsBlocked || claims.TokenVersion != user.TokenVersion {
+			c.Next()
+			return
+		}
+		c.Set("user_id", userID)
+		c.Set("role", user.Role)
+		c.Set("user", user)
+		c.Next()
+	}
+}
+
 // CompanyVerified проверяет что у пользователя есть хотя бы одна одобренная компания.
 func CompanyVerified(companyRepo *repository.CompanyRepo) gin.HandlerFunc {
 	return func(c *gin.Context) {

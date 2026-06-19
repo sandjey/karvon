@@ -21,10 +21,10 @@ func NewWarehouseHandler(svc *service.WarehouseService) *WarehouseHandler {
 	return &WarehouseHandler{svc: svc}
 }
 
-func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gin.HandlerFunc) {
+func (h *WarehouseHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified, optionalAuth gin.HandlerFunc) {
 	g := rg.Group("/warehouses")
 	g.GET("", h.List)
-	g.GET("/:id", h.GetOne)
+	g.GET("/:id", optionalAuth, h.GetOne)
 	g.GET("/:id/stats", auth, h.Stats)
 	g.GET("/:id/similar", h.Similar)
 	g.POST("", auth, verified, h.Create)
