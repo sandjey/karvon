@@ -58,6 +58,10 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 
 	// Multicard фақат UZS қабул қилади — ҳамиша UZS ишлатамиз.
 	amount := p.PriceUZS
+	if amount <= 0 {
+		// Бесплатные тарифы (price_uzs=0) нельзя оплатить через Multicard.
+		return nil, "", ErrValidation
+	}
 
 	// listing/boost учун листинг мавжудлигини текшириш.
 	if in.PaymentType == "listing" || in.PaymentType == "boost" {

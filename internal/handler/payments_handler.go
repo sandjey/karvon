@@ -65,12 +65,15 @@ func (h *PaymentsHandler) Create(c *gin.Context) {
 		ReturnURL:   req.ReturnURL,
 	})
 	if err != nil {
-		if isErr(err, service.ErrNotFound) {
+		switch {
+		case isErr(err, service.ErrNotFound):
 			FailCode(c, http.StatusNotFound, "NOT_FOUND")
-			return
+		case isErr(err, service.ErrValidation):
+			FailCode(c, http.StatusBadRequest, "TARIFF_NOT_PAYABLE")
+		default:
+			log.Error().Err(err).Str("pricing_key", req.PricingKey).Str("type", req.PaymentType).Msg("payment create failed")
+			InternalError(c)
 		}
-		log.Error().Err(err).Str("pricing_key", req.PricingKey).Str("type", req.PaymentType).Msg("payment create failed")
-		InternalError(c)
 		return
 	}
 	CreatedMsg(c, gin.H{"order_id": order.ID, "payment_url": checkoutURL, "amount": order.Amount, "currency": order.Currency}, "PAYMENT_CREATED")
