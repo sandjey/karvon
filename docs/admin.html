@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARVON Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3248;--accent:#5b8ef0;--accent2:#7c5bf0;--success:#22c55e;--warn:#f59e0b;--danger:#ef4444;--text:#e2e8f0;--muted:#6b7280;--font:'Segoe UI',sans-serif}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex}
+
+/* LOGIN */
+#login-screen{width:100%;display:flex;align-items:center;justify-content:center}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;width:360px}
+.login-box h2{text-align:center;margin-bottom:24px;font-size:22px;color:var(--accent)}
+.login-box .logo{text-align:center;font-size:28px;font-weight:700;margin-bottom:8px;letter-spacing:2px}
+.login-err{background:#ef444420;border:1px solid var(--danger);border-radius:6px;padding:10px;margin-bottom:14px;font-size:13px;color:var(--danger);display:none}
+
+/* SIDEBAR */
+#app{display:none;width:100%;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 16px;font-size:20px;font-weight:700;color:var(--accent);letter-spacing:1px;border-bottom:1px solid var(--border)}
+.sidebar-logo span{color:var(--accent2)}
+.sidebar nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:14px;color:var(--muted);transition:.15s;border-left:3px solid transparent}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:var(--accent);background:var(--surface2);border-left-color:var(--accent)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-user{padding:14px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:.15s}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:0 24px;height:56px;display:flex;align-items:center;border-bottom:1px solid var(--border);background:var(--surface);gap:12px}
+.topbar h1{font-size:18px;font-weight:600}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.page{display:none;flex:1;overflow-y:auto;padding:24px}
+.page.active{display:block}
+
+/* CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+.stat-card .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:700}
+.stat-card.accent .value{color:var(--accent)}
+.stat-card.success .value{color:var(--success)}
+.stat-card.warn .value{color:var(--warn)}
+.stat-card.danger .value{color:var(--danger)}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.toolbar .spacer{flex:1}
+input[type=text],input[type=number],input[type=password],select,textarea{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:8px 12px;border-radius:6px;font-size:13px;outline:none;transition:.15s;
+  font-family:var(--font)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[type=text]{width:220px}
+select{cursor:pointer}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-family:var(--font);font-weight:500;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{filter:brightness(1.1)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{filter:brightness(1.1)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{filter:brightness(1.1)}
+.btn-warn{background:var(--warn);color:#000}.btn-warn:hover{filter:brightness(1.1)}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* TABLE */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface2);padding:10px 14px;text-align:left;color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--surface2)}
+.truncate{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:#22c55e20;color:var(--success)}
+.badge-red{background:#ef444420;color:var(--danger)}
+.badge-yellow{background:#f59e0b20;color:var(--warn)}
+.badge-blue{background:#5b8ef020;color:var(--accent)}
+.badge-purple{background:#7c5bf020;color:var(--accent2)}
+.badge-gray{background:#6b728020;color:var(--muted)}
+
+/* PAGINATION */
+.pagination{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:14px;font-size:13px}
+.pagination .info{color:var(--muted);margin-right:8px}
+.pag-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 12px;border-radius:5px;cursor:pointer;font-size:12px}
+.pag-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.pag-btn:disabled{opacity:.4;cursor:default}
+.pag-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* PERIOD TABS */
+.period-tabs{display:flex;gap:4px}
+.period-tab{padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;transition:.15s}
+.period-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:#0008;z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:17px;margin-bottom:20px}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%}
+.form-row textarea{min-height:80px;resize:vertical}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.form-check{display:flex;align-items:center;gap:8px;font-size:13px}
+.form-check input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 18px;border-radius:8px;font-size:13px;animation:slideIn .2s ease;max-width:320px;pointer-events:all}
+.toast-success{background:#22c55e;color:#fff}
+.toast-error{background:#ef4444;color:#fff}
+.toast-info{background:var(--accent);color:#fff}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* LOADING */
+.loader{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row td{text-align:center;padding:32px;color:var(--muted)}
+.empty-row td{text-align:center;padding:32px;color:var(--muted);font-style:italic}
+
+/* DETAIL PANEL */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.detail-item label{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
+.detail-item span{font-size:14px}
+
+/* TOGGLE SWITCH */
+.switch{position:relative;display:inline-block;width:36px;height:20px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:20px;transition:.2s}
+.slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:var(--success)}
+input:checked+.slider:before{transform:translateX(16px)}
+
+.section-title{font-size:16px;font-weight:600;margin-bottom:14px}
+
+/* RESPONSIVE HELPERS */
+@media(max-width:768px){
+  .sidebar{width:180px}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">KARVON</div>
+    <h2>Панель администратора</h2>
+    <div class="login-err" id="login-err"></div>
+    <div class="form-row">
+      <label>Логин</label>
+      <input type="text" id="login-field" placeholder="karvonadmin" autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label>Пароль</label>
+      <input type="password" id="pass-field" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Войти</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">KARV<span>ON</span></div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>Дашборд</div>
+      <div class="nav-item" onclick="showPage('users')"><span class="icon">👥</span>Пользователи</div>
+      <div class="nav-item" onclick="showPage('companies')"><span class="icon">🏢</span>Компании</div>
+      <div class="nav-item" onclick="showPage('listings')"><span class="icon">📦</span>Объявления</div>
+      <div class="nav-item" onclick="showPage('payments')"><span class="icon">💳</span>Платежи</div>
+      <div class="nav-item" onclick="showPage('pricing')"><span class="icon">💰</span>Тарифы</div>
+      <div class="nav-item" onclick="showPage('categories')"><span class="icon">🏷️</span>Категории</div>
+      <div class="nav-item" onclick="showPage('moderators')"><span class="icon">🛡️</span>Модераторы</div>
+      <div class="nav-item" onclick="showPage('queue')"><span class="icon">📋</span>Очередь верификации</div>
+    </nav>
+    <div class="sidebar-user">
+      <span id="sidebar-role">super_admin</span>
+      <button class="btn-logout" onclick="logout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="page-title">Дашборд</h1>
+      <div class="topbar-right" id="topbar-right"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="period-tab active" onclick="loadDashboard('7d',this)">7 дней</button>
+        <button class="period-tab" onclick="loadDashboard('30d',this)">30 дней</button>
+        <button class="period-tab" onclick="loadDashboard('90d',this)">90 дней</button>
+      </div>
+      <div class="stat-grid" id="stat-grid">
+        <div style="color:var(--muted);padding:20px">Загрузка...</div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="toolbar">
+        <input type="text" id="user-search" placeholder="Поиск по телефону / имени" oninput="debounce(loadUsers,400)()">
+        <select id="user-role" onchange="loadUsers()">
+          <option value="">Все роли</option>
+          <option value="user">Пользователь</option>
+          <option value="moderator">Модератор</option>
+          <option value="super_admin">Супер-администратор</option>
+        </select>
+        <div class="spacer"></div>
+        <span id="users-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Телефон</th><th>Имя</th><th>Роль</th><th>Токены</th><th>Статус</th><th>Регистрация</th><th>Действия</th></tr></thead>
+          <tbody id="users-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="users-pag"></div>
+    </div>
+
+    <!-- COMPANIES -->
+    <div class="page" id="page-companies">
+      <div class="toolbar">
+        <select id="company-status" onchange="loadCompanies()">
+          <option value="">Все статусы</option>
+          <option value="pending">На рассмотрении</option>
+          <option value="approved">Одобрены</option>
+          <option value="rejected">Отклонены</option>
+          <option value="docs_requested">Запрос документов</option>
+        </select>
+        <div class="spacer"></div>
+        <span id="companies-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Компания</th><th>ИНН</th><th>Тип</th><th>Страна</th><th>Телефон</th><th>Статус</th><th>Создана</th></tr></thead>
+          <tbody id="companies-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="companies-pag"></div>
+    </div>
+
+    <!-- LISTINGS -->
+    <div class="page" id="page-listings">
+      <div class="toolbar">
+        <select id="listing-type" onchange="loadListings()">
+          <option value="cargo">Грузы</option>
+          <option value="warehouse">Склады</option>
+        </select>
+        <div class="spacer"></div>
+        <span id="listings-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Описание</th><th>Откуда</th><th>Куда</th><th>Статус</th><th>Создано</th><th>Действия</th></tr></thead>
+          <tbody id="listings-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="listings-pag"></div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <span id="payments-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Пользователь</th><th>Тип</th><th>Сумма</th><th>Статус</th><th>Метод</th><th>Дата</th></tr></thead>
+          <tbody id="payments-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="payments-pag"></div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="page" id="page-pricing">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openPricingModal()">+ Добавить тариф</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ключ</th><th>Название</th><th>UZS</th><th>USD</th><th>Токены</th><th>Дней</th><th>Активен</th><th>Действия</th></tr></thead>
+          <tbody id="pricing-body"><tr class="loading-row"><td colspan="8"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="page" id="page-categories">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openCategoryModal()">+ Добавить категорию</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ключ</th><th>RU</th><th>UZ</th><th>EN</th><th>Активна</th><th>Действия</th></tr></thead>
+          <tbody id="categories-body"><tr class="loading-row"><td colspan="6"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODERATORS -->
+    <div class="page" id="page-moderators">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openModeratorModal()">+ Добавить модератора</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Телефон</th><th>Имя</th><th>Логин</th><th>Добавлен</th><th>Действия</th></tr></thead>
+          <tbody id="moderators-body"><tr class="loading-row"><td colspan="5"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- QUEUE -->
+    <div class="page" id="page-queue">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <span id="queue-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Компания</th><th>ИНН</th><th>Тип орг.</th><th>Страна</th><th>Пользователь</th><th>Дата подачи</th><th>Действия</th></tr></thead>
+          <tbody id="queue-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="queue-pag"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- MODAL: User detail / actions -->
+<div class="modal-bg" id="modal-user">
+  <div class="modal">
+    <h3>👤 Пользователь</h3>
+    <div id="user-detail-content"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">Закрыть</button>
+      <button class="btn btn-warn" id="user-block-btn" onclick="toggleUserBlock()"></button>
+      <button class="btn btn-success" onclick="openTopupModal()">+ Токены</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Topup -->
+<div class="modal-bg" id="modal-topup">
+  <div class="modal" style="width:320px">
+    <h3>💎 Пополнить токены</h3>
+    <div class="form-row">
+      <label>Количество токенов</label>
+      <input type="number" id="topup-amount" value="10" min="1" max="10000">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-topup')">Отмена</button>
+      <button class="btn btn-success" onclick="doTopup()">Пополнить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Pricing -->
+<div class="modal-bg" id="modal-pricing">
+  <div class="modal">
+    <h3 id="pricing-modal-title">+ Новый тариф</h3>
+    <input type="hidden" id="pricing-edit-key">
+    <div class="form-row">
+      <label>Ключ (key) — например: tokens_pro, boost_14day</label>
+      <input type="text" id="p-key" placeholder="tokens_pro">
+    </div>
+    <div class="form-row">
+      <label>Название (label)</label>
+      <input type="text" id="p-label" placeholder="Про пакет (50 токенов)">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row">
+        <label>Цена UZS</label>
+        <input type="number" id="p-uzs" value="0" min="0">
+      </div>
+      <div class="form-row">
+        <label>Цена USD</label>
+        <input type="number" id="p-usd" value="0" min="0" step="0.01">
+      </div>
+      <div class="form-row">
+        <label>Кол-во токенов</label>
+        <input type="number" id="p-tokens" value="0" min="0">
+      </div>
+      <div class="form-row">
+        <label>Срок (дней, 0=бессрочно)</label>
+        <input type="number" id="p-days" value="0" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-check">
+        <input type="checkbox" id="p-active" checked>
+        <label for="p-active">Активен (виден в публичном API)</label>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:6px;padding:10px;font-size:12px;color:var(--muted);margin-bottom:4px">
+      <strong>Префиксы для публичного API:</strong><br>
+      <code>tokens_</code> → Пакеты токенов &nbsp;|&nbsp; <code>sub_</code> → Подписки<br>
+      <code>boost_</code> → Бусты &nbsp;|&nbsp; <code>listing_</code> → Платные объявления
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pricing')">Отмена</button>
+      <button class="btn btn-primary" onclick="savePricing()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Category -->
+<div class="modal-bg" id="modal-category">
+  <div class="modal">
+    <h3 id="cat-modal-title">+ Новая категория</h3>
+    <input type="hidden" id="cat-edit-id">
+    <div class="form-row">
+      <label>Ключ (key)</label>
+      <input type="text" id="c-key" placeholder="electronics">
+    </div>
+    <div class="form-row">
+      <label>Название RU</label>
+      <input type="text" id="c-ru" placeholder="Электроника">
+    </div>
+    <div class="form-row">
+      <label>Название UZ</label>
+      <input type="text" id="c-uz" placeholder="Elektronika">
+    </div>
+    <div class="form-row">
+      <label>Название EN</label>
+      <input type="text" id="c-en" placeholder="Electronics">
+    </div>
+    <div class="form-row">
+      <div class="form-check">
+        <input type="checkbox" id="c-active" checked>
+        <label for="c-active">Активна</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-category')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveCategory()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Moderator -->
+<div class="modal-bg" id="modal-moderator">
+  <div class="modal">
+    <h3>+ Новый модератор</h3>
+    <div class="form-row">
+      <label>Телефон</label>
+      <input type="text" id="mod-phone" placeholder="+998901234567">
+    </div>
+    <div class="form-row">
+      <label>Имя</label>
+      <input type="text" id="mod-name" placeholder="Имя Фамилия">
+    </div>
+    <div class="form-row">
+      <label>Логин</label>
+      <input type="text" id="mod-login" placeholder="moderator1">
+    </div>
+    <div class="form-row">
+      <label>Пароль (мин. 6 символов)</label>
+      <input type="password" id="mod-pass" placeholder="••••••">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-moderator')">Отмена</button>
+      <button class="btn btn-primary" onclick="saveModerator()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Queue item detail -->
+<div class="modal-bg" id="modal-queue">
+  <div class="modal" style="width:560px">
+    <h3>📋 Заявка на верификацию</h3>
+    <div id="queue-detail-content"></div>
+    <div class="modal-actions" id="queue-detail-actions"></div>
+  </div>
+</div>
+
+<!-- MODAL: Reject reason -->
+<div class="modal-bg" id="modal-reject">
+  <div class="modal" style="width:400px">
+    <h3 id="reject-modal-title">Причина отказа</h3>
+    <div class="form-row">
+      <label id="reject-field-label">Укажите причину</label>
+      <textarea id="reject-reason" placeholder="Недостаточно документов..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reject')">Отмена</button>
+      <button class="btn btn-danger" id="reject-confirm-btn">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://api.centraltrademarket.com/api/v1'
+let TOKEN = localStorage.getItem('admin_token') || ''
+let currentUser = null
+let selectedUserId = null
+let currentUserBlocked = false
+let _debounceTimers = {}
+
+// ═══════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════
+function debounce(fn, ms) {
+  return function(...args) {
+    clearTimeout(_debounceTimers[fn])
+    _debounceTimers[fn] = setTimeout(() => fn(...args), ms)
+  }
+}
+
+function toast(msg, type='info') {
+  const el = document.createElement('div')
+  el.className = `toast toast-${type}`
+  el.textContent = msg
+  document.getElementById('toast').appendChild(el)
+  setTimeout(() => el.remove(), 3500)
+}
+
+function fmtDate(d) {
+  if (!d) return '—'
+  return new Date(d).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
+}
+
+function fmtNum(n) {
+  return (n||0).toLocaleString('ru-RU')
+}
+
+function statusBadge(s) {
+  const map = {
+    active:'badge-green',approved:'badge-green',paid:'badge-green',success:'badge-green',true:'badge-green',
+    pending:'badge-yellow',progress:'badge-yellow',billing:'badge-yellow',
+    archived:'badge-gray',rejected:'badge-red',reverted:'badge-red',blocked:'badge-red',false:'badge-red',
+    docs_requested:'badge-blue',draft:'badge-gray',
+  }
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`
+}
+
+function roleBadge(r) {
+  const map={super_admin:'badge-purple',moderator:'badge-blue',user:'badge-gray'}
+  return `<span class="badge ${map[r]||'badge-gray'}">${r}</span>`
+}
+
+async function api(method, path, body=null) {
+  const opts = {
+    method,
+    headers: {'Content-Type':'application/json','Authorization':`Bearer ${TOKEN}`}
+  }
+  if (body) opts.body = JSON.stringify(body)
+  const r = await fetch(BASE + path, opts)
+  const j = await r.json()
+  if (!r.ok) throw new Error(j.message || j.error || `HTTP ${r.status}`)
+  return j
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+
+function renderPag(containerId, meta, loadFn) {
+  const c = document.getElementById(containerId)
+  if (!meta || meta.total === 0) { c.innerHTML=''; return }
+  const totalPages = Math.ceil(meta.total / meta.per_page)
+  let html = `<span class="info">Всего: ${meta.total}</span>`
+  html += `<button class="pag-btn" onclick="${loadFn}(${meta.page-1})" ${meta.page<=1?'disabled':''}>‹</button>`
+  const start = Math.max(1, meta.page-2), end = Math.min(totalPages, meta.page+2)
+  for (let i=start;i<=end;i++) html += `<button class="pag-btn ${i===meta.page?'active':''}" onclick="${loadFn}(${i})">${i}</button>`
+  html += `<button class="pag-btn" onclick="${loadFn}(${meta.page+1})" ${meta.page>=totalPages?'disabled':''}>›</button>`
+  c.innerHTML = html
+}
+
+// ═══════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════
+async function doLogin() {
+  const login = document.getElementById('login-field').value.trim()
+  const password = document.getElementById('pass-field').value.trim()
+  const err = document.getElementById('login-err')
+  err.style.display='none'
+  try {
+    const r = await fetch(BASE+'/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({login, password})
+    })
+    const j = await r.json()
+    if (!r.ok || !j.success) throw new Error(j.message || 'Ошибка входа')
+    TOKEN = j.data.access_token
+    localStorage.setItem('admin_token', TOKEN)
+    showApp()
+  } catch(e) {
+    err.textContent = e.message
+    err.style.display = 'block'
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin()
+})
+
+function logout() {
+  TOKEN = ''
+  localStorage.removeItem('admin_token')
+  document.getElementById('app').style.display='none'
+  document.getElementById('login-screen').style.display='flex'
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display='none'
+  document.getElementById('app').style.display='flex'
+  showPage('dashboard')
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+const pageTitles = {
+  dashboard:'Дашборд',users:'Пользователи',companies:'Компании',
+  listings:'Объявления',payments:'Платежи',pricing:'Тарифы',
+  categories:'Категории',moderators:'Модераторы',queue:'Очередь верификации'
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('page-'+name).classList.add('active')
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim() === pageTitles[name]) n.classList.add('active')
+  })
+  document.getElementById('page-title').textContent = pageTitles[name]
+  document.getElementById('topbar-right').innerHTML = ''
+  const loaders = {
+    dashboard: () => loadDashboard('7d', document.querySelector('.period-tab.active')),
+    users: loadUsers, companies: loadCompanies, listings: loadListings,
+    payments: loadPayments, pricing: loadPricing, categories: loadCategories,
+    moderators: loadModerators, queue: loadQueue
+  }
+  if (loaders[name]) loaders[name]()
+}
+
+// ═══════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════
+async function loadDashboard(period='7d', tabEl) {
+  if (tabEl) {
+    document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'))
+    tabEl.classList.add('active')
+  }
+  const grid = document.getElementById('stat-grid')
+  grid.innerHTML = '<div style="color:var(--muted);padding:20px"><div class="loader"></div></div>'
+  try {
+    const r = await api('GET', `/admin/dashboard?period=${period}`)
+    const d = r.data
+    const cards = [
+      {label:'Новых пользователей',value:fmtNum(d.new_users),cls:'accent'},
+      {label:'Новых грузов',value:fmtNum(d.new_cargo),cls:''},
+      {label:'Новых складов',value:fmtNum(d.new_warehouses),cls:''},
+      {label:'Выручка (UZS)',value:fmtNum(d.revenue_uzs),cls:'success'},
+      {label:'Выручка (USD)',value:'$'+fmtNum(d.revenue_usd),cls:'success'},
+      {label:'Куплено контактов',value:fmtNum(d.contacts_bought),cls:'warn'},
+      {label:'Активных подписок',value:fmtNum(d.active_subscriptions),cls:'accent'},
+      {label:'Ожидают верификации',value:fmtNum(d.urgent_verifications),cls:d.urgent_verifications>0?'danger':''},
+    ]
+    grid.innerHTML = cards.map(c=>`
+      <div class="stat-card ${c.cls}">
+        <div class="label">${c.label}</div>
+        <div class="value">${c.value}</div>
+      </div>`).join('')
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--danger)">${e.message}</div>`
+  }
+}
+
+// ═══════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════
+let usersPage = 1
+async function loadUsers(page=1) {
+  usersPage = page
+  const q = document.getElementById('user-search').value.trim()
+  const role = document.getElementById('user-role').value
+  const body = document.getElementById('users-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    let url = `/admin/users?page=${page}&per_page=20`
+    if (q) url += `&q=${encodeURIComponent(q)}`
+    if (role) url += `&role=${role}`
+    const r = await api('GET', url)
+    const items = r.data || []
+    document.getElementById('users-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Пользователи не найдены</td></tr>'; return }
+    body.innerHTML = items.map(u=>`
+      <tr>
+        <td><code style="color:var(--accent)">${u.phone||'—'}</code></td>
+        <td>${u.name||'—'}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td><strong>${u.token_balance||0}</strong></td>
+        <td>${u.is_blocked?'<span class="badge badge-red">Заблокирован</span>':'<span class="badge badge-green">Активен</span>'}</td>
+        <td style="color:var(--muted)">${fmtDate(u.created_at)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick='openUserDetail(${JSON.stringify(u)})'>Детали</button></td>
+      </tr>`).join('')
+    renderPag('users-pag', r.meta, 'loadUsers')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+function openUserDetail(u) {
+  selectedUserId = u.id
+  currentUserBlocked = u.is_blocked
+  document.getElementById('user-block-btn').textContent = u.is_blocked ? 'Разблокировать' : 'Заблокировать'
+  document.getElementById('user-block-btn').className = u.is_blocked ? 'btn btn-success' : 'btn btn-danger'
+  document.getElementById('user-detail-content').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><label>Телефон</label><span>${u.phone||'—'}</span></div>
+      <div class="detail-item"><label>Имя</label><span>${u.name||'—'}</span></div>
+      <div class="detail-item"><label>Email</label><span>${u.email||'—'}</span></div>
+      <div class="detail-item"><label>Роль</label><span>${roleBadge(u.role)}</span></div>
+      <div class="detail-item"><label>Токены</label><span><strong>${u.token_balance||0}</strong></span></div>
+      <div class="detail-item"><label>Статус</label><span>${u.is_blocked?'<span class="badge badge-red">Заблокирован</span>':'<span class="badge badge-green">Активен</span>'}</span></div>
+      <div class="detail-item"><label>Город</label><span>${u.city||'—'}</span></div>
+      <div class="detail-item"><label>Страна</label><span>${u.country||'—'}</span></div>
+      <div class="detail-item"><label>WhatsApp</label><span>${u.whatsapp||'—'}</span></div>
+      <div class="detail-item"><label>Telegram</label><span>${u.telegram||'—'}</span></div>
+      <div class="detail-item"><label>Доп. телефон</label><span>${u.extra_phone||'—'}</span></div>
+      <div class="detail-item"><label>Регистрация</label><span style="color:var(--muted)">${fmtDate(u.created_at)}</span></div>
+    </div>
+    <div style="color:var(--muted);font-size:12px;word-break:break-all">ID: ${u.id}</div>`
+  openModal('modal-user')
+}
+
+async function toggleUserBlock() {
+  if (!selectedUserId) return
+  const newVal = !currentUserBlocked
+  try {
+    await api('PATCH', `/admin/users/${selectedUserId}/block`, {blocked: newVal})
+    toast(newVal ? 'Пользователь заблокирован' : 'Пользователь разблокирован', newVal?'error':'success')
+    closeModal('modal-user')
+    loadUsers(usersPage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+function openTopupModal() {
+  document.getElementById('topup-amount').value = 10
+  openModal('modal-topup')
+}
+
+async function doTopup() {
+  const amount = parseInt(document.getElementById('topup-amount').value)
+  if (!amount || amount < 1) { toast('Введите количество токенов','error'); return }
+  try {
+    await api('POST', `/admin/users/${selectedUserId}/topup`, {amount})
+    toast(`Начислено ${amount} токенов`, 'success')
+    closeModal('modal-topup')
+    closeModal('modal-user')
+    loadUsers(usersPage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+// ═══════════════════════════════════════════
+// COMPANIES
+// ═══════════════════════════════════════════
+let companiesPage = 1
+async function loadCompanies(page=1) {
+  companiesPage = page
+  const status = document.getElementById('company-status').value
+  const body = document.getElementById('companies-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    let url = `/admin/companies?page=${page}&per_page=20`
+    if (status) url += `&status=${status}`
+    const r = await api('GET', url)
+    const items = r.data || []
+    document.getElementById('companies-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Компании не найдены</td></tr>'; return }
+    body.innerHTML = items.map(c=>`
+      <tr>
+        <td><strong>${c.name||'—'}</strong></td>
+        <td><code>${c.inn||'—'}</code></td>
+        <td>${c.org_type||'—'}</td>
+        <td>${c.country||'—'}</td>
+        <td>${c.phone||'—'}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td style="color:var(--muted)">${fmtDate(c.created_at)}</td>
+      </tr>`).join('')
+    renderPag('companies-pag', r.meta, 'loadCompanies')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+// ═══════════════════════════════════════════
+// LISTINGS
+// ═══════════════════════════════════════════
+let listingsPage = 1
+async function loadListings(page=1) {
+  listingsPage = page
+  const type = document.getElementById('listing-type').value
+  const body = document.getElementById('listings-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', `/admin/listings?type=${type}&page=${page}&per_page=20`)
+    const items = r.data || []
+    document.getElementById('listings-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Объявления не найдены</td></tr>'; return }
+    body.innerHTML = items.map(item=>{
+      const from = type==='cargo' ? (item.from_city||item.from||'—') : (item.city||'—')
+      const to   = type==='cargo' ? (item.to_city||item.to||'—') : '—'
+      const desc = type==='cargo' ? (item.cargo_name||item.category_key||'Груз') : (item.name||'Склад')
+      const st   = item.status || (item.is_active?'active':'archived')
+      return `<tr>
+        <td><code style="font-size:11px;color:var(--muted)">${(item.id||'').substr(0,8)}…</code></td>
+        <td class="truncate">${desc}</td>
+        <td>${from}</td>
+        <td>${to}</td>
+        <td>${statusBadge(st)}</td>
+        <td style="color:var(--muted)">${fmtDate(item.created_at)}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-warn btn-sm" onclick="blockListing('${type}','${item.id}')">Архив</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteListing('${type}','${item.id}')">Удалить</button>
+        </td>
+      </tr>`
+    }).join('')
+    renderPag('listings-pag', r.meta, 'loadListings')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+async function blockListing(type, id) {
+  if (!confirm('Перенести объявление в архив?')) return
+  try {
+    await api('PATCH', `/admin/listings/${type}/${id}/block`)
+    toast('Объявление заархивировано','success')
+    loadListings(listingsPage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+async function deleteListing(type, id) {
+  if (!confirm('УДАЛИТЬ объявление навсегда? Это действие нельзя отменить.')) return
+  try {
+    await api('DELETE', `/admin/listings/${type}/${id}`)
+    toast('Объявление удалено','success')
+    loadListings(listingsPage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+// ═══════════════════════════════════════════
+// PAYMENTS
+// ═══════════════════════════════════════════
+let paymentsPage = 1
+async function loadPayments(page=1) {
+  paymentsPage = page
+  const body = document.getElementById('payments-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', `/admin/payments?page=${page}&per_page=20`)
+    const items = r.data || []
+    document.getElementById('payments-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Платежи не найдены</td></tr>'; return }
+    body.innerHTML = items.map(p=>`
+      <tr>
+        <td><code style="font-size:11px;color:var(--muted)">${(p.id||'').substr(0,8)}…</code></td>
+        <td><code style="color:var(--muted);font-size:11px">${(p.user_id||'').substr(0,8)}…</code></td>
+        <td><span class="badge badge-blue">${p.payment_type||'—'}</span></td>
+        <td><strong>${fmtNum(p.amount)}</strong> <span style="color:var(--muted)">${p.currency||''}</span></td>
+        <td>${statusBadge(p.status)}</td>
+        <td>${p.payment_method||'—'}</td>
+        <td style="color:var(--muted)">${fmtDate(p.created_at)}</td>
+      </tr>`).join('')
+    renderPag('payments-pag', r.meta, 'loadPayments')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+// ═══════════════════════════════════════════
+// PRICING
+// ═══════════════════════════════════════════
+async function loadPricing() {
+  const body = document.getElementById('pricing-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="8"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', '/admin/pricing')
+    const items = r.data || []
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="8">Тарифы не найдены</td></tr>'; return }
+    body.innerHTML = items.map(p=>`
+      <tr>
+        <td><code style="color:var(--accent)">${p.key}</code></td>
+        <td>${p.label}</td>
+        <td>${fmtNum(p.price_uzs)}</td>
+        <td>${p.price_usd||0}</td>
+        <td>${p.tokens_amount||0}</td>
+        <td>${p.duration_days||0}</td>
+        <td>${p.is_active?'<span class="badge badge-green">Да</span>':'<span class="badge badge-red">Нет</span>'}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick='editPricing(${JSON.stringify(p)})'>✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePricing('${p.key}')">🗑</button>
+        </td>
+      </tr>`).join('')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="8" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+function openPricingModal() {
+  document.getElementById('pricing-modal-title').textContent = '+ Новый тариф'
+  document.getElementById('pricing-edit-key').value = ''
+  document.getElementById('p-key').value = ''
+  document.getElementById('p-key').disabled = false
+  document.getElementById('p-label').value = ''
+  document.getElementById('p-uzs').value = '0'
+  document.getElementById('p-usd').value = '0'
+  document.getElementById('p-tokens').value = '0'
+  document.getElementById('p-days').value = '0'
+  document.getElementById('p-active').checked = true
+  openModal('modal-pricing')
+}
+
+function editPricing(p) {
+  document.getElementById('pricing-modal-title').textContent = '✏️ Редактировать тариф'
+  document.getElementById('pricing-edit-key').value = p.key
+  document.getElementById('p-key').value = p.key
+  document.getElementById('p-key').disabled = true
+  document.getElementById('p-label').value = p.label||''
+  document.getElementById('p-uzs').value = p.price_uzs||0
+  document.getElementById('p-usd').value = p.price_usd||0
+  document.getElementById('p-tokens').value = p.tokens_amount||0
+  document.getElementById('p-days').value = p.duration_days||0
+  document.getElementById('p-active').checked = p.is_active
+  openModal('modal-pricing')
+}
+
+async function savePricing() {
+  const editKey = document.getElementById('pricing-edit-key').value
+  const key = document.getElementById('p-key').value.trim()
+  const label = document.getElementById('p-label').value.trim()
+  if (!label) { toast('Введите название','error'); return }
+  const body = {
+    label,
+    price_uzs: parseFloat(document.getElementById('p-uzs').value)||0,
+    price_usd: parseFloat(document.getElementById('p-usd').value)||0,
+    tokens_amount: parseInt(document.getElementById('p-tokens').value)||0,
+    duration_days: parseInt(document.getElementById('p-days').value)||0,
+    is_active: document.getElementById('p-active').checked
+  }
+  try {
+    if (editKey) {
+      await api('PATCH', `/admin/pricing/${editKey}`, body)
+      toast('Тариф обновлён', 'success')
+    } else {
+      if (!key) { toast('Введите ключ','error'); return }
+      await api('POST', '/admin/pricing', {...body, key})
+      toast('Тариф создан', 'success')
+    }
+    closeModal('modal-pricing')
+    loadPricing()
+  } catch(e) { toast(e.message,'error') }
+}
+
+async function deletePricing(key) {
+  if (!confirm(`Удалить тариф "${key}"?`)) return
+  try {
+    await api('DELETE', `/admin/pricing/${key}`)
+    toast('Тариф удалён', 'success')
+    loadPricing()
+  } catch(e) { toast(e.message,'error') }
+}
+
+// ═══════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════
+async function loadCategories() {
+  const body = document.getElementById('categories-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="6"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', '/admin/categories')
+    const items = r.data || []
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="6">Категории не найдены</td></tr>'; return }
+    body.innerHTML = items.map(c=>`
+      <tr>
+        <td><code style="color:var(--accent)">${c.key}</code></td>
+        <td>${c.label_ru}</td>
+        <td>${c.label_uz}</td>
+        <td>${c.label_en}</td>
+        <td>${c.is_active?'<span class="badge badge-green">Да</span>':'<span class="badge badge-red">Нет</span>'}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick='editCategory(${JSON.stringify(c)})'>✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCategory('${c.id}','${c.key}')">🗑</button>
+        </td>
+      </tr>`).join('')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="6" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+function openCategoryModal() {
+  document.getElementById('cat-modal-title').textContent = '+ Новая категория'
+  document.getElementById('cat-edit-id').value = ''
+  document.getElementById('c-key').value = ''
+  document.getElementById('c-key').disabled = false
+  document.getElementById('c-ru').value = ''
+  document.getElementById('c-uz').value = ''
+  document.getElementById('c-en').value = ''
+  document.getElementById('c-active').checked = true
+  openModal('modal-category')
+}
+
+function editCategory(c) {
+  document.getElementById('cat-modal-title').textContent = '✏️ Редактировать категорию'
+  document.getElementById('cat-edit-id').value = c.id
+  document.getElementById('c-key').value = c.key
+  document.getElementById('c-key').disabled = true
+  document.getElementById('c-ru').value = c.label_ru||''
+  document.getElementById('c-uz').value = c.label_uz||''
+  document.getElementById('c-en').value = c.label_en||''
+  document.getElementById('c-active').checked = c.is_active
+  openModal('modal-category')
+}
+
+async function saveCategory() {
+  const editId = document.getElementById('cat-edit-id').value
+  const body = {
+    label_ru: document.getElementById('c-ru').value.trim(),
+    label_uz: document.getElementById('c-uz').value.trim(),
+    label_en: document.getElementById('c-en').value.trim(),
+    is_active: document.getElementById('c-active').checked
+  }
+  if (!body.label_ru||!body.label_uz||!body.label_en) { toast('Заполните все названия','error'); return }
+  try {
+    if (editId) {
+      await api('PATCH', `/admin/categories/${editId}`, body)
+      toast('Категория обновлена','success')
+    } else {
+      const key = document.getElementById('c-key').value.trim()
+      if (!key) { toast('Введите ключ','error'); return }
+      await api('POST', '/admin/categories', {...body, key})
+      toast('Категория создана','success')
+    }
+    closeModal('modal-category')
+    loadCategories()
+  } catch(e) { toast(e.message,'error') }
+}
+
+async function deleteCategory(id, key) {
+  if (!confirm(`Удалить категорию "${key}"?`)) return
+  try {
+    await api('DELETE', `/admin/categories/${id}`)
+    toast('Категория удалена','success')
+    loadCategories()
+  } catch(e) { toast(e.message,'error') }
+}
+
+// ═══════════════════════════════════════════
+// MODERATORS
+// ═══════════════════════════════════════════
+async function loadModerators() {
+  const body = document.getElementById('moderators-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="5"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', '/admin/moderators')
+    const items = r.data || []
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="5">Модераторы не найдены</td></tr>'; return }
+    body.innerHTML = items.map(m=>`
+      <tr>
+        <td><code style="color:var(--accent)">${m.phone||'—'}</code></td>
+        <td>${m.name||'—'}</td>
+        <td><code>${m.admin_login||'—'}</code></td>
+        <td style="color:var(--muted)">${fmtDate(m.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteModerator('${m.id}','${m.name||m.phone}')">Удалить</button></td>
+      </tr>`).join('')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="5" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+function openModeratorModal() {
+  document.getElementById('mod-phone').value = ''
+  document.getElementById('mod-name').value = ''
+  document.getElementById('mod-login').value = ''
+  document.getElementById('mod-pass').value = ''
+  openModal('modal-moderator')
+}
+
+async function saveModerator() {
+  const phone = document.getElementById('mod-phone').value.trim()
+  const name  = document.getElementById('mod-name').value.trim()
+  const login = document.getElementById('mod-login').value.trim()
+  const pass  = document.getElementById('mod-pass').value.trim()
+  if (!phone||!login||!pass) { toast('Заполните обязательные поля','error'); return }
+  if (pass.length < 6) { toast('Пароль минимум 6 символов','error'); return }
+  try {
+    await api('POST', '/admin/moderators', {phone, name:name||undefined, login, password:pass})
+    toast('Модератор создан', 'success')
+    closeModal('modal-moderator')
+    loadModerators()
+  } catch(e) { toast(e.message,'error') }
+}
+
+async function deleteModerator(id, name) {
+  if (!confirm(`Удалить модератора "${name}"?`)) return
+  try {
+    await api('DELETE', `/admin/moderators/${id}`)
+    toast('Модератор удалён','success')
+    loadModerators()
+  } catch(e) { toast(e.message,'error') }
+}
+
+// ═══════════════════════════════════════════
+// VERIFICATION QUEUE
+// ═══════════════════════════════════════════
+let queuePage = 1
+let selectedQueueId = null
+
+async function loadQueue(page=1) {
+  queuePage = page
+  const body = document.getElementById('queue-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', `/moderator/queue?page=${page}&per_page=20`)
+    const items = r.data || []
+    document.getElementById('queue-count').textContent = `Ожидают: ${r.meta?.total||items.length}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Очередь пуста 🎉</td></tr>'; return }
+    body.innerHTML = items.map(q=>`
+      <tr>
+        <td><strong>${q.name||'—'}</strong></td>
+        <td><code>${q.inn||'—'}</code></td>
+        <td>${q.org_type||'—'}</td>
+        <td>${q.country||'—'}</td>
+        <td style="color:var(--muted);font-size:12px">${(q.user_id||'').substr(0,8)}…</td>
+        <td style="color:var(--muted)">${fmtDate(q.created_at||q.submitted_at)}</td>
+        <td><button class="btn btn-primary btn-sm" onclick='openQueueItem(${JSON.stringify(q)})'>Рассмотреть</button></td>
+      </tr>`).join('')
+    renderPag('queue-pag', r.meta || {total:items.length,page:1,per_page:20}, 'loadQueue')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+function openQueueItem(q) {
+  selectedQueueId = q.id
+  document.getElementById('queue-detail-content').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><label>Компания</label><span><strong>${q.name||'—'}</strong></span></div>
+      <div class="detail-item"><label>ИНН</label><span><code>${q.inn||'—'}</code></span></div>
+      <div class="detail-item"><label>Тип орг.</label><span>${q.org_type||'—'}</span></div>
+      <div class="detail-item"><label>Страна</label><span>${q.country||'—'}</span></div>
+      <div class="detail-item"><label>Город</label><span>${q.city||'—'}</span></div>
+      <div class="detail-item"><label>Регион</label><span>${q.region||'—'}</span></div>
+      <div class="detail-item"><label>Email</label><span>${q.email||'—'}</span></div>
+      <div class="detail-item"><label>Телефон</label><span>${q.phone||'—'}</span></div>
+      <div class="detail-item"><label>Адрес</label><span>${q.street||'—'}</span></div>
+      <div class="detail-item"><label>Статус</label><span>${statusBadge(q.status||'pending')}</span></div>
+    </div>
+    ${q.reg_doc_url?`<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--muted)">Регистрационный документ</label><br><a href="${q.reg_doc_url}" target="_blank" class="btn btn-ghost btn-sm" style="margin-top:4px">Открыть документ</a></div>`:''}
+    ${q.inn_doc_url?`<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--muted)">ИНН документ</label><br><a href="${q.inn_doc_url}" target="_blank" class="btn btn-ghost btn-sm" style="margin-top:4px">Открыть документ</a></div>`:''}
+    ${q.rejection_reason?`<div style="background:#ef444415;border:1px solid var(--danger);border-radius:6px;padding:10px;font-size:13px;color:var(--danger);margin-top:8px"><strong>Причина отказа:</strong> ${q.rejection_reason}</div>`:''}
+    ${q.docs_request_note?`<div style="background:#5b8ef015;border:1px solid var(--accent);border-radius:6px;padding:10px;font-size:13px;color:var(--accent);margin-top:8px"><strong>Запрос документов:</strong> ${q.docs_request_note}</div>`:''}
+  `
+  document.getElementById('queue-detail-actions').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal('modal-queue')">Закрыть</button>
+    <button class="btn btn-warn" onclick="openRejectModal('docs','Запросить документы','Что нужно предоставить?','Отправить запрос')">📎 Запрос доков</button>
+    <button class="btn btn-danger" onclick="openRejectModal('reject','Причина отказа','Укажите причину отказа...','Отклонить')">✗ Отклонить</button>
+    <button class="btn btn-success" onclick="approveQueue()">✓ Одобрить</button>
+  `
+  openModal('modal-queue')
+}
+
+async function approveQueue() {
+  if (!selectedQueueId) return
+  if (!confirm('Одобрить верификацию компании?')) return
+  try {
+    await api('POST', `/moderator/queue/${selectedQueueId}/approve`)
+    toast('Компания одобрена!','success')
+    closeModal('modal-queue')
+    loadQueue(queuePage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+let _rejectMode = 'reject'
+function openRejectModal(mode, title, placeholder, btnText) {
+  _rejectMode = mode
+  document.getElementById('reject-modal-title').textContent = title
+  document.getElementById('reject-reason').placeholder = placeholder
+  document.getElementById('reject-reason').value = ''
+  document.getElementById('reject-confirm-btn').textContent = btnText
+  document.getElementById('reject-confirm-btn').onclick = confirmReject
+  openModal('modal-reject')
+}
+
+async function confirmReject() {
+  const reason = document.getElementById('reject-reason').value.trim()
+  if (!reason) { toast('Введите текст','error'); return }
+  try {
+    if (_rejectMode === 'reject') {
+      await api('POST', `/moderator/queue/${selectedQueueId}/reject`, {reason})
+      toast('Заявка отклонена','success')
+    } else {
+      await api('POST', `/moderator/queue/${selectedQueueId}/request-docs`, {note: reason})
+      toast('Запрос документов отправлен','success')
+    }
+    closeModal('modal-reject')
+    closeModal('modal-queue')
+    loadQueue(queuePage)
+  } catch(e) { toast(e.message,'error') }
+}
+
+// Close modal on background click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open') })
+})
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+if (TOKEN) {
+  showApp()
+} else {
+  document.getElementById('login-screen').style.display = 'flex'
+}
+</script>
+</body>
+</html>
