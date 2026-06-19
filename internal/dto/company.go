@@ -18,6 +18,7 @@ type CreateCompanyRequest struct {
 	Street     string  `json:"street"      binding:"required,max=200"`
 	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
 	RegDocURL  string  `json:"reg_doc_url" binding:"required"`
+	InnDocURL  *string `json:"inn_doc_url" binding:"omitempty"`
 }
 
 type UpdateCompanyRequest struct {
@@ -31,6 +32,7 @@ type UpdateCompanyRequest struct {
 	Street     *string `json:"street"      binding:"omitempty,max=200"`
 	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
 	RegDocURL  *string `json:"reg_doc_url"`
+	InnDocURL  *string `json:"inn_doc_url"`
 }
 
 type CompanyResponse struct {
@@ -47,6 +49,7 @@ type CompanyResponse struct {
 	Street          string     `json:"street"`
 	PostalCode      *string    `json:"postal_code"`
 	RegDocURL       string     `json:"reg_doc_url"`
+	InnDocURL       *string    `json:"inn_doc_url"`
 	Status          string     `json:"status"`
 	RejectionReason *string    `json:"rejection_reason"`
 	DocsRequestNote *string    `json:"docs_request_note"`

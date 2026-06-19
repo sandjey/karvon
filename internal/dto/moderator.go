@@ -20,6 +20,7 @@ type QueueItemResponse struct {
 	Region          *string   `json:"region,omitempty"`
 	Street          string    `json:"street"`
 	RegDocURL       string    `json:"reg_doc_url,omitempty"`
+	InnDocURL       *string   `json:"inn_doc_url,omitempty"`
 	RejectionReason *string   `json:"rejection_reason,omitempty"`
 	DocsRequestNote *string   `json:"docs_request_note,omitempty"`
 	UserName        *string   `json:"user_name"`

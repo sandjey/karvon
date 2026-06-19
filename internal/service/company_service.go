@@ -41,6 +41,7 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 		Street:     req.Street,
 		PostalCode: req.PostalCode,
 		RegDocURL:  req.RegDocURL,
+		InnDocURL:  req.InnDocURL,
 		Status:     "pending",
 	}
 	if err := s.repo.Create(ctx, c); err != nil {
@@ -111,10 +112,13 @@ func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID
 	if req.PostalCode != nil {
 		fields["postal_code"] = *req.PostalCode
 	}
-	// документ (свидетельство) можно обновить только при docs_requested
+	// документы можно обновить только при docs_requested
 	if c.Status == "docs_requested" {
 		if req.RegDocURL != nil {
 			fields["reg_doc_url"] = *req.RegDocURL
+		}
+		if req.InnDocURL != nil {
+			fields["inn_doc_url"] = *req.InnDocURL
 		}
 		// при обновлении после запроса документов — вернуть статус в pending
 		if len(fields) > 0 {

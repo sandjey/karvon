@@ -29,8 +29,9 @@ type Company struct {
 	Street     string  `gorm:"type:varchar(200);not null"` // Улица, дом, офис
 	PostalCode *string `gorm:"type:varchar(20);column:postal_code"`
 
-	// Документ
-	RegDocURL string `gorm:"type:text;not null;column:reg_doc_url"` // Свидетельство о регистрации
+	// Документы
+	RegDocURL string  `gorm:"type:text;not null;column:reg_doc_url"` // Свидетельство о регистрации
+	InnDocURL *string `gorm:"type:text;column:inn_doc_url"`           // Скан ИНН / свидетельства налогоплательщика
 
 	// Модерация
 	Status          string     `gorm:"type:company_status;not null;default:'pending';index"`

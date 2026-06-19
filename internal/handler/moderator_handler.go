@@ -143,6 +143,7 @@ func toQueueItem(c *model.Company) dto.QueueItemResponse {
 		Region:          c.Region,
 		Street:          c.Street,
 		RegDocURL:       c.RegDocURL,
+		InnDocURL:       c.InnDocURL,
 		RejectionReason: c.RejectionReason,
 		DocsRequestNote: c.DocsRequestNote,
 		UserName:        c.User.Name,

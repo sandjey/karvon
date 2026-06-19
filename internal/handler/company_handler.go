@@ -108,6 +108,7 @@ func toCompanyResponse(c *model.Company) dto.CompanyResponse {
 		Street:          c.Street,
 		PostalCode:      c.PostalCode,
 		RegDocURL:       c.RegDocURL,
+		InnDocURL:       c.InnDocURL,
 		Status:          c.Status,
 		RejectionReason: c.RejectionReason,
 		DocsRequestNote: c.DocsRequestNote,
