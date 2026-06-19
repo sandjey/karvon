@@ -9,7 +9,7 @@ import (
 type Company struct {
 	ID     uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	UserID uuid.UUID `gorm:"type:uuid;not null;index"`
-	User   User      `gorm:"foreignKey:UserID"`
+	User   *User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
 	// Компания
 	Country       string     `gorm:"type:varchar(100);not null"`            // Страна регистрации

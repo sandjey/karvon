@@ -129,6 +129,12 @@ func (h *ModeratorHandler) GetHistory(c *gin.Context) {
 
 func toQueueItem(c *model.Company) dto.QueueItemResponse {
 	deadline := c.CreatedAt.Add(24 * time.Hour)
+	var userName *string
+	var userPhone string
+	if c.User != nil {
+		userName = c.User.Name
+		userPhone = c.User.Phone
+	}
 	return dto.QueueItemResponse{
 		ID:              c.ID,
 		CompanyName:     c.Name,
@@ -146,8 +152,8 @@ func toQueueItem(c *model.Company) dto.QueueItemResponse {
 		InnDocURL:       c.InnDocURL,
 		RejectionReason: c.RejectionReason,
 		DocsRequestNote: c.DocsRequestNote,
-		UserName:        c.User.Name,
-		UserPhone:       c.User.Phone,
+		UserName:        userName,
+		UserPhone:       userPhone,
 		CreatedAt:       c.CreatedAt,
 		Deadline:        deadline,
 		IsUrgent:        time.Until(deadline) < 2*time.Hour,

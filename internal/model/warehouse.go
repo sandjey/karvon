@@ -17,6 +17,9 @@ type WarehouseListing struct {
 
 	WarehouseType string  `gorm:"type:warehouse_type_enum;not null;index" json:"warehouse_type"`
 	Name          string  `gorm:"type:varchar(200);not null" json:"name"`
+	Description   *string `gorm:"type:text" json:"description"`
+	Country       *string `gorm:"type:varchar(100)" json:"country"`
+	City          *string `gorm:"type:varchar(100)" json:"city"`
 	Region        *string `gorm:"type:varchar(100)" json:"region"`
 	Address       *string `gorm:"type:text" json:"address"`
 	Lat           *float64 `gorm:"type:decimal" json:"lat"`
@@ -47,6 +50,10 @@ type WarehouseListing struct {
 	Infrastructure pq.StringArray `gorm:"type:text[]" json:"infrastructure"`
 	Services       pq.StringArray `gorm:"type:text[]" json:"services"`
 	WorkingHours   datatypes.JSON `gorm:"type:jsonb" json:"working_hours,omitempty"`
+
+	PricePerM2        *float64 `gorm:"type:decimal;column:price_per_m2" json:"price_per_m2"`
+	PriceCurrency     *string  `gorm:"type:varchar(10);column:price_currency" json:"price_currency"`
+	MinRentPeriodDays *int     `gorm:"column:min_rent_period_days" json:"min_rent_period_days"`
 
 	IsBoosted          bool       `gorm:"not null;default:false" json:"is_boosted"`
 	BoostExpiresAt     *time.Time `json:"boost_expires_at"`

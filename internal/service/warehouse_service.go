@@ -262,6 +262,9 @@ func applyWarehouse(req *dto.WarehouseUpsertRequest, w *model.WarehouseListing) 
 	if req.Name != nil {
 		w.Name = *req.Name
 	}
+	w.Description = req.Description
+	w.Country = req.Country
+	w.City = req.City
 	w.Region = req.Region
 	w.Address = req.Address
 	w.Lat = req.Lat
@@ -301,4 +304,7 @@ func applyWarehouse(req *dto.WarehouseUpsertRequest, w *model.WarehouseListing) 
 	if req.WorkingHours != nil {
 		w.WorkingHours = req.WorkingHours
 	}
+	w.PricePerM2 = req.PricePerM2
+	w.PriceCurrency = req.PriceCurrency
+	w.MinRentPeriodDays = req.MinRentPeriodDays
 }

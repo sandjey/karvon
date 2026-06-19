@@ -64,6 +64,7 @@ func maskWarehouse(w *model.WarehouseListing) {
 	if w.Company != nil {
 		w.Company.Phone = ""
 		w.Company.Email = ""
+		w.Company.User = nil
 	}
 }
 

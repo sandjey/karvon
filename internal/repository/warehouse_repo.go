@@ -40,7 +40,7 @@ func (r *WarehouseRepo) Save(ctx context.Context, w *model.WarehouseListing) err
 
 func (r *WarehouseRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.WarehouseListing, error) {
 	var w model.WarehouseListing
-	err := r.db.WithContext(ctx).Preload("Company").First(&w, "id = ?", id).Error
+	err := r.db.WithContext(ctx).Preload("Company").Preload("Company.User").First(&w, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -129,7 +129,7 @@ func (r *WarehouseRepo) List(ctx context.Context, f WarehouseFilter) ([]model.Wa
 		order = "is_boosted DESC, area_total_m2 DESC NULLS LAST"
 	}
 	var list []model.WarehouseListing
-	err := q.Preload("Company").Order(order).Offset(f.Offset).Limit(f.Limit).Find(&list).Error
+	err := q.Preload("Company").Preload("Company.User").Order(order).Offset(f.Offset).Limit(f.Limit).Find(&list).Error
 	return list, total, err
 }
 
@@ -164,7 +164,7 @@ func (r *WarehouseRepo) Similar(ctx context.Context, excludeID uuid.UUID, wareho
 	if region != "" {
 		q = q.Where("region ILIKE ?", "%"+region+"%")
 	}
-	err := q.Preload("Company").
+	err := q.Preload("Company").Preload("Company.User").
 		Order("is_boosted DESC, created_at DESC").
 		Limit(limit).Find(&list).Error
 	return list, err

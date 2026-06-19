@@ -13,6 +13,9 @@ type WarehouseUpsertRequest struct {
 
 	WarehouseType *string `json:"warehouse_type" binding:"omitempty,oneof=regular cold customs"`
 	Name          *string `json:"name"           binding:"omitempty,min=2,max=200"`
+	Description   *string `json:"description"`
+	Country       *string `json:"country"`
+	City          *string `json:"city"`
 	Region        *string `json:"region"`
 	Address       *string `json:"address"`
 	Lat           *float64 `json:"lat"`
@@ -43,6 +46,10 @@ type WarehouseUpsertRequest struct {
 	Infrastructure []string       `json:"infrastructure"`
 	Services       []string       `json:"services"`
 	WorkingHours   datatypes.JSON `json:"working_hours"`
+
+	PricePerM2        *float64 `json:"price_per_m2"`
+	PriceCurrency     *string  `json:"price_currency"`
+	MinRentPeriodDays *int     `json:"min_rent_period_days"`
 
 	Media []MediaItem `json:"media"`
 }
