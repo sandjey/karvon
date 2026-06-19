@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -17,18 +18,26 @@ func NewPricingService(repo *repository.PricingRepo) *PricingService {
 	return &PricingService{repo: repo}
 }
 
-// Tariffs возвращает все публичные тарифы: токены, подписки, листинги, бусты.
+// Tariffs возвращает все публичные активные тарифы, сгруппированные по префиксу ключа.
+// tokens_* → packages, sub_* → subscriptions, listing_* → listings, boost_* → boosts.
+// Ключи free_* считаются системными и в публичный список не попадают.
 func (s *PricingService) Tariffs(ctx context.Context) (packages, subscriptions, listings, boosts []model.PricingConfig, err error) {
-	if packages, err = s.repo.ListByPrefix(ctx, "tokens_"); err != nil {
+	all, err := s.repo.ListActive(ctx)
+	if err != nil {
 		return
 	}
-	if subscriptions, err = s.repo.ListByPrefix(ctx, "sub_"); err != nil {
-		return
+	for _, p := range all {
+		switch {
+		case strings.HasPrefix(p.Key, "tokens_"):
+			packages = append(packages, p)
+		case strings.HasPrefix(p.Key, "sub_"):
+			subscriptions = append(subscriptions, p)
+		case strings.HasPrefix(p.Key, "listing_"):
+			listings = append(listings, p)
+		case strings.HasPrefix(p.Key, "boost_"):
+			boosts = append(boosts, p)
+		}
 	}
-	if listings, err = s.repo.ListByKeys(ctx, []string{"listing_paid"}); err != nil {
-		return
-	}
-	boosts, err = s.repo.ListByPrefix(ctx, "boost_")
 	return
 }
 
