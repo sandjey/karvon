@@ -176,7 +176,8 @@ input:checked+.slider:before{transform:translateX(16px)}
       <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">📊</span>Дашборд</div>
       <div class="nav-item" onclick="showPage('users')"><span class="icon">👥</span>Пользователи</div>
       <div class="nav-item" onclick="showPage('companies')"><span class="icon">🏢</span>Компании</div>
-      <div class="nav-item" onclick="showPage('listings')"><span class="icon">📦</span>Объявления</div>
+      <div class="nav-item" onclick="showPage('cargo')"><span class="icon">📦</span>Грузы</div>
+      <div class="nav-item" onclick="showPage('warehouses')"><span class="icon">🏭</span>Склады</div>
       <div class="nav-item" onclick="showPage('payments')"><span class="icon">💳</span>Платежи</div>
       <div class="nav-item" onclick="showPage('pricing')"><span class="icon">💰</span>Тарифы</div>
       <div class="nav-item" onclick="showPage('categories')"><span class="icon">🏷️</span>Категории</div>
@@ -251,23 +252,34 @@ input:checked+.slider:before{transform:translateX(16px)}
       <div class="pagination" id="companies-pag"></div>
     </div>
 
-    <!-- LISTINGS -->
-    <div class="page" id="page-listings">
+    <!-- CARGO -->
+    <div class="page" id="page-cargo">
       <div class="toolbar">
-        <select id="listing-type" onchange="loadListings()">
-          <option value="cargo">Грузы</option>
-          <option value="warehouse">Склады</option>
-        </select>
         <div class="spacer"></div>
-        <span id="listings-count" style="color:var(--muted);font-size:13px"></span>
+        <span id="cargo-count" style="color:var(--muted);font-size:13px"></span>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>Описание</th><th>Откуда</th><th>Куда</th><th>Статус</th><th>Создано</th><th>Действия</th></tr></thead>
-          <tbody id="listings-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+          <thead><tr><th>Груз</th><th>Категория</th><th>Откуда</th><th>Куда</th><th>Статус</th><th>Создано</th><th>Действия</th></tr></thead>
+          <tbody id="cargo-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
         </table>
       </div>
-      <div class="pagination" id="listings-pag"></div>
+      <div class="pagination" id="cargo-pag"></div>
+    </div>
+
+    <!-- WAREHOUSES -->
+    <div class="page" id="page-warehouses">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <span id="warehouses-count" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Название</th><th>Тип</th><th>Город</th><th>Площадь</th><th>Статус</th><th>Создано</th><th>Действия</th></tr></thead>
+          <tbody id="warehouses-body"><tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="warehouses-pag"></div>
     </div>
 
     <!-- PAYMENTS -->
@@ -632,7 +644,7 @@ function showApp() {
 // ═══════════════════════════════════════════
 const pageTitles = {
   dashboard:'Дашборд',users:'Пользователи',companies:'Компании',
-  listings:'Объявления',payments:'Платежи',pricing:'Тарифы',
+  cargo:'Грузы',warehouses:'Склады',payments:'Платежи',pricing:'Тарифы',
   categories:'Категории',moderators:'Модераторы',queue:'Очередь верификации'
 }
 
@@ -647,7 +659,8 @@ function showPage(name) {
   document.getElementById('topbar-right').innerHTML = ''
   const loaders = {
     dashboard: () => loadDashboard('7d', document.querySelector('.period-tab.active')),
-    users: loadUsers, companies: loadCompanies, listings: loadListings,
+    users: loadUsers, companies: loadCompanies,
+    cargo: loadCargo, warehouses: loadWarehouses,
     payments: loadPayments, pricing: loadPricing, categories: loadCategories,
     moderators: loadModerators, queue: loadQueue
   }
@@ -808,59 +821,86 @@ async function loadCompanies(page=1) {
 }
 
 // ═══════════════════════════════════════════
-// LISTINGS
+// CARGO
 // ═══════════════════════════════════════════
-let listingsPage = 1
-async function loadListings(page=1) {
-  listingsPage = page
-  const type = document.getElementById('listing-type').value
-  const body = document.getElementById('listings-body')
+let cargoPage = 1
+async function loadCargo(page=1) {
+  cargoPage = page
+  const body = document.getElementById('cargo-body')
   body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
   try {
-    const r = await api('GET', `/admin/listings?type=${type}&page=${page}&per_page=20`)
+    const r = await api('GET', `/admin/listings?type=cargo&page=${page}&per_page=20`)
     const items = r.data || []
-    document.getElementById('listings-count').textContent = `Всего: ${r.meta?.total||0}`
-    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Объявления не найдены</td></tr>'; return }
-    body.innerHTML = items.map(item=>{
-      const from = type==='cargo' ? (item.from_city||item.from||'—') : (item.city||'—')
-      const to   = type==='cargo' ? (item.to_city||item.to||'—') : '—'
-      const desc = type==='cargo' ? (item.cargo_name||item.category||'Груз') : (item.name||'Склад')
-      const st   = item.status || (item.is_active?'active':'archived')
-      return `<tr>
-        <td><code style="font-size:11px;color:var(--muted)">${(item.id||'').substr(0,8)}…</code></td>
-        <td class="truncate">${desc}</td>
-        <td>${from}</td>
-        <td>${to}</td>
-        <td>${statusBadge(st)}</td>
+    document.getElementById('cargo-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Грузы не найдены</td></tr>'; return }
+    body.innerHTML = items.map(item=>`
+      <tr>
+        <td class="truncate" style="max-width:220px">${item.cargo_name||'—'}</td>
+        <td><span class="badge badge-blue">${item.category||'—'}</span></td>
+        <td>${item.from_city||'—'}</td>
+        <td>${item.to_city||'—'}</td>
+        <td>${statusBadge(item.status||'active')}</td>
         <td style="color:var(--muted)">${fmtDate(item.created_at)}</td>
         <td style="display:flex;gap:4px">
-          <button class="btn btn-warn btn-sm" onclick="blockListing('${type}','${item.id}')">Архив</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteListing('${type}','${item.id}')">Удалить</button>
+          <button class="btn btn-warn btn-sm" onclick="blockListing('cargo','${item.id}','cargo')">Архив</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteListing('cargo','${item.id}','cargo')">Удалить</button>
         </td>
-      </tr>`
-    }).join('')
-    renderPag('listings-pag', r.meta, 'loadListings')
+      </tr>`).join('')
+    renderPag('cargo-pag', r.meta, 'loadCargo')
   } catch(e) {
     body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
     toast(e.message,'error')
   }
 }
 
-async function blockListing(type, id) {
+// ═══════════════════════════════════════════
+// WAREHOUSES
+// ═══════════════════════════════════════════
+let warehousesPage = 1
+async function loadWarehouses(page=1) {
+  warehousesPage = page
+  const body = document.getElementById('warehouses-body')
+  body.innerHTML = '<tr class="loading-row"><td colspan="7"><div class="loader"></div></td></tr>'
+  try {
+    const r = await api('GET', `/admin/listings?type=warehouse&page=${page}&per_page=20`)
+    const items = r.data || []
+    document.getElementById('warehouses-count').textContent = `Всего: ${r.meta?.total||0}`
+    if (!items.length) { body.innerHTML='<tr class="empty-row"><td colspan="7">Склады не найдены</td></tr>'; return }
+    body.innerHTML = items.map(item=>`
+      <tr>
+        <td class="truncate" style="max-width:220px">${item.name||'—'}</td>
+        <td><span class="badge badge-purple">${item.warehouse_type||'—'}</span></td>
+        <td>${item.city||'—'}</td>
+        <td>${item.area ? item.area+' м²' : '—'}</td>
+        <td>${statusBadge(item.status||'active')}</td>
+        <td style="color:var(--muted)">${fmtDate(item.created_at)}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-warn btn-sm" onclick="blockListing('warehouse','${item.id}','warehouses')">Архив</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteListing('warehouse','${item.id}','warehouses')">Удалить</button>
+        </td>
+      </tr>`).join('')
+    renderPag('warehouses-pag', r.meta, 'loadWarehouses')
+  } catch(e) {
+    body.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px">${e.message}</td></tr>`
+    toast(e.message,'error')
+  }
+}
+
+async function blockListing(type, id, section) {
   if (!confirm('Перенести объявление в архив?')) return
   try {
     await api('PATCH', `/admin/listings/${type}/${id}/block`)
     toast('Объявление заархивировано','success')
-    loadListings(listingsPage)
+    section==='warehouses' ? loadWarehouses(warehousesPage) : loadCargo(cargoPage)
   } catch(e) { toast(e.message,'error') }
 }
 
-async function deleteListing(type, id) {
+async function deleteListing(type, id, section) {
   if (!confirm('УДАЛИТЬ объявление навсегда? Это действие нельзя отменить.')) return
   try {
     await api('DELETE', `/admin/listings/${type}/${id}`)
     toast('Объявление удалено','success')
-    loadListings(listingsPage)
+    section==='warehouses' ? loadWarehouses(warehousesPage) : loadCargo(cargoPage)
   } catch(e) { toast(e.message,'error') }
 }
 
