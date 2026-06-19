@@ -171,6 +171,10 @@ func main() {
 	r.Use(middleware.Lang())
 	r.Use(requestLogger())
 
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(404, gin.H{"success": false, "message": "Not found", "data": nil})
+	})
+
 	// статические файлы — отдаём загруженные файлы по URL
 	r.Static("/uploads", cfg.StoragePath)
 

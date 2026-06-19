@@ -132,8 +132,13 @@ func (h *AdminHandler) Topup(c *gin.Context) {
 }
 
 func (h *AdminHandler) Listings(c *gin.Context) {
+	lt := c.DefaultQuery("type", "cargo")
+	if lt != "cargo" && lt != "warehouse" {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
 	page, perPage := parsePagination(c)
-	if c.DefaultQuery("type", "cargo") == "warehouse" {
+	if lt == "warehouse" {
 		list, total, err := h.svc.Warehouses(c.Request.Context(), (page-1)*perPage, perPage)
 		if err != nil {
 			InternalError(c)
