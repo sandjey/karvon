@@ -55,13 +55,30 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 	if p == nil {
 		return nil, "", ErrNotFound
 	}
-	currency := in.Currency
-	if currency == "" {
-		currency = "UZS"
-	}
+
+	// Multicard фақат UZS қабул қилади — ҳамиша UZS ишлатамиз.
 	amount := p.PriceUZS
-	if currency == "USD" {
-		amount = p.PriceUSD
+
+	// listing/boost учун листинг мавжудлигини текшириш.
+	if in.PaymentType == "listing" || in.PaymentType == "boost" {
+		listingID, parseErr := uuid.Parse(in.ListingID)
+		if parseErr != nil {
+			return nil, "", ErrNotFound
+		}
+		switch in.ListingType {
+		case "cargo":
+			c, e := s.cargo.FindByID(ctx, listingID)
+			if e != nil || c == nil {
+				return nil, "", ErrNotFound
+			}
+		case "warehouse":
+			w, e := s.warehouse.FindByID(ctx, listingID)
+			if e != nil || w == nil {
+				return nil, "", ErrNotFound
+			}
+		default:
+			return nil, "", ErrNotFound
+		}
 	}
 
 	// item_id кодирует тариф и (для listing/boost) ссылку на объявление.
@@ -76,7 +93,7 @@ func (s *PaymentService) Create(ctx context.Context, in CreatePaymentInput) (*mo
 		PaymentType: in.PaymentType,
 		ItemID:      &itemID,
 		Amount:      amount,
-		Currency:    currency,
+		Currency:    "UZS",
 		Status:      "pending",
 	}
 	if err := s.payments.Create(ctx, order); err != nil {
