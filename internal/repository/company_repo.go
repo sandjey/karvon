@@ -69,7 +69,7 @@ func (r *CompanyRepo) FindByIDWithUser(ctx context.Context, id uuid.UUID) (*mode
 	return &c, err
 }
 
-// FindQueue returns companies with the given status, ordered by created_at ASC (oldest first).
+// FindQueue returns companies with the given status, ordered by created_at DESC (newest first).
 func (r *CompanyRepo) FindQueue(ctx context.Context, status string, offset, limit int) ([]model.Company, int64, error) {
 	var list []model.Company
 	var total int64
@@ -77,7 +77,7 @@ func (r *CompanyRepo) FindQueue(ctx context.Context, status string, offset, limi
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	err := q.Preload("User").Order("created_at ASC").Offset(offset).Limit(limit).Find(&list).Error
+	err := q.Preload("User").Order("created_at DESC, id DESC").Offset(offset).Limit(limit).Find(&list).Error
 	return list, total, err
 }
 
@@ -90,6 +90,6 @@ func (r *CompanyRepo) FindModeratorHistory(ctx context.Context, modID uuid.UUID,
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
-	err := q.Preload("User").Order("updated_at DESC").Offset(offset).Limit(limit).Find(&list).Error
+	err := q.Preload("User").Order("created_at DESC, id DESC").Offset(offset).Limit(limit).Find(&list).Error
 	return list, total, err
 }
