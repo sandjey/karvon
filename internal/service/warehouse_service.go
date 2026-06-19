@@ -139,8 +139,12 @@ func (s *WarehouseService) GetByID(ctx context.Context, id, viewerID uuid.UUID) 
 	if w.IsAdminBlocked && w.UserID != viewerID {
 		return nil, ErrListingNotFound
 	}
-	if w.UserID != viewerID {
-		_ = s.repo.IncrementViews(ctx, id)
+	if w.UserID != viewerID && viewerID != uuid.Nil {
+		alreadySeen, _ := s.repo.HasViewed(ctx, id, viewerID)
+		if !alreadySeen {
+			_ = s.repo.IncrementViews(ctx, id)
+			_ = s.repo.RecordView(ctx, id, viewerID)
+		}
 	}
 	w.Media, _ = s.media.ListByEntity(ctx, "warehouse", id)
 	return w, nil

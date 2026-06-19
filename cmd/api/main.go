@@ -296,6 +296,7 @@ func runMigrations(db *gorm.DB) error {
 		&model.SavedRoute{},
 		&model.Favorite{},
 		&model.Notification{},
+		&model.WarehouseView{},
 	)
 }
 

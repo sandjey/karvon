@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"ctm/internal/model"
 )
@@ -51,6 +52,26 @@ func (r *WarehouseRepo) IncrementViews(ctx context.Context, id uuid.UUID) error 
 	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
 		Where("id = ?", id).
 		UpdateColumn("views_count", gorm.Expr("views_count + 1")).Error
+}
+
+// HasViewed — bu viewer bu omborni avval ko'rganmi (abadiy unique).
+func (r *WarehouseRepo) HasViewed(ctx context.Context, warehouseID, viewerID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.WarehouseView{}).
+		Where("warehouse_id = ? AND viewer_id = ?", warehouseID, viewerID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// RecordView — ko'rishni qayd etish (dublikat bo'lsa ignore).
+func (r *WarehouseRepo) RecordView(ctx context.Context, warehouseID, viewerID uuid.UUID) error {
+	view := &model.WarehouseView{
+		WarehouseID: warehouseID,
+		ViewerID:    viewerID,
+	}
+	return r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(view).Error
 }
 
 func (r *WarehouseRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {

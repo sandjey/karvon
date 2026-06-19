@@ -44,7 +44,7 @@ func Auth(jwtMgr *jwtpkg.Manager, userRepo *repository.UserRepo) gin.HandlerFunc
 		}
 
 		if user.IsBlocked {
-			handler.Forbidden(c)
+			handler.FailCode(c, 403, "USER_BLOCKED")
 			c.Abort()
 			return
 		}

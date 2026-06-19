@@ -66,3 +66,9 @@ type WarehouseListing struct {
 
 	Media []ListingMedia `gorm:"-" json:"media,omitempty"` // фото/видео (entity=warehouse)
 }
+
+// WarehouseView — уникальный просмотр склада (1 раз навсегда на пользователя).
+type WarehouseView struct {
+	WarehouseID uuid.UUID `gorm:"type:uuid;not null;primaryKey" json:"warehouse_id"`
+	ViewerID    uuid.UUID `gorm:"type:uuid;not null;primaryKey" json:"viewer_id"`
+}
