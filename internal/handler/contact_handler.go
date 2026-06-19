@@ -37,11 +37,11 @@ func (h *ContactHandler) View(c *gin.Context) {
 	info, err := h.svc.Open(c.Request.Context(), userID, req)
 	if err != nil {
 		if isErr(err, service.ErrInsufficientTokens) {
-			packages, subs, _ := h.pricing.Tariffs(c.Request.Context())
+			packages, subs, listings, boosts, _ := h.pricing.Tariffs(c.Request.Context())
 			c.JSON(http.StatusPaymentRequired, gin.H{
 				"success": false,
 				"error":   gin.H{"code": "INSUFFICIENT_TOKENS", "message": i18n.T(c, "INSUFFICIENT_TOKENS")},
-				"data":    gin.H{"packages": packages, "subscriptions": subs},
+				"data":    gin.H{"packages": packages, "subscriptions": subs, "listings": listings, "boosts": boosts},
 			})
 			return
 		}

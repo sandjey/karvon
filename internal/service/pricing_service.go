@@ -17,13 +17,18 @@ func NewPricingService(repo *repository.PricingRepo) *PricingService {
 	return &PricingService{repo: repo}
 }
 
-// Tariffs возвращает токен-пакеты и подписки (для витрины и ответа 402).
-func (s *PricingService) Tariffs(ctx context.Context) (packages, subscriptions []model.PricingConfig, err error) {
-	packages, err = s.repo.ListByPrefix(ctx, "tokens_")
-	if err != nil {
+// Tariffs возвращает все публичные тарифы: токены, подписки, листинги, бусты.
+func (s *PricingService) Tariffs(ctx context.Context) (packages, subscriptions, listings, boosts []model.PricingConfig, err error) {
+	if packages, err = s.repo.ListByPrefix(ctx, "tokens_"); err != nil {
 		return
 	}
-	subscriptions, err = s.repo.ListByPrefix(ctx, "sub_")
+	if subscriptions, err = s.repo.ListByPrefix(ctx, "sub_"); err != nil {
+		return
+	}
+	if listings, err = s.repo.ListByKeys(ctx, []string{"listing_paid"}); err != nil {
+		return
+	}
+	boosts, err = s.repo.ListByPrefix(ctx, "boost_")
 	return
 }
 

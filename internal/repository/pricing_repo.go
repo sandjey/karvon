@@ -27,6 +27,15 @@ func (r *PricingRepo) ListAll(ctx context.Context) ([]model.PricingConfig, error
 	return list, err
 }
 
+// ListByKeys возвращает активные тарифы по точным ключам.
+func (r *PricingRepo) ListByKeys(ctx context.Context, keys []string) ([]model.PricingConfig, error) {
+	var list []model.PricingConfig
+	err := r.db.WithContext(ctx).
+		Where("is_active = true AND key IN ?", keys).
+		Order("key ASC").Find(&list).Error
+	return list, err
+}
+
 // ListByPrefix возвращает активные тарифы, ключ которых начинается с префикса (tokens_, sub_).
 func (r *PricingRepo) ListByPrefix(ctx context.Context, prefix string) ([]model.PricingConfig, error) {
 	var list []model.PricingConfig

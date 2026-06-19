@@ -34,12 +34,17 @@ func (h *PaymentsHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFu
 }
 
 func (h *PaymentsHandler) Packages(c *gin.Context) {
-	packages, subs, err := h.pricing.Tariffs(c.Request.Context())
+	packages, subs, listings, boosts, err := h.pricing.Tariffs(c.Request.Context())
 	if err != nil {
 		InternalError(c)
 		return
 	}
-	OK(c, gin.H{"packages": packages, "subscriptions": subs})
+	OK(c, gin.H{
+		"packages":      packages,
+		"subscriptions": subs,
+		"listings":      listings,
+		"boosts":        boosts,
+	})
 }
 
 func (h *PaymentsHandler) Create(c *gin.Context) {
