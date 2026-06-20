@@ -115,15 +115,16 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 		return nil, err
 	}
 	freeQuota := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
+	initialStatus := "active"
 	if int(freeCargo+freeWarehouse) >= freeQuota {
-		return nil, ErrFreeListingUsed
+		initialStatus = "archived"
 	}
 
 	w := &model.WarehouseListing{
 		ID:        uuid.New(),
 		CompanyID: companyID,
 		UserID:    userID,
-		Status:    "active",
+		Status:    initialStatus,
 		IsPaid:    false,
 	}
 	applyWarehouse(&req, w)
