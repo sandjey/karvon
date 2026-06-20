@@ -239,6 +239,16 @@ func (s *AdminService) BlockListing(ctx context.Context, listingType string, id 
 	return ErrListingNotFound
 }
 
+func (s *AdminService) UnblockListing(ctx context.Context, listingType string, id uuid.UUID) error {
+	switch listingType {
+	case "cargo":
+		return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_admin_blocked": false, "status": "active"})
+	case "warehouse":
+		return s.warehouse.UpdateFields(ctx, id, map[string]interface{}{"is_admin_blocked": false, "status": "active"})
+	}
+	return ErrListingNotFound
+}
+
 func (s *AdminService) Cargo(ctx context.Context, offset, limit int) ([]model.CargoListing, int64, error) {
 	return s.admin.AllCargo(ctx, offset, limit)
 }

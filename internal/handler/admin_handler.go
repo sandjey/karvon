@@ -33,6 +33,7 @@ func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.
 	g.GET("/listings", h.Listings)
 	g.DELETE("/listings/:type/:id", h.DeleteListing)
 	g.PATCH("/listings/:type/:id/block", h.BlockListing)
+	g.PATCH("/listings/:type/:id/unblock", h.UnblockListing)
 	g.GET("/companies", h.Companies)
 	g.GET("/payments", h.Payments)
 	g.GET("/pricing", h.Pricing)
@@ -175,6 +176,19 @@ func (h *AdminHandler) BlockListing(c *gin.Context) {
 		return
 	}
 	if err := h.svc.BlockListing(c.Request.Context(), c.Param("type"), id); err != nil {
+		FailCode(c, http.StatusNotFound, "LISTING_NOT_FOUND")
+		return
+	}
+	OKMsg(c, nil, "LISTING_BLOCK_UPDATED")
+}
+
+func (h *AdminHandler) UnblockListing(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
+		return
+	}
+	if err := h.svc.UnblockListing(c.Request.Context(), c.Param("type"), id); err != nil {
 		FailCode(c, http.StatusNotFound, "LISTING_NOT_FOUND")
 		return
 	}
