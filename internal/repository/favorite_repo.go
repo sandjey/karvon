@@ -34,10 +34,18 @@ func (r *FavoriteRepo) Remove(ctx context.Context, userID uuid.UUID, listingType
 		Delete(&model.Favorite{}).Error
 }
 
-func (r *FavoriteRepo) ListByUser(ctx context.Context, userID uuid.UUID) ([]model.Favorite, error) {
+func (r *FavoriteRepo) ListByUser(ctx context.Context, userID uuid.UUID, listingType string, offset, limit int) ([]model.Favorite, int64, error) {
+	q := r.db.WithContext(ctx).Model(&model.Favorite{}).Where("user_id = ?", userID)
+	if listingType != "" {
+		q = q.Where("listing_type = ?", listingType)
+	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	var list []model.Favorite
-	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("created_at DESC").Find(&list).Error
-	return list, err
+	err := q.Order("created_at DESC").Offset(offset).Limit(limit).Find(&list).Error
+	return list, total, err
 }
 
 // FavoriteUserRow — кто добавил объявление в избранное (имя + компания).

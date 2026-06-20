@@ -140,7 +140,7 @@ func main() {
 	})
 	paymentSvc   := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
 	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo)
-	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo)
+	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, mediaRepo)
 	routeSvc     := service.NewRouteService(routeRepo)
 	notifSvc     := service.NewNotificationService(notifRepo)
 	statsRepo    := repository.NewStatsRepo(gormDB)
