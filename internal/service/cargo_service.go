@@ -117,7 +117,11 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 		return nil, err
 	}
 	s.saveMedia(ctx, m.ID, req.Media)
-	go s.notifyMatchingRoutes(m)
+	fromCity := ""
+	if m.FromCity != nil {
+		fromCity = *m.FromCity
+	}
+	go s.notifyMatchingRoutes(m.ID, m.UserID, fromCity)
 	return s.loadFull(ctx, m.ID)
 }
 
@@ -420,25 +424,23 @@ func (s *CargoService) copyMedia(ctx context.Context, srcID, dstID uuid.UUID) {
 	_ = s.media.Replace(ctx, "cargo", dstID, items)
 }
 
-func (s *CargoService) notifyMatchingRoutes(c *model.CargoListing) {
-	from := ""
-	if c.FromCity != nil {
-		from = *c.FromCity
-	}
-	if from == "" {
+func (s *CargoService) notifyMatchingRoutes(listingID, ownerID uuid.UUID, fromCity string) {
+	if fromCity == "" {
 		return
 	}
 	ctx := context.Background()
-	routes, err := s.routes.FindMatching(ctx, from, "")
+	routes, err := s.routes.FindMatching(ctx, fromCity, "")
 	if err != nil {
 		return
 	}
-	meta, _ := json.Marshal(map[string]string{"listing_type": "cargo", "listing_id": c.ID.String()})
+	meta, _ := json.Marshal(map[string]string{"listing_type": "cargo", "listing_id": listingID.String()})
+	sent := make(map[uuid.UUID]bool)
 	for _, rt := range routes {
-		if rt.UserID == c.UserID {
+		if rt.UserID == ownerID || sent[rt.UserID] {
 			continue
 		}
-		body := fmt.Sprintf("Новый товар из %s по вашему маршруту", from)
+		sent[rt.UserID] = true
+		body := fmt.Sprintf("Новый товар из %s по вашему маршруту", fromCity)
 		_ = s.notif.Create(ctx, &model.Notification{
 			UserID: rt.UserID,
 			Type:   "new_cargo_on_route",

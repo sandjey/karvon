@@ -131,15 +131,15 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 		return nil, err
 	}
 	s.saveMedia(ctx, w.ID, req.Media)
-	go s.notifyMatchingRoutes(w)
-	return s.loadFull(ctx, w.ID)
-}
-
-func (s *WarehouseService) notifyMatchingRoutes(w *model.WarehouseListing) {
 	city := ""
 	if w.City != nil {
 		city = *w.City
 	}
+	go s.notifyMatchingRoutes(w.ID, w.UserID, city)
+	return s.loadFull(ctx, w.ID)
+}
+
+func (s *WarehouseService) notifyMatchingRoutes(listingID, ownerID uuid.UUID, city string) {
 	if city == "" {
 		return
 	}
@@ -148,11 +148,13 @@ func (s *WarehouseService) notifyMatchingRoutes(w *model.WarehouseListing) {
 	if err != nil {
 		return
 	}
-	meta, _ := json.Marshal(map[string]string{"listing_type": "warehouse", "listing_id": w.ID.String()})
+	meta, _ := json.Marshal(map[string]string{"listing_type": "warehouse", "listing_id": listingID.String()})
+	sent := make(map[uuid.UUID]bool)
 	for _, rt := range routes {
-		if rt.UserID == w.UserID {
+		if rt.UserID == ownerID || sent[rt.UserID] {
 			continue
 		}
+		sent[rt.UserID] = true
 		body := fmt.Sprintf("Новый склад в %s по вашему маршруту", city)
 		_ = s.notif.Create(ctx, &model.Notification{
 			UserID: rt.UserID,
