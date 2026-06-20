@@ -128,14 +128,14 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 		IsPaid:    false,
 	}
 	applyWarehouse(&req, w)
+	city := ""
+	if req.City != nil {
+		city = *req.City
+	}
 	if err := s.repo.Create(ctx, w); err != nil {
 		return nil, err
 	}
 	s.saveMedia(ctx, w.ID, req.Media)
-	city := ""
-	if w.City != nil {
-		city = *w.City
-	}
 	go s.notifyMatchingRoutes(w.ID, w.UserID, city)
 	return s.loadFull(ctx, w.ID)
 }

@@ -111,14 +111,14 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 		Type:      "domestic", // legacy NOT NULL
 	}
 	applyCargo(&req, m)
+	fromCity := ""
+	if req.FromCity != nil {
+		fromCity = *req.FromCity
+	}
 	if err := s.repo.Create(ctx, m); err != nil {
 		return nil, err
 	}
 	s.saveMedia(ctx, m.ID, req.Media)
-	fromCity := ""
-	if m.FromCity != nil {
-		fromCity = *m.FromCity
-	}
 	go s.notifyMatchingRoutes(m.ID, m.UserID, fromCity)
 	return s.loadFull(ctx, m.ID)
 }
