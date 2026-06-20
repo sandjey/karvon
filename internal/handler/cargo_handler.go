@@ -291,6 +291,8 @@ func handleCargoErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusBadRequest, "PHOTO_LIMIT_EXCEEDED")
 	case isErr(err, service.ErrFreeListingUsed):
 		FailCode(c, http.StatusPaymentRequired, "FREE_LISTING_USED")
+	case isErr(err, service.ErrValidation):
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
 	default:
 		InternalError(c)
 	}

@@ -78,9 +78,6 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	if req.Category == nil || *req.Category == "" {
 		return nil, ErrValidation
 	}
-	if req.CompanyID == nil {
-		return nil, ErrValidation
-	}
 	if countPhotos(req.Media) > 10 {
 		return nil, ErrPhotoLimitExceeded
 	}
