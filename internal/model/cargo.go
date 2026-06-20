@@ -8,6 +8,18 @@ import (
 	"gorm.io/datatypes"
 )
 
+// CargoContact — контактные данные, доступные после покупки просмотра.
+type CargoContact struct {
+	IsUnlocked  bool    `json:"is_unlocked"`
+	Phone       *string `json:"phone,omitempty"`
+	WhatsApp    *string `json:"whatsapp,omitempty"`
+	Telegram    *string `json:"telegram,omitempty"`
+	Email       *string `json:"email,omitempty"`
+	CompanyName *string `json:"company_name,omitempty"`
+	City        *string `json:"city,omitempty"`
+	Country     *string `json:"country,omitempty"`
+}
+
 // CargoListing — карточка ТОВАРА (маркетплейс-модель). Грузовладелец публикует товар,
 // перевозчик находит и покупает контакт. Карточка постоянная (не истекает по таймеру).
 type CargoListing struct {
@@ -84,7 +96,8 @@ type CargoListing struct {
 	ViewsCount          int `gorm:"not null;default:0" json:"views_count"`
 	ContactsBoughtCount int `gorm:"not null;default:0" json:"contacts_bought_count"`
 
-	Media []ListingMedia `gorm:"-" json:"media,omitempty"` // фото/видео/сертификаты (entity=cargo)
+	Media   []ListingMedia `gorm:"-" json:"media,omitempty"`    // фото/видео/сертификаты (entity=cargo)
+	Contact *CargoContact  `gorm:"-" json:"contact,omitempty"` // контакты (после покупки)
 
 	// Legacy-колонки (NOT NULL в БД) — заполняются дефолтами, в API не используются.
 	Type          string `gorm:"type:cargo_type_enum;not null;default:'domestic'" json:"-"`

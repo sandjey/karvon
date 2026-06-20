@@ -125,7 +125,7 @@ func main() {
 	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
 	companySvc   := service.NewCompanyService(companyRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
-	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo)
+	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo)
 	pricingSvc   := service.NewPricingService(pricingRepo)
 	rahmatClient := rahmat.NewClient(rahmat.Config{

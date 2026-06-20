@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -22,6 +23,7 @@ type CargoService struct {
 	media         *repository.MediaRepo
 	warehouseRepo *repository.WarehouseRepo
 	pricingRepo   *repository.PricingRepo
+	contacts      *repository.ContactRepo
 }
 
 func NewCargoService(
@@ -33,8 +35,9 @@ func NewCargoService(
 	media *repository.MediaRepo,
 	warehouseRepo *repository.WarehouseRepo,
 	pricingRepo *repository.PricingRepo,
+	contactRepo *repository.ContactRepo,
 ) *CargoService {
-	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media, warehouseRepo: warehouseRepo, pricingRepo: pricingRepo}
+	return &CargoService{repo: repo, company: company, routes: routes, notif: notif, favorites: favorites, media: media, warehouseRepo: warehouseRepo, pricingRepo: pricingRepo, contacts: contactRepo}
 }
 
 func (s *CargoService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -133,6 +136,36 @@ func (s *CargoService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*mo
 		_ = s.repo.IncrementViews(ctx, id)
 	}
 	c.Media, _ = s.media.ListByEntity(ctx, "cargo", id)
+
+	// Populyatsiya contact maydoni
+	if viewerID != uuid.Nil {
+		contact := &model.CargoContact{}
+		if viewerID == c.UserID {
+			contact.IsUnlocked = true
+		} else {
+			view, _ := s.contacts.RecentView(ctx, viewerID, "cargo", id, 30*24*time.Hour)
+			contact.IsUnlocked = view != nil
+		}
+		if contact.IsUnlocked {
+			if c.User != nil {
+				contact.Phone = &c.User.Phone
+				contact.WhatsApp = c.User.WhatsApp
+				contact.Telegram = c.User.Telegram
+				contact.Email = c.User.Email
+				contact.City = c.User.City
+				contact.Country = c.User.Country
+			}
+			if c.Company != nil {
+				contact.CompanyName = &c.Company.Name
+				if contact.City == nil {
+					city := c.Company.City
+					contact.City = &city
+				}
+			}
+		}
+		c.Contact = contact
+	}
+
 	return c, nil
 }
 

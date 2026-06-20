@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,6 +21,9 @@ func (r *MediaRepo) ListByEntity(ctx context.Context, entityType string, entityI
 	err := r.db.WithContext(ctx).
 		Where("entity_type = ? AND entity_id = ?", entityType, entityID).
 		Order("sort_order ASC").Find(&list).Error
+	for i := range list {
+		list[i].FileURL = strings.ReplaceAll(list[i].FileURL, "/uploads/uploads/", "/uploads/")
+	}
 	return list, err
 }
 
@@ -58,6 +62,7 @@ func (r *MediaRepo) ListByEntityIDs(ctx context.Context, entityType string, ids 
 	}
 	result := make(map[uuid.UUID][]model.ListingMedia, len(ids))
 	for _, item := range items {
+		item.FileURL = strings.ReplaceAll(item.FileURL, "/uploads/uploads/", "/uploads/")
 		result[item.EntityID] = append(result[item.EntityID], item)
 	}
 	return result, nil

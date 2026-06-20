@@ -57,11 +57,8 @@ func (h *UploadHandler) Upload(c *gin.Context) {
 		return
 	}
 
-	// determine subdirectory from optional "dir" form field (default: "uploads")
+	// determine subdirectory from optional "dir" form field
 	dir := c.PostForm("dir")
-	if dir == "" {
-		dir = "uploads"
-	}
 
 	relPath, err := h.store.Save(dir, header.Filename, file)
 	if err != nil {
