@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"ctm/internal/dto"
+	"ctm/internal/model"
 	"ctm/internal/service"
 	"ctm/pkg/i18n"
 )
@@ -128,7 +129,7 @@ func (h *PaymentsHandler) GetOrder(c *gin.Context) {
 		}
 		return
 	}
-	OK(c, order)
+	OK(c, model.ToPaymentResponse(order))
 }
 
 func (h *PaymentsHandler) History(c *gin.Context) {
@@ -139,7 +140,11 @@ func (h *PaymentsHandler) History(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	Paginated(c, list, int(total), page, perPage)
+	resp := make([]model.PaymentOrderResponse, len(list))
+	for i := range list {
+		resp[i] = model.ToPaymentResponse(&list[i])
+	}
+	Paginated(c, resp, int(total), page, perPage)
 }
 
 func (h *PaymentsHandler) ActiveSubscription(c *gin.Context) {

@@ -212,7 +212,11 @@ func (h *AdminHandler) Payments(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	Paginated(c, list, int(total), page, perPage)
+	resp := make([]model.PaymentOrderResponse, len(list))
+	for i := range list {
+		resp[i] = model.ToPaymentResponse(&list[i])
+	}
+	Paginated(c, resp, int(total), page, perPage)
 }
 
 func (h *AdminHandler) Pricing(c *gin.Context) {

@@ -6,6 +6,27 @@ import (
 	"github.com/google/uuid"
 )
 
+const tashkentTZ = "Asia/Tashkent"
+
+// PaymentOrderResponse wraps PaymentOrder and adds local-time fields for Asia/Tashkent (UTC+5).
+type PaymentOrderResponse struct {
+	*PaymentOrder
+	PaidAtLocal    *string `json:"paid_at_local"`
+	CreatedAtLocal string  `json:"created_at_local"`
+}
+
+// ToPaymentResponse converts a PaymentOrder into a PaymentOrderResponse with local-time fields.
+func ToPaymentResponse(o *PaymentOrder) PaymentOrderResponse {
+	tz, _ := time.LoadLocation(tashkentTZ)
+	local := o.CreatedAt.In(tz).Format("2006-01-02 15:04:05")
+	var paidLocal *string
+	if o.PaidAt != nil {
+		s := o.PaidAt.In(tz).Format("2006-01-02 15:04:05")
+		paidLocal = &s
+	}
+	return PaymentOrderResponse{PaymentOrder: o, PaidAtLocal: paidLocal, CreatedAtLocal: local}
+}
+
 type TokenTransaction struct {
 	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	UserID       uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
