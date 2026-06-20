@@ -117,7 +117,7 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 		return nil, err
 	}
 	s.saveMedia(ctx, m.ID, req.Media)
-	s.notifyMatchingRoutes(ctx, m)
+	go s.notifyMatchingRoutes(m)
 	return s.loadFull(ctx, m.ID)
 }
 
@@ -420,7 +420,7 @@ func (s *CargoService) copyMedia(ctx context.Context, srcID, dstID uuid.UUID) {
 	_ = s.media.Replace(ctx, "cargo", dstID, items)
 }
 
-func (s *CargoService) notifyMatchingRoutes(ctx context.Context, c *model.CargoListing) {
+func (s *CargoService) notifyMatchingRoutes(c *model.CargoListing) {
 	from := ""
 	if c.FromCity != nil {
 		from = *c.FromCity
@@ -428,6 +428,7 @@ func (s *CargoService) notifyMatchingRoutes(ctx context.Context, c *model.CargoL
 	if from == "" {
 		return
 	}
+	ctx := context.Background()
 	routes, err := s.routes.FindMatching(ctx, from, "")
 	if err != nil {
 		return

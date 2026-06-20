@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -18,6 +20,8 @@ type WarehouseService struct {
 	cargoRepo   *repository.CargoRepo
 	favorites   *repository.FavoriteRepo
 	pricingRepo *repository.PricingRepo
+	routes      *repository.RouteRepo
+	notif       *repository.NotificationRepo
 }
 
 func NewWarehouseService(
@@ -27,8 +31,10 @@ func NewWarehouseService(
 	cargoRepo *repository.CargoRepo,
 	favorites *repository.FavoriteRepo,
 	pricingRepo *repository.PricingRepo,
+	routes *repository.RouteRepo,
+	notif *repository.NotificationRepo,
 ) *WarehouseService {
-	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites, pricingRepo: pricingRepo}
+	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites, pricingRepo: pricingRepo, routes: routes, notif: notif}
 }
 
 func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -125,7 +131,37 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 		return nil, err
 	}
 	s.saveMedia(ctx, w.ID, req.Media)
+	go s.notifyMatchingRoutes(w)
 	return s.loadFull(ctx, w.ID)
+}
+
+func (s *WarehouseService) notifyMatchingRoutes(w *model.WarehouseListing) {
+	city := ""
+	if w.City != nil {
+		city = *w.City
+	}
+	if city == "" {
+		return
+	}
+	ctx := context.Background()
+	routes, err := s.routes.FindMatching(ctx, city, "")
+	if err != nil {
+		return
+	}
+	meta, _ := json.Marshal(map[string]string{"listing_type": "warehouse", "listing_id": w.ID.String()})
+	for _, rt := range routes {
+		if rt.UserID == w.UserID {
+			continue
+		}
+		body := fmt.Sprintf("Новый склад в %s по вашему маршруту", city)
+		_ = s.notif.Create(ctx, &model.Notification{
+			UserID: rt.UserID,
+			Type:   "new_cargo_on_route",
+			Title:  "Новый склад по вашему маршруту",
+			Body:   &body,
+			Meta:   meta,
+		})
+	}
 }
 
 func (s *WarehouseService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*model.WarehouseListing, error) {
