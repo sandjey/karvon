@@ -232,9 +232,9 @@ func (s *AdminService) DeleteListing(ctx context.Context, listingType string, id
 func (s *AdminService) BlockListing(ctx context.Context, listingType string, id uuid.UUID) error {
 	switch listingType {
 	case "cargo":
-		return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"status": "archived", "is_admin_blocked": true})
+		return s.cargo.UpdateStatus(ctx, id, map[string]interface{}{"is_admin_blocked": true})
 	case "warehouse":
-		return s.warehouse.UpdateFields(ctx, id, map[string]interface{}{"status": "archived", "is_admin_blocked": true})
+		return s.warehouse.UpdateFields(ctx, id, map[string]interface{}{"is_admin_blocked": true})
 	}
 	return ErrListingNotFound
 }
