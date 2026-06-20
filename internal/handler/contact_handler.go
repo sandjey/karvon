@@ -68,10 +68,22 @@ func (h *ContactHandler) History(c *gin.Context) {
 
 func (h *ContactHandler) Tokens(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
-	balance, txs, err := h.svc.TokenInfo(c.Request.Context(), userID)
+	page, perPage := parsePagination(c)
+	balance, txs, total, err := h.svc.TokenInfo(c.Request.Context(), userID, (page-1)*perPage, perPage)
 	if err != nil {
 		InternalError(c)
 		return
 	}
-	OK(c, gin.H{"token_balance": balance, "transactions": txs})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"token_balance": balance,
+			"transactions":  txs,
+		},
+		"meta": gin.H{
+			"total":    total,
+			"page":     page,
+			"per_page": perPage,
+		},
+	})
 }

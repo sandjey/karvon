@@ -50,7 +50,8 @@ type CreateModeratorRequest struct {
 }
 
 type TopupRequest struct {
-	Amount int `json:"amount" binding:"required,min=1"`
+	Amount int    `json:"amount" binding:"required,min=1"`
+	Note   string `json:"note"`
 }
 
 type BlockRequest struct {

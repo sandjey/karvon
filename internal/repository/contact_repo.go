@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -81,6 +82,10 @@ func (r *ContactRepo) DebitAndRecord(ctx context.Context, userID uuid.UUID, list
 		if err := tx.Create(view).Error; err != nil {
 			return err
 		}
+		metaRaw, _ := json.Marshal(map[string]string{
+			"listing_type": listingType,
+			"listing_id":   listingID.String(),
+		})
 		if err := tx.Create(&model.TokenTransaction{
 			UserID:       userID,
 			Type:         "debit",
@@ -88,6 +93,7 @@ func (r *ContactRepo) DebitAndRecord(ctx context.Context, userID uuid.UUID, list
 			Reason:       "contact_view",
 			ReferenceID:  &view.ID,
 			BalanceAfter: newBalance,
+			Meta:         metaRaw,
 		}).Error; err != nil {
 			return err
 		}
@@ -151,10 +157,18 @@ func (r *ContactRepo) FirstViewedAtPerListing(ctx context.Context, userID uuid.U
 	return m, err
 }
 
-func (r *ContactRepo) TokenTransactions(ctx context.Context, userID uuid.UUID, limit int) ([]model.TokenTransaction, error) {
+func (r *ContactRepo) TokenTransactions(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.TokenTransaction, int64, error) {
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&model.TokenTransaction{}).
+		Where("user_id = ?", userID).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	var list []model.TokenTransaction
 	err := r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
-		Order("created_at DESC").Limit(limit).Find(&list).Error
-	return list, err
+		Order("created_at DESC").
+		Offset(offset).Limit(limit).
+		Find(&list).Error
+	return list, total, err
 }

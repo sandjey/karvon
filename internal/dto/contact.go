@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,4 +50,24 @@ type ContactHistoryItem struct {
 	ViewReason  string                `json:"view_reason"`
 	ViewedAt    time.Time             `json:"viewed_at"`
 	FreeUntil   time.Time             `json:"free_until"`
+}
+
+type TokenTxListing struct {
+	ID       uuid.UUID `json:"id"`
+	Type     string    `json:"type"`
+	Name     string    `json:"name"`
+	FromCity *string   `json:"from_city"`
+}
+
+type TokenTransactionResponse struct {
+	ID            uuid.UUID       `json:"id"`
+	Type          string          `json:"type"`
+	Amount        int             `json:"amount"`
+	Reason        string          `json:"reason"`
+	BalanceBefore int             `json:"balance_before"`
+	BalanceAfter  int             `json:"balance_after"`
+	Listing       *TokenTxListing `json:"listing"`
+	Meta          json.RawMessage `json:"meta"`
+	Description   string          `json:"description"`
+	CreatedAt     time.Time       `json:"created_at"`
 }

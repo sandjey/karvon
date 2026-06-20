@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
 	"ctm/internal/model"
@@ -120,7 +121,7 @@ func (r *UserRepo) FindByAdminLogin(ctx context.Context, login string) (*model.U
 	return &u, err
 }
 
-func (r *UserRepo) CreditTokens(ctx context.Context, userID uuid.UUID, amount int, reason string) error {
+func (r *UserRepo) CreditTokens(ctx context.Context, userID uuid.UUID, amount int, reason string, meta ...datatypes.JSON) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var user model.User
 		if err := tx.Clauses().Where("id = ?", userID).First(&user).Error; err != nil {
@@ -132,12 +133,17 @@ func (r *UserRepo) CreditTokens(ctx context.Context, userID uuid.UUID, amount in
 			return err
 		}
 
+		txMeta := datatypes.JSON(nil)
+		if len(meta) > 0 {
+			txMeta = meta[0]
+		}
 		return tx.Create(&model.TokenTransaction{
 			UserID:       userID,
 			Type:         "credit",
 			Amount:       amount,
 			Reason:       reason,
 			BalanceAfter: newBalance,
+			Meta:         txMeta,
 		}).Error
 	})
 }

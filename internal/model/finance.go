@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 const tashkentTZ = "Asia/Tashkent"
@@ -28,14 +29,15 @@ func ToPaymentResponse(o *PaymentOrder) PaymentOrderResponse {
 }
 
 type TokenTransaction struct {
-	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	UserID       uuid.UUID  `gorm:"type:uuid;not null;index" json:"user_id"`
-	Type         string     `gorm:"type:token_transaction_type_enum;not null" json:"type"`
-	Amount       int        `gorm:"not null" json:"amount"`
-	Reason       string     `gorm:"type:token_reason_enum;not null" json:"reason"`
-	ReferenceID  *uuid.UUID `gorm:"type:uuid" json:"reference_id"`
-	BalanceAfter int        `gorm:"not null" json:"balance_after"`
-	CreatedAt    time.Time  `gorm:"index" json:"created_at"`
+	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID       uuid.UUID      `gorm:"type:uuid;not null;index" json:"user_id"`
+	Type         string         `gorm:"type:token_transaction_type_enum;not null" json:"type"`
+	Amount       int            `gorm:"not null" json:"amount"`
+	Reason       string         `gorm:"type:token_reason_enum;not null" json:"reason"`
+	ReferenceID  *uuid.UUID     `gorm:"type:uuid" json:"reference_id"`
+	BalanceAfter int            `gorm:"not null" json:"balance_after"`
+	Meta         datatypes.JSON `gorm:"type:jsonb" json:"meta,omitempty"`
+	CreatedAt    time.Time      `gorm:"index" json:"created_at"`
 }
 
 type PaymentOrder struct {

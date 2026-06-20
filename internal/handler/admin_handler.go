@@ -125,7 +125,8 @@ func (h *AdminHandler) Topup(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	if err := h.svc.TopupTokens(c.Request.Context(), id, req.Amount); err != nil {
+	adminID := c.MustGet("user_id").(uuid.UUID)
+	if err := h.svc.TopupTokens(c.Request.Context(), id, req.Amount, adminID, req.Note); err != nil {
 		FailCode(c, http.StatusNotFound, "USER_NOT_FOUND")
 		return
 	}

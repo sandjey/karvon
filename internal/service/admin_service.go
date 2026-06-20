@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/datatypes"
 
 	"ctm/internal/dto"
 	"ctm/internal/model"
@@ -246,12 +248,16 @@ func (s *AdminService) SetBlocked(ctx context.Context, id uuid.UUID, blocked boo
 	return s.admin.SetBlocked(ctx, id, blocked, reason)
 }
 
-func (s *AdminService) TopupTokens(ctx context.Context, userID uuid.UUID, amount int) error {
+func (s *AdminService) TopupTokens(ctx context.Context, userID uuid.UUID, amount int, adminID uuid.UUID, note string) error {
 	u, err := s.users.FindByID(ctx, userID)
 	if err != nil || u == nil {
 		return ErrNotFound
 	}
-	return s.users.CreditTokens(ctx, userID, amount, "manual")
+	metaRaw, _ := json.Marshal(map[string]string{
+		"admin_id": adminID.String(),
+		"note":     note,
+	})
+	return s.users.CreditTokens(ctx, userID, amount, "manual", datatypes.JSON(metaRaw))
 }
 
 func (s *AdminService) Companies(ctx context.Context, status string, offset, limit int) ([]model.Company, int64, error) {

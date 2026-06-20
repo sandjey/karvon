@@ -277,11 +277,111 @@ func (s *ContactService) History(ctx context.Context, userID uuid.UUID, offset, 
 	return items, total, nil
 }
 
-func (s *ContactService) TokenInfo(ctx context.Context, userID uuid.UUID) (int, []model.TokenTransaction, error) {
+func (s *ContactService) TokenInfo(ctx context.Context, userID uuid.UUID, offset, limit int) (int, []dto.TokenTransactionResponse, int64, error) {
 	u, err := s.users.FindByID(ctx, userID)
 	if err != nil || u == nil {
-		return 0, nil, ErrNotFound
+		return 0, nil, 0, ErrNotFound
 	}
-	txs, err := s.contacts.TokenTransactions(ctx, userID, 100)
-	return u.TokenBalance, txs, err
+	txs, total, err := s.contacts.TokenTransactions(ctx, userID, offset, limit)
+	if err != nil {
+		return u.TokenBalance, nil, 0, err
+	}
+
+	type listingRef struct {
+		listingType string
+		listingID   uuid.UUID
+	}
+	cargoIDs := make([]uuid.UUID, 0)
+	warehouseIDs := make([]uuid.UUID, 0)
+	txMetas := make([]listingRef, len(txs))
+
+	for i, tx := range txs {
+		if tx.Reason == "contact_view" && len(tx.Meta) > 0 {
+			var m map[string]string
+			if json.Unmarshal(tx.Meta, &m) == nil {
+				lid, _ := uuid.Parse(m["listing_id"])
+				txMetas[i] = listingRef{listingType: m["listing_type"], listingID: lid}
+				if m["listing_type"] == "cargo" {
+					cargoIDs = append(cargoIDs, lid)
+				} else if m["listing_type"] == "warehouse" {
+					warehouseIDs = append(warehouseIDs, lid)
+				}
+			}
+		}
+	}
+
+	cargoList, _ := s.cargo.FindByIDs(ctx, cargoIDs)
+	warehouseList, _ := s.warehouse.FindByIDs(ctx, warehouseIDs)
+
+	cargoMap := make(map[uuid.UUID]*model.CargoListing, len(cargoList))
+	for _, c := range cargoList {
+		cargoMap[c.ID] = c
+	}
+	warehouseMap := make(map[uuid.UUID]*model.WarehouseListing, len(warehouseList))
+	for _, w := range warehouseList {
+		warehouseMap[w.ID] = w
+	}
+
+	result := make([]dto.TokenTransactionResponse, len(txs))
+	for i, tx := range txs {
+		var balanceBefore int
+		if tx.Type == "credit" {
+			balanceBefore = tx.BalanceAfter - tx.Amount
+		} else {
+			balanceBefore = tx.BalanceAfter + tx.Amount
+		}
+
+		resp := dto.TokenTransactionResponse{
+			ID:            tx.ID,
+			Type:          tx.Type,
+			Amount:        tx.Amount,
+			Reason:        tx.Reason,
+			BalanceBefore: balanceBefore,
+			BalanceAfter:  tx.BalanceAfter,
+			Meta:          json.RawMessage(tx.Meta),
+			CreatedAt:     tx.CreatedAt,
+		}
+
+		ref := txMetas[i]
+		if ref.listingType == "cargo" {
+			if c, ok := cargoMap[ref.listingID]; ok {
+				resp.Listing = &dto.TokenTxListing{
+					ID:       c.ID,
+					Type:     "cargo",
+					Name:     c.CargoName,
+					FromCity: c.FromCity,
+				}
+				resp.Description = "Kontakt ko'rish — " + c.CargoName
+			}
+		} else if ref.listingType == "warehouse" {
+			if w, ok := warehouseMap[ref.listingID]; ok {
+				resp.Listing = &dto.TokenTxListing{
+					ID:       w.ID,
+					Type:     "warehouse",
+					Name:     w.Name,
+					FromCity: w.City,
+				}
+				resp.Description = "Kontakt ko'rish — " + w.Name
+			}
+		}
+
+		if resp.Description == "" {
+			switch tx.Reason {
+			case "manual":
+				resp.Description = "Administrator tomonidan qo'shildi"
+			case "payment_completed", "token_purchase":
+				resp.Description = "Token sotib olish"
+			case "subscription_grant":
+				resp.Description = "Obuna orqali tokenlar berildi"
+			case "refund", "payment_revert":
+				resp.Description = "To'lov qaytarildi"
+			default:
+				resp.Description = tx.Reason
+			}
+		}
+
+		result[i] = resp
+	}
+
+	return u.TokenBalance, result, total, nil
 }
