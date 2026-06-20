@@ -193,7 +193,7 @@ func main() {
 	handler.NewGeoHandler().RegisterRoutes(v1)
 	handler.NewMapHandler(cargoRepo, warehouseRepo).RegisterRoutes(v1)
 	handler.NewConfigHandler(cfg.MapTilesURL, categoryRepo).RegisterRoutes(v1)
-	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware)
+	handler.NewCargoHandler(cargoSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware, optionalAuthMiddleware)
 	handler.NewWarehouseHandler(warehouseSvc).RegisterRoutes(v1, authMiddleware, verifiedMiddleware, optionalAuthMiddleware)
 	handler.NewContactHandler(contactSvc, pricingSvc).RegisterRoutes(v1, authMiddleware)
 	handler.NewPaymentsHandler(pricingSvc, paymentSvc).RegisterRoutes(v1, authMiddleware)

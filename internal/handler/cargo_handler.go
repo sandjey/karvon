@@ -22,12 +22,12 @@ func NewCargoHandler(svc *service.CargoService) *CargoHandler {
 	return &CargoHandler{svc: svc}
 }
 
-func (h *CargoHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified gin.HandlerFunc) {
+func (h *CargoHandler) RegisterRoutes(rg *gin.RouterGroup, auth, verified, optionalAuth gin.HandlerFunc) {
 	g := rg.Group("/listings/cargo")
 	// public
 	g.GET("", h.List)
 	g.GET("/templates", auth, h.Templates)
-	g.GET("/:id", h.GetOne)
+	g.GET("/:id", optionalAuth, h.GetOne)
 	g.GET("/:id/stats", auth, h.Stats)
 	g.GET("/:id/similar", h.Similar)
 	// owner / verified

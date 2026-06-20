@@ -367,6 +367,8 @@ func (s *ContactService) TokenInfo(ctx context.Context, userID uuid.UUID, offset
 
 		if resp.Description == "" {
 			switch tx.Reason {
+			case "contact_view":
+				resp.Description = "Kontakt ko'rish"
 			case "manual":
 				resp.Description = "Administrator tomonidan qo'shildi"
 			case "payment_completed", "token_purchase":
@@ -375,6 +377,8 @@ func (s *ContactService) TokenInfo(ctx context.Context, userID uuid.UUID, offset
 				resp.Description = "Obuna orqali tokenlar berildi"
 			case "refund", "payment_revert":
 				resp.Description = "To'lov qaytarildi"
+			case "registration":
+				resp.Description = "Ro'yxatdan o'tish bonusi"
 			default:
 				resp.Description = tx.Reason
 			}
