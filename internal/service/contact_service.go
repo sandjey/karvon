@@ -160,8 +160,121 @@ func (s *ContactService) Open(ctx context.Context, viewerID uuid.UUID, req dto.O
 	return info, nil
 }
 
-func (s *ContactService) History(ctx context.Context, userID uuid.UUID) ([]model.ContactView, error) {
-	return s.contacts.History(ctx, userID, contactViewWindow)
+func (s *ContactService) History(ctx context.Context, userID uuid.UUID, offset, limit int) ([]dto.ContactHistoryItem, int64, error) {
+	views, total, err := s.contacts.HistoryPaginated(ctx, userID, contactViewWindow, offset, limit)
+	if err != nil || len(views) == 0 {
+		return nil, total, err
+	}
+
+	// Listing IDlarini cargo va warehouse bo'yicha ajrat
+	var cargoIDs, warehouseIDs, allListingIDs []uuid.UUID
+	for _, v := range views {
+		allListingIDs = append(allListingIDs, v.ListingID)
+		if v.ListingType == "cargo" {
+			cargoIDs = append(cargoIDs, v.ListingID)
+		} else {
+			warehouseIDs = append(warehouseIDs, v.ListingID)
+		}
+	}
+
+	// Batch yuklash
+	cargoList, _ := s.cargo.FindByIDs(ctx, cargoIDs)
+	warehouseList, _ := s.warehouse.FindByIDs(ctx, warehouseIDs)
+
+	// Map qilish
+	cargoMap := make(map[uuid.UUID]*model.CargoListing, len(cargoList))
+	for _, c := range cargoList {
+		cargoMap[c.ID] = c
+	}
+	warehouseMap := make(map[uuid.UUID]*model.WarehouseListing, len(warehouseList))
+	for _, w := range warehouseList {
+		warehouseMap[w.ID] = w
+	}
+
+	// Birinchi viewed_at per listing (repeat_view aniqlash uchun)
+	firstViews, _ := s.contacts.FirstViewedAtPerListing(ctx, userID, allListingIDs)
+
+	items := make([]dto.ContactHistoryItem, 0, len(views))
+	for _, v := range views {
+		item := dto.ContactHistoryItem{
+			ID:          v.ID,
+			ListingType: v.ListingType,
+			TokensSpent: v.TokensSpent,
+			ViewedAt:    v.ViewedAt,
+			FreeUntil:   v.ViewedAt.Add(30 * 24 * time.Hour),
+		}
+
+		// view_reason aniqlash
+		if v.TokensSpent > 0 {
+			item.ViewReason = "token"
+		}
+
+		if v.ListingType == "cargo" {
+			if c, ok := cargoMap[v.ListingID]; ok {
+				companyName := ""
+				if c.Company != nil {
+					companyName = c.Company.Name
+				}
+				item.Listing = dto.ContactHistoryListing{
+					ID:          c.ID,
+					Name:        c.CargoName,
+					CompanyName: companyName,
+					FromCity:    c.FromCity,
+					ToCity:      c.ToCity,
+					Status:      c.Status,
+				}
+				if c.User != nil {
+					item.Contact = dto.ContactHistoryContact{
+						Phone:    &c.User.Phone,
+						WhatsApp: c.User.WhatsApp,
+						Telegram: c.User.Telegram,
+					}
+				}
+				if v.TokensSpent == 0 {
+					if c.UserID == userID {
+						item.ViewReason = "own_listing"
+					} else if first, ok := firstViews[v.ListingID]; ok && v.ViewedAt.After(first) {
+						item.ViewReason = "repeat_view"
+					} else {
+						item.ViewReason = "subscription"
+					}
+				}
+			}
+		} else {
+			if w, ok := warehouseMap[v.ListingID]; ok {
+				companyName := ""
+				if w.Company != nil {
+					companyName = w.Company.Name
+				}
+				item.Listing = dto.ContactHistoryListing{
+					ID:          w.ID,
+					Name:        w.Name,
+					CompanyName: companyName,
+					FromCity:    w.City,
+					Status:      w.Status,
+				}
+				item.Contact = dto.ContactHistoryContact{
+					Phone: w.PhoneMain,
+				}
+				if w.User != nil {
+					item.Contact.WhatsApp = w.User.WhatsApp
+					item.Contact.Telegram = w.User.Telegram
+				}
+				if v.TokensSpent == 0 {
+					if w.UserID == userID {
+						item.ViewReason = "own_listing"
+					} else if first, ok := firstViews[v.ListingID]; ok && v.ViewedAt.After(first) {
+						item.ViewReason = "repeat_view"
+					} else {
+						item.ViewReason = "subscription"
+					}
+				}
+			}
+		}
+
+		items = append(items, item)
+	}
+	return items, total, nil
 }
 
 func (s *ContactService) TokenInfo(ctx context.Context, userID uuid.UUID) (int, []model.TokenTransaction, error) {

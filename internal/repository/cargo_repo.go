@@ -59,6 +59,20 @@ func (r *CargoRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CargoLis
 	return &c, err
 }
 
+// FindByIDs — batch yuklash Company va User preload bilan.
+func (r *CargoRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.CargoListing, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var list []*model.CargoListing
+	err := r.db.WithContext(ctx).
+		Preload("Company").
+		Preload("User").
+		Where("id IN ?", ids).
+		Find(&list).Error
+	return list, err
+}
+
 func (r *CargoRepo) IncrementViews(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&model.CargoListing{}).
 		Where("id = ?", id).

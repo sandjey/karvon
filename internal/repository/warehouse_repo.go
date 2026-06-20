@@ -48,6 +48,20 @@ func (r *WarehouseRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Ware
 	return &w, err
 }
 
+// FindByIDs — batch yuklash Company va User preload bilan.
+func (r *WarehouseRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.WarehouseListing, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var list []*model.WarehouseListing
+	err := r.db.WithContext(ctx).
+		Preload("Company").
+		Preload("User").
+		Where("id IN ?", ids).
+		Find(&list).Error
+	return list, err
+}
+
 func (r *WarehouseRepo) IncrementViews(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&model.WarehouseListing{}).
 		Where("id = ?", id).

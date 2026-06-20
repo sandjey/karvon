@@ -57,12 +57,13 @@ func (h *ContactHandler) View(c *gin.Context) {
 
 func (h *ContactHandler) History(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
-	list, err := h.svc.History(c.Request.Context(), userID)
+	page, perPage := parsePagination(c)
+	list, total, err := h.svc.History(c.Request.Context(), userID, (page-1)*perPage, perPage)
 	if err != nil {
 		InternalError(c)
 		return
 	}
-	OK(c, list)
+	Paginated(c, list, int(total), page, perPage)
 }
 
 func (h *ContactHandler) Tokens(c *gin.Context) {

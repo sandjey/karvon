@@ -110,6 +110,47 @@ func (r *ContactRepo) History(ctx context.Context, userID uuid.UUID, within time
 	return list, err
 }
 
+// HistoryPaginated — sahifalangan tarix, within ichidagi viewlar.
+func (r *ContactRepo) HistoryPaginated(ctx context.Context, userID uuid.UUID, within time.Duration, offset, limit int) ([]model.ContactView, int64, error) {
+	since := time.Now().Add(-within)
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&model.ContactView{}).
+		Where("user_id = ? AND viewed_at >= ?", userID, since).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var list []model.ContactView
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND viewed_at >= ?", userID, since).
+		Order("viewed_at DESC").
+		Offset(offset).Limit(limit).
+		Find(&list).Error
+	return list, total, err
+}
+
+// FirstViewedAtPerListing — har bir listing uchun birinchi viewed_at qaytaradi.
+func (r *ContactRepo) FirstViewedAtPerListing(ctx context.Context, userID uuid.UUID, listingIDs []uuid.UUID) (map[uuid.UUID]time.Time, error) {
+	if len(listingIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		ListingID uuid.UUID `gorm:"column:listing_id"`
+		FirstAt   time.Time `gorm:"column:first_at"`
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).
+		Model(&model.ContactView{}).
+		Select("listing_id, MIN(viewed_at) as first_at").
+		Where("user_id = ? AND listing_id IN ?", userID, listingIDs).
+		Group("listing_id").
+		Scan(&rows).Error
+	m := make(map[uuid.UUID]time.Time, len(rows))
+	for _, r := range rows {
+		m[r.ListingID] = r.FirstAt
+	}
+	return m, err
+}
+
 func (r *ContactRepo) TokenTransactions(ctx context.Context, userID uuid.UUID, limit int) ([]model.TokenTransaction, error) {
 	var list []model.TokenTransaction
 	err := r.db.WithContext(ctx).
