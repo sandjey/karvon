@@ -60,7 +60,10 @@ func (r *PricingRepo) Update(ctx context.Context, key string, fields map[string]
 }
 
 func (r *PricingRepo) Create(ctx context.Context, p *model.PricingConfig) error {
-	return r.db.WithContext(ctx).Create(p).Error
+	// Явно указываем колонки, иначе GORM пропускает is_active=false (zero value + default:true в теге).
+	return r.db.WithContext(ctx).
+		Select("key", "label", "price_uzs", "price_usd", "tokens_amount", "duration_days", "is_active", "updated_by").
+		Create(p).Error
 }
 
 func (r *PricingRepo) Delete(ctx context.Context, key string) error {
