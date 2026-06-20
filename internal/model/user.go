@@ -23,8 +23,13 @@ type User struct {
 	// Admin panel credentials (moderators only)
 	AdminLogin        *string `gorm:"type:varchar(100);uniqueIndex" json:"admin_login,omitempty"`
 	AdminPasswordHash *string `gorm:"type:varchar(200)"             json:"-"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	// Admin-managed fields
+	BlockedReason      *string    `gorm:"type:text"                              json:"-"`
+	BlockedAt          *time.Time `gorm:"column:blocked_at"                      json:"-"`
+	LastLoginAt        *time.Time `gorm:"column:last_login_at"                   json:"-"`
+	RegistrationSource *string    `gorm:"type:varchar(50);default:'phone'"       json:"-"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 type OTPCode struct {

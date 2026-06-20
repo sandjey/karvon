@@ -1,5 +1,42 @@
 package dto
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+
+	"ctm/internal/model"
+)
+
+// AdminUserDetailResponse — enriched user detail for admin panel.
+type AdminUserDetailResponse struct {
+	ID                 uuid.UUID            `json:"id"`
+	Phone              string               `json:"phone"`
+	Name               *string              `json:"name"`
+	Email              *string              `json:"email"`
+	ExtraPhone         *string              `json:"extra_phone"`
+	WhatsApp           *string              `json:"whatsapp"`
+	Telegram           *string              `json:"telegram"`
+	City               *string              `json:"city"`
+	Country            *string              `json:"country"`
+	TokenBalance       int                  `json:"token_balance"`
+	Role               string               `json:"role"`
+	IsBlocked          bool                 `json:"is_blocked"`
+	BlockedReason      *string              `json:"blocked_reason"`
+	BlockedAt          *time.Time           `json:"blocked_at"`
+	LastLoginAt        *time.Time           `json:"last_login_at"`
+	RegistrationSource *string              `json:"registration_source"`
+	CreatedAt          time.Time            `json:"created_at"`
+	UpdatedAt          time.Time            `json:"updated_at"`
+	// Activity stats
+	Companies           []model.Company      `json:"companies"`
+	ListingsCount       int64                `json:"listings_count"`
+	ActiveSubscription  *model.Subscription  `json:"active_subscription"`
+	TotalSpent          float64              `json:"total_spent"`
+	PaymentsCount       int64                `json:"payments_count"`
+	ContactsViewedCount int64                `json:"contacts_viewed_count"`
+}
+
 type AdminLoginRequest struct {
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -17,7 +54,8 @@ type TopupRequest struct {
 }
 
 type BlockRequest struct {
-	Blocked bool `json:"blocked"`
+	Blocked bool   `json:"blocked"`
+	Reason  string `json:"reason"`
 }
 
 type UpdatePricingRequest struct {

@@ -230,3 +230,10 @@ func (r *WarehouseRepo) ListForMap(ctx context.Context) ([]WarehouseMapRow, erro
 		Find(&rows).Error
 	return rows, err
 }
+
+
+func (r *WarehouseRepo) CountByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.WarehouseListing{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
+}

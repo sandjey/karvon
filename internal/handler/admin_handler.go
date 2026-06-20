@@ -107,7 +107,7 @@ func (h *AdminHandler) Block(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	if err := h.svc.SetBlocked(c.Request.Context(), id, req.Blocked); err != nil {
+	if err := h.svc.SetBlocked(c.Request.Context(), id, req.Blocked, req.Reason); err != nil {
 		InternalError(c)
 		return
 	}

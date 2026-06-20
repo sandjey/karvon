@@ -77,8 +77,34 @@ func (r *AdminRepo) Users(ctx context.Context, search, role string, offset, limi
 	return list, total, err
 }
 
-func (r *AdminRepo) SetBlocked(ctx context.Context, id uuid.UUID, blocked bool) error {
-	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", id).Update("is_blocked", blocked).Error
+type UserPaymentStats struct {
+	TotalSpent    float64 `json:"total_spent"`
+	PaymentsCount int64   `json:"payments_count"`
+}
+
+func (r *AdminRepo) UserPaymentStats(ctx context.Context, userID uuid.UUID) (UserPaymentStats, error) {
+	var result UserPaymentStats
+	err := r.db.WithContext(ctx).
+		Model(&model.PaymentOrder{}).
+		Where("user_id = ? AND status = 'paid'", userID).
+		Select("COALESCE(SUM(amount), 0) AS total_spent, COUNT(*) AS payments_count").
+		Scan(&result).Error
+	return result, err
+}
+
+func (r *AdminRepo) SetBlocked(ctx context.Context, id uuid.UUID, blocked bool, reason string) error {
+	fields := map[string]interface{}{"is_blocked": blocked}
+	if blocked {
+		now := time.Now()
+		fields["blocked_at"] = now
+		if reason != "" {
+			fields["blocked_reason"] = reason
+		}
+	} else {
+		fields["blocked_at"] = nil
+		fields["blocked_reason"] = nil
+	}
+	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", id).Updates(fields).Error
 }
 
 func (r *AdminRepo) AllCompanies(ctx context.Context, status string, offset, limit int) ([]model.Company, int64, error) {

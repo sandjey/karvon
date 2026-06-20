@@ -252,3 +252,10 @@ func (r *CargoRepo) ListForMap(ctx context.Context) ([]CargoMapRow, error) {
 		Find(&rows).Error
 	return rows, err
 }
+
+
+func (r *CargoRepo) CountByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.CargoListing{}).Where("user_id = ? AND is_template = false", userID).Count(&count).Error
+	return count, err
+}

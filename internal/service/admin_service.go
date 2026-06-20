@@ -23,6 +23,8 @@ type AdminService struct {
 	tokens     *repository.TokenRepo
 	cargo      *repository.CargoRepo
 	warehouse  *repository.WarehouseRepo
+	companies  *repository.CompanyRepo
+	payments   *repository.PaymentRepo
 	pricing    *PricingService
 	categories *repository.CategoryRepo
 	jwtMgr     *jwtpkg.Manager
@@ -37,6 +39,8 @@ func NewAdminService(
 	tokens *repository.TokenRepo,
 	cargo *repository.CargoRepo,
 	warehouse *repository.WarehouseRepo,
+	companies *repository.CompanyRepo,
+	payments *repository.PaymentRepo,
 	pricing *PricingService,
 	categories *repository.CategoryRepo,
 	jwtMgr *jwtpkg.Manager,
@@ -44,9 +48,12 @@ func NewAdminService(
 ) *AdminService {
 	return &AdminService{
 		admin: admin, users: users, tokens: tokens,
-		cargo: cargo, warehouse: warehouse, pricing: pricing,
-		categories: categories, jwtMgr: jwtMgr,
-		adminLogin: adminLogin, adminPassword: adminPassword,
+		cargo: cargo, warehouse: warehouse,
+		companies: companies, payments: payments,
+		pricing: pricing, categories: categories,
+		jwtMgr:        jwtMgr,
+		adminLogin:    adminLogin,
+		adminPassword: adminPassword,
 	}
 }
 
@@ -188,7 +195,7 @@ func (s *AdminService) Users(ctx context.Context, search, role string, offset, l
 	return s.admin.Users(ctx, search, role, offset, limit)
 }
 
-func (s *AdminService) User(ctx context.Context, id uuid.UUID) (*model.User, error) {
+func (s *AdminService) User(ctx context.Context, id uuid.UUID) (*dto.AdminUserDetailResponse, error) {
 	u, err := s.users.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -196,11 +203,47 @@ func (s *AdminService) User(ctx context.Context, id uuid.UUID) (*model.User, err
 	if u == nil {
 		return nil, ErrNotFound
 	}
-	return u, nil
+
+	companies, _ := s.companies.FindByUserID(ctx, id)
+	stats, _ := s.admin.UserPaymentStats(ctx, id)
+	contactsCount, _ := s.users.CountContactsPurchasedByUser(ctx, id)
+	activeSub, _ := s.payments.ActiveSubscription(ctx, id)
+
+	var cargoCount, warehouseCount int64
+	cargoCount, _ = s.cargo.CountByUser(ctx, id)
+	warehouseCount, _ = s.warehouse.CountByUser(ctx, id)
+
+	resp := &dto.AdminUserDetailResponse{
+		ID:                 u.ID,
+		Phone:              u.Phone,
+		Name:               u.Name,
+		Email:              u.Email,
+		ExtraPhone:         u.ExtraPhone,
+		WhatsApp:           u.WhatsApp,
+		Telegram:           u.Telegram,
+		City:               u.City,
+		Country:            u.Country,
+		TokenBalance:       u.TokenBalance,
+		Role:               u.Role,
+		IsBlocked:          u.IsBlocked,
+		BlockedReason:      u.BlockedReason,
+		BlockedAt:          u.BlockedAt,
+		LastLoginAt:        u.LastLoginAt,
+		RegistrationSource: u.RegistrationSource,
+		CreatedAt:          u.CreatedAt,
+		UpdatedAt:          u.UpdatedAt,
+		Companies:          companies,
+		ListingsCount:      cargoCount + warehouseCount,
+		ActiveSubscription: activeSub,
+		TotalSpent:         stats.TotalSpent,
+		PaymentsCount:      stats.PaymentsCount,
+		ContactsViewedCount: contactsCount,
+	}
+	return resp, nil
 }
 
-func (s *AdminService) SetBlocked(ctx context.Context, id uuid.UUID, blocked bool) error {
-	return s.admin.SetBlocked(ctx, id, blocked)
+func (s *AdminService) SetBlocked(ctx context.Context, id uuid.UUID, blocked bool, reason string) error {
+	return s.admin.SetBlocked(ctx, id, blocked, reason)
 }
 
 func (s *AdminService) TopupTokens(ctx context.Context, userID uuid.UUID, amount int) error {

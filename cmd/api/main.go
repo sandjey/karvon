@@ -144,7 +144,7 @@ func main() {
 	routeSvc     := service.NewRouteService(routeRepo)
 	notifSvc     := service.NewNotificationService(notifRepo)
 	statsRepo    := repository.NewStatsRepo(gormDB)
-	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
+	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, companyRepo, paymentRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
 
 	// Сид скрытого статик-админа
 	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
