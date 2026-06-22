@@ -103,6 +103,8 @@ func toCompanyResponse(c *model.Company) dto.CompanyResponse {
 		INNVerified:     c.INNVerified,
 		Phone:           c.Phone,
 		Email:           c.Email,
+		EmailVerified:   c.EmailVerified,
+		EmailVerifiedAt: c.EmailVerifiedAt,
 		City:            c.City,
 		Region:          c.Region,
 		Street:          c.Street,
