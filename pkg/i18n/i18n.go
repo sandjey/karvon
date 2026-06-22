@@ -85,6 +85,11 @@ var messages = map[string]map[string]string{
 		"WAREHOUSE_STATUS_UPDATED": "Статус склада обновлён",
 		"SUBSCRIPTION_EXPIRING":    "Ваша подписка истекает через 3 дня",
 		"EMAIL_VERIFICATION_SENT":  "Уведомление отправлено на email",
+		"CARRIER_CREATED":         "Компания-перевозчик добавлена",
+		"CARRIER_UPDATED":         "Данные перевозчика обновлены",
+		"CARRIER_DELETED":         "Перевозчик удалён",
+		"CARRIER_NOT_FOUND":       "Перевозчик не найден",
+		"CARRIER_COUNTRIES_LIMIT": "Максимум 100 стран",
 	},
 	"uz": {
 		// errors
@@ -165,6 +170,11 @@ var messages = map[string]map[string]string{
 		"WAREHOUSE_STATUS_UPDATED": "Ombor holati yangilandi",
 		"SUBSCRIPTION_EXPIRING":    "Obunangiz 3 kundan keyin tugaydi",
 		"EMAIL_VERIFICATION_SENT":  "Email ga xabar yuborildi",
+		"CARRIER_CREATED":         "Tashuvchi kompaniya qo'shildi",
+		"CARRIER_UPDATED":         "Tashuvchi ma'lumotlari yangilandi",
+		"CARRIER_DELETED":         "Tashuvchi o'chirildi",
+		"CARRIER_NOT_FOUND":       "Tashuvchi topilmadi",
+		"CARRIER_COUNTRIES_LIMIT": "Maksimal 100 ta mamlakat",
 	},
 	"en": {
 		// errors
@@ -245,6 +255,11 @@ var messages = map[string]map[string]string{
 		"WAREHOUSE_STATUS_UPDATED": "Warehouse status updated",
 		"SUBSCRIPTION_EXPIRING":    "Your subscription expires in 3 days",
 		"EMAIL_VERIFICATION_SENT":  "Notification sent to email",
+		"CARRIER_CREATED":         "Carrier company added",
+		"CARRIER_UPDATED":         "Carrier updated",
+		"CARRIER_DELETED":         "Carrier deleted",
+		"CARRIER_NOT_FOUND":       "Carrier not found",
+		"CARRIER_COUNTRIES_LIMIT": "Maximum 100 countries allowed",
 	},
 }
 

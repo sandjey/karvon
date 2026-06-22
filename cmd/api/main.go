@@ -118,6 +118,9 @@ func main() {
 	adminRepo     := repository.NewAdminRepo(gormDB)
 	mediaRepo     := repository.NewMediaRepo(gormDB)
 	paymentRepo   := repository.NewPaymentRepo(gormDB)
+	carrierRepo   := repository.NewCarrierRepo(gormDB)
+
+	carrierSvc   := service.NewCarrierService(carrierRepo)
 
 	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
 
@@ -203,6 +206,7 @@ func main() {
 	handler.NewSearchHandler(cargoSvc, warehouseSvc).RegisterRoutes(v1)
 	handler.NewAdminHandler(adminSvc).RegisterRoutes(v1, authMiddleware, superAdminMiddleware)
 	handler.NewStatsHandler(statsRepo).RegisterRoutes(v1)
+	handler.NewCarrierHandler(carrierSvc).RegisterRoutes(v1, authMiddleware)
 
 	// ── Сервер ───────────────────────────────────────────────────────────────
 	srv := &http.Server{
@@ -302,6 +306,7 @@ func runMigrations(db *gorm.DB) error {
 		&model.Favorite{},
 		&model.Notification{},
 		&model.WarehouseView{},
+		&model.CarrierCompany{},
 	)
 }
 
@@ -336,6 +341,7 @@ func createEnumTypes(db *gorm.DB) error {
 		{"payment_currency_enum", "'UZS','USD'"},
 		{"subscription_plan_enum", "'week','month','year'"},
 		{"favorite_listing_type_enum", "'cargo','transport','warehouse'"},
+		{"carrier_transport_type_enum", "'railway','auto','aviation','sea'"},
 	}
 	for _, e := range enums {
 		sql := fmt.Sprintf(`DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='%s') THEN CREATE TYPE %s AS ENUM (%s); END IF; END $$;`, e.name, e.name, e.vals)
