@@ -2140,14 +2140,24 @@
               "name": "201 Created — объявление создано",
               "status": "Created",
               "code": 201,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": true,\n  \"message\": \"Объявление создано\",\n  \"data\": {\n    \"id\": \"uuid\",\n    \"status\": \"active\",\n    \"is_paid\": false,\n    \"cargo_name\": \"Хлопковая пряжа\"\n  }\n}"
             },
             {
               "name": "402 Payment Required — квота исчерпана",
               "status": "Payment Required",
               "code": 402,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"FREE_LISTING_USED\",\n    \"message\": \"Бесплатное объявление уже использовано\"\n  }\n}"
             }
           ]
@@ -4590,18 +4600,36 @@
           "request": {
             "method": "PATCH",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tokens_amount\": 5\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/pricing/free_listing_quota",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "pricing", "free_listing_quota"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pricing",
+                "free_listing_quota"
+              ]
             },
             "description": "Изменить количество бесплатных объявлений на аккаунт.\n`tokens_amount` = количество бесплатных активных объявлений (cargo + warehouse суммарно).\n\nПо умолчанию: 1. Например, чтобы дать 5 бесплатных — передать `{\"tokens_amount\": 5}`.\nВступает в силу сразу, без перезапуска сервера."
           },
@@ -4610,7 +4638,12 @@
               "name": "200 OK",
               "status": "OK",
               "code": 200,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": true,\n  \"message\": \"Тариф обновлён\",\n  \"data\": null\n}"
             }
           ]
@@ -4620,18 +4653,36 @@
           "request": {
             "method": "PATCH",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"price_uzs\": 50000,\n  \"price_usd\": 4\n}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/admin/pricing/listing_paid",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "pricing", "listing_paid"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "pricing",
+                "listing_paid"
+              ]
             },
             "description": "Изменить цену платного объявления (2-е и последующие).\nПо умолчанию: 30 000 UZS / $3."
           },
@@ -4640,7 +4691,12 @@
               "name": "200 OK",
               "status": "OK",
               "code": 200,
-              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"success\": true,\n  \"message\": \"Тариф обновлён\",\n  \"data\": null\n}"
             }
           ]
@@ -4683,8 +4739,15 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "description": "Возвращает состояние всех флагов бесплатного режима: all, cargo, warehouse, contacts, carriers."
           },
@@ -4695,18 +4758,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"all\", \"enabled\": true}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Включает глобальный бесплатный режим (все сущности становятся бесплатными)."
           },
@@ -4717,18 +4797,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"cargo\", \"enabled\": true}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Снять лимит квоты на создание грузовых объявлений."
           },
@@ -4739,18 +4836,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"warehouse\", \"enabled\": true}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Снять лимит квоты на создание складов."
           },
@@ -4761,18 +4875,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"contacts\", \"enabled\": true}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Отключить списание токенов за просмотр контактов."
           },
@@ -4783,18 +4914,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"carriers\", \"enabled\": true}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Флаг для учёта перевозчиков (уже бесплатно по умолчанию)."
           },
@@ -4805,18 +4953,35 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"},
-              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "free-mode"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
             },
             "body": {
               "mode": "raw",
               "raw": "{\"key\": \"all\", \"enabled\": false}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "description": "Выключить глобальный бесплатный режим (вернуть все ограничения)."
           },
@@ -5037,6 +5202,240 @@
           ]
         },
         {
+          "name": "GET /config - org_types (ru)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=ru",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "ru"
+                }
+              ]
+            },
+            "description": "Spravochnik tipov organizatsiy na russkom. Pole org_types v otvete."
+          },
+          "response": [
+            {
+              "name": "200 - org_types ru",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"org_types\": [{\"key\": \"ooo\", \"label\": \"OOO - Obshchestvo s ogranichennoy otvetstvennostyu\"}, {\"key\": \"ao\", \"label\": \"AO - Aktsionernoe obshchestvo\"}, {\"key\": \"ip\", \"label\": \"IP - Individualnyy predprinimatel\"}, {\"key\": \"ltd\", \"label\": \"Ltd - Chastnaya kompaniya s ogranichennoy otvetstvennostyu\"}, {\"key\": \"gmbh\", \"label\": \"GmbH - Obshchestvo s ogranichennoy otvetstvennostyu (Germaniya)\"}, {\"key\": \"co_ltd\", \"label\": \"Co. Ltd - Kompaniya s ogranichennoy otvetstvennostyu\"}, {\"key\": \"mchj\", \"label\": \"MChJ - Mas'uliyati cheklangan jamiyat (Uzbekistan)\"}, {\"key\": \"xk\", \"label\": \"XK - Xususiy korxona (Uzbekistan)\"}, {\"key\": \"oaj\", \"label\": \"OAJ - Ochiq aksiyadorlik jamiyati (Uzbekistan)\"}, {\"key\": \"yat\", \"label\": \"YaT - Yakka tartibdagi tadbirkor (Uzbekistan)\"}, {\"key\": \"qmj\", \"label\": \"QMJ - Qoshimcha masuliyatli jamiyat\"}]}}"
+            }
+          ]
+        },
+        {
+          "name": "GET /config - org_types (uz)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=uz",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "uz"
+                }
+              ]
+            },
+            "description": "Tashkilot turlari malumotnomasi o'zbek tilida. org_types maydoni."
+          },
+          "response": [
+            {
+              "name": "200 - org_types uz",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"org_types\": [{\"key\": \"ooo\", \"label\": \"OOO - Mas'uliyati cheklangan jamiyat (Rossiya)\"}, {\"key\": \"ao\", \"label\": \"AO - Aksiyadorlik jamiyati (Rossiya)\"}, {\"key\": \"ip\", \"label\": \"YT - Yakka tartibdagi tadbirkor (Rossiya)\"}, {\"key\": \"ltd\", \"label\": \"Ltd - Xususiy cheklangan kompaniya\"}, {\"key\": \"gmbh\", \"label\": \"GmbH - Cheklangan javobgarlikli jamiyat (Germaniya)\"}, {\"key\": \"co_ltd\", \"label\": \"Co. Ltd - Cheklangan masuliyatli kompaniya\"}, {\"key\": \"mchj\", \"label\": \"MCHJ - Masuliyati cheklangan jamiyat\"}, {\"key\": \"xk\", \"label\": \"XK - Xususiy korxona\"}, {\"key\": \"oaj\", \"label\": \"OAJ - Ochiq aksiyadorlik jamiyati\"}, {\"key\": \"yat\", \"label\": \"YAT - Yakka tartibdagi tadbirkor\"}, {\"key\": \"qmj\", \"label\": \"QMJ - Qo'shimcha masuliyatli jamiyat\"}]}}"
+            }
+          ]
+        },
+        {
+          "name": "GET /config - org_types (en)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=en",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Organization types reference in English. Field org_types in response."
+          },
+          "response": [
+            {
+              "name": "200 - org_types en",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"org_types\": [{\"key\": \"ooo\", \"label\": \"LLC - Limited Liability Company (Russian form)\"}, {\"key\": \"ao\", \"label\": \"JSC - Joint Stock Company (Russian form)\"}, {\"key\": \"ip\", \"label\": \"SE - Sole Entrepreneur (Russian form)\"}, {\"key\": \"ltd\", \"label\": \"Ltd - Private Limited Company\"}, {\"key\": \"gmbh\", \"label\": \"GmbH - Gesellschaft mit beschrankter Haftung (Germany)\"}, {\"key\": \"co_ltd\", \"label\": \"Co. Ltd - Company Limited\"}, {\"key\": \"mchj\", \"label\": \"LLC - Masuliyati Cheklangan Jamiyat (Uzbek form)\"}, {\"key\": \"xk\", \"label\": \"PE - Private Enterprise (Uzbek form)\"}, {\"key\": \"oaj\", \"label\": \"OJSC - Open Joint Stock Company (Uzbek form)\"}, {\"key\": \"yat\", \"label\": \"IE - Individual Entrepreneur (Uzbek form)\"}, {\"key\": \"qmj\", \"label\": \"ALC - Additional Liability Company (Uzbek form)\"}]}}"
+            }
+          ]
+        },
+        {
+          "name": "GET /config - transport_types (ru)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=ru",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "ru"
+                }
+              ]
+            },
+            "description": "Spravochnik tipov transporta na russkom. Pole transport_types v otvete."
+          },
+          "response": [
+            {
+              "name": "200 - transport_types ru",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"transport_types\": [{\"key\": \"auto\", \"label\": \"Avtomobilnyy transport\"}, {\"key\": \"railway\", \"label\": \"Zheleznodorozhnyy transport\"}, {\"key\": \"aviation\", \"label\": \"Aviatsionnyy transport\"}, {\"key\": \"sea\", \"label\": \"Morskoy transport\"}]}}"
+            }
+          ]
+        },
+        {
+          "name": "GET /config - transport_types (uz)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=uz",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "uz"
+                }
+              ]
+            },
+            "description": "Transport turlari malumotnomasi o'zbek tilida. transport_types maydoni."
+          },
+          "response": [
+            {
+              "name": "200 - transport_types uz",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"transport_types\": [{\"key\": \"auto\", \"label\": \"Avtomobil tashish\"}, {\"key\": \"railway\", \"label\": \"Temir yo'l tashish\"}, {\"key\": \"aviation\", \"label\": \"Aviatsiya tashish\"}, {\"key\": \"sea\", \"label\": \"Dengiz tashish\"}]}}"
+            }
+          ]
+        },
+        {
+          "name": "GET /config - transport_types (en)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/config?lang=en",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "config"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Transport types reference in English. Field transport_types in response."
+          },
+          "response": [
+            {
+              "name": "200 - transport_types en",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\"success\": true, \"data\": {\"transport_types\": [{\"key\": \"auto\", \"label\": \"Road transport\"}, {\"key\": \"railway\", \"label\": \"Railway transport\"}, {\"key\": \"aviation\", \"label\": \"Air transport\"}, {\"key\": \"sea\", \"label\": \"Sea transport\"}]}}"
+            }
+          ]
+        },
+        {
           "name": "GET /users/me/events — лента событий",
           "request": {
             "method": "GET",
@@ -5102,8 +5501,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/map/markers",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "map", "markers"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "map",
+                "markers"
+              ],
               "query": []
             },
             "description": "Возвращает **все** активные грузы И склады в виде GeoJSON FeatureCollection.\n\n**Пример ответа:**\n```json\n{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"uuid\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.24, 41.29] },\n      \"properties\": {\n        \"id\": \"uuid\",\n        \"kind\": \"cargo\",\n        \"title\": \"Замороженная говядина\",\n        \"city\": \"Самарканд\"\n      }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"uuid2\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.35, 41.32] },\n      \"properties\": {\n        \"id\": \"uuid2\",\n        \"kind\": \"warehouse\",\n        \"title\": \"Chilonzor ombori\",\n        \"address\": \"Chilonzor ko'chasi 12\"\n      }\n    }\n  ]\n}\n```\n\n**Использование в MapLibre GL JS:**\n```js\nmap.addSource('ctm', {\n  type: 'geojson',\n  data: 'https://api.centraltrademarket.com/api/v1/map/markers'\n});\n```"
@@ -5113,7 +5519,12 @@
               "name": "200 — все маркеры",
               "status": "OK",
               "code": 200,
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [66.9597, 39.6542] },\n      \"properties\": { \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\", \"kind\": \"cargo\", \"title\": \"Замороженная говядина\", \"city\": \"Самарканд\" }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b00-0000-0000-0000-000000000001\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"c88f9b00-0000-0000-0000-000000000001\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
             }
           ]
@@ -5125,10 +5536,21 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/map/markers?kind=cargo",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "map", "markers"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "map",
+                "markers"
+              ],
               "query": [
-                { "key": "kind", "value": "cargo", "description": "Только активные грузовые объявления с координатами" }
+                {
+                  "key": "kind",
+                  "value": "cargo",
+                  "description": "Только активные грузовые объявления с координатами"
+                }
               ]
             },
             "description": "Только **грузы** (cargo_listings). Фильтрует по:\n- `status = 'active'`\n- `is_template = false`\n- `is_admin_blocked = false`\n- `lat IS NOT NULL AND lng IS NOT NULL`\n\n**Properties каждого feature:**\n- `id` — UUID груза\n- `kind` — всегда `\"cargo\"`\n- `title` — название груза (cargo_name)\n- `city` — город отправки (from_city)"
@@ -5138,7 +5560,12 @@
               "name": "200 — только грузы",
               "status": "OK",
               "code": 200,
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [66.9597, 39.6542] },\n      \"properties\": { \"id\": \"06bb83a9-e67c-4a60-b1a3-eb230fdaa20e\", \"kind\": \"cargo\", \"title\": \"Замороженная говядина\", \"city\": \"Самарканд\" }\n    }\n  ]\n}"
             }
           ]
@@ -5150,10 +5577,21 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/map/markers?kind=warehouse",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "map", "markers"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "map",
+                "markers"
+              ],
               "query": [
-                { "key": "kind", "value": "warehouse", "description": "Только активные склады с координатами" }
+                {
+                  "key": "kind",
+                  "value": "warehouse",
+                  "description": "Только активные склады с координатами"
+                }
               ]
             },
             "description": "Только **склады** (warehouse_listings). Фильтрует по:\n- `status = 'active'`\n- `is_admin_blocked = false`\n- `lat IS NOT NULL AND lng IS NOT NULL`\n\n**Properties каждого feature:**\n- `id` — UUID склада\n- `kind` — всегда `\"warehouse\"`\n- `title` — название склада (name)\n- `address` — адрес склада"
@@ -5163,7 +5601,12 @@
               "name": "200 — только склады",
               "status": "OK",
               "code": 200,
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b00-0000-0000-0000-000000000001\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"c88f9b00-0000-0000-0000-000000000001\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
             }
           ]
@@ -5175,10 +5618,22 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/v1/map/markers",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "map", "markers"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "map",
+                "markers"
+              ],
               "query": [
-                { "key": "kind", "value": "cargo", "description": "Фильтр: cargo | warehouse. Без параметра — все.", "disabled": true }
+                {
+                  "key": "kind",
+                  "value": "cargo",
+                  "description": "Фильтр: cargo | warehouse. Без параметра — все.",
+                  "disabled": true
+                }
               ]
             },
             "description": "Возвращает **raw GeoJSON FeatureCollection** (без стандартной обёртки success/data) — пригоден для прямого использования в MapLibre, Leaflet, iOS/Android map SDK.\n\nКаждый Feature:\n```json\n{\n  \"type\": \"Feature\",\n  \"id\": \"uuid\",\n  \"geometry\": { \"type\": \"Point\", \"coordinates\": [lng, lat] },\n  \"properties\": {\n    \"id\": \"uuid\",\n    \"kind\": \"cargo\" | \"warehouse\",\n    \"title\": \"Название\",\n    \"city\": \"Ташкент\"   // cargo only\n    \"address\": \"ул. ...\" // warehouse only\n  }\n}\n```\n\n**Использование в MapLibre GL JS:**\n```js\nmap.addSource('ctm', {\n  type: 'geojson',\n  data: 'https://api.centraltrademarket.com/api/v1/map/markers',\n  cluster: true\n});\n```\n\n**Фильтр по типу:** `?kind=cargo` или `?kind=warehouse`."
@@ -5188,7 +5643,12 @@
               "name": "200 — FeatureCollection",
               "status": "OK",
               "code": 200,
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
               "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"b12e4a...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"b12e4a...\", \"kind\": \"cargo\", \"title\": \"Qand mahsulotlari\", \"city\": \"Toshkent\" }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.3500, 41.3200] },\n      \"properties\": { \"id\": \"c88f9b...\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
             }
           ]
