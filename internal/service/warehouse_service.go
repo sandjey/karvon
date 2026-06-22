@@ -119,7 +119,7 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	}
 	freeQuota := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
 	initialStatus := "active"
-	if !s.pricingRepo.IsFreeMode(ctx) && int(freeCargo+freeWarehouse) >= freeQuota {
+	if !s.pricingRepo.IsFreeWarehouse(ctx) && int(freeCargo+freeWarehouse) >= freeQuota {
 		initialStatus = "archived"
 	}
 

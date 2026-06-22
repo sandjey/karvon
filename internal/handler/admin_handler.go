@@ -405,19 +405,34 @@ func (h *AdminHandler) GetFreeMode(c *gin.Context) {
 		InternalError(c)
 		return
 	}
-	enabled := false
+	flags := map[string]bool{
+		"all":       false,
+		"cargo":     false,
+		"warehouse": false,
+		"contacts":  false,
+		"carriers":  false,
+	}
 	for _, p := range list {
-		if p.Key == "system:free_mode" {
-			enabled = p.TokensAmount > 0
-			break
+		switch p.Key {
+		case "system:free_mode":
+			flags["all"] = p.TokensAmount > 0
+		case "system:free_cargo":
+			flags["cargo"] = p.TokensAmount > 0
+		case "system:free_warehouse":
+			flags["warehouse"] = p.TokensAmount > 0
+		case "system:free_contacts":
+			flags["contacts"] = p.TokensAmount > 0
+		case "system:free_carriers":
+			flags["carriers"] = p.TokensAmount > 0
 		}
 	}
-	OK(c, gin.H{"enabled": enabled})
+	OK(c, flags)
 }
 
 func (h *AdminHandler) SetFreeMode(c *gin.Context) {
 	var req struct {
-		Enabled bool `json:"enabled"`
+		Key     string `json:"key"     binding:"required,oneof=all cargo warehouse contacts carriers"`
+		Enabled bool   `json:"enabled"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
@@ -428,15 +443,26 @@ func (h *AdminHandler) SetFreeMode(c *gin.Context) {
 	if req.Enabled {
 		val = 1
 	}
-	if err := h.svc.UpdatePricing(c.Request.Context(), "system:free_mode", map[string]interface{}{"tokens_amount": val}, adminID); err != nil {
+
+	keyMap := map[string]string{
+		"all":       "system:free_mode",
+		"cargo":     "system:free_cargo",
+		"warehouse": "system:free_warehouse",
+		"contacts":  "system:free_contacts",
+		"carriers":  "system:free_carriers",
+	}
+
+	pricingKey := keyMap[req.Key]
+	if err := h.svc.UpdatePricing(c.Request.Context(), pricingKey, map[string]interface{}{"tokens_amount": val}, adminID); err != nil {
 		InternalError(c)
 		return
 	}
-	key := "FREE_MODE_DISABLED"
+
+	msgKey := "FREE_MODE_DISABLED"
 	if req.Enabled {
-		key = "FREE_MODE_ENABLED"
+		msgKey = "FREE_MODE_ENABLED"
 	}
-	OKMsg(c, gin.H{"enabled": req.Enabled}, key)
+	OKMsg(c, gin.H{"key": req.Key, "enabled": req.Enabled}, msgKey)
 }
 
 func (h *AdminHandler) FreeModeUI(c *gin.Context) {
@@ -450,80 +476,124 @@ func (h *AdminHandler) FreeModeUI(c *gin.Context) {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-  .card { background: white; border-radius: 16px; padding: 40px; width: 420px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+  .card { background: white; border-radius: 16px; padding: 40px; width: 460px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
   h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 8px; }
-  .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; line-height: 1.5; }
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-top: 1px solid #f0f0f0; }
-  .toggle-label { font-size: 16px; font-weight: 600; color: #333; }
-  .toggle-desc { font-size: 13px; color: #999; margin-top: 4px; }
-  .switch { position: relative; display: inline-block; width: 56px; height: 30px; }
+  .subtitle { color: #666; font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+  .section-title { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 10px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f5f5f5; }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 15px; font-weight: 600; color: #222; }
+  .toggle-desc { font-size: 12px; color: #aaa; margin-top: 3px; }
+  .switch { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
   .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .3s; border-radius: 30px; }
-  .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background: white; transition: .3s; border-radius: 50%; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ddd; transition: .25s; border-radius: 28px; }
+  .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; transition: .25s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   input:checked + .slider { background: #4f46e5; }
-  input:checked + .slider:before { transform: translateX(26px); }
-  .status { margin-top: 24px; padding: 14px 18px; border-radius: 10px; font-size: 14px; font-weight: 500; display: none; }
-  .status.on { background: #ecfdf5; color: #065f46; display: block; }
-  .status.off { background: #fef2f2; color: #991b1b; display: block; }
-  .login-form { margin-bottom: 24px; }
-  .login-form input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
-  .login-form button { width: 100%; padding: 11px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 600; }
+  input:checked + .slider.green { background: #10b981; }
+  input:checked + .slider:before { transform: translateX(24px); }
+  .divider { height: 1px; background: #f0f0f0; margin: 16px 0; }
+  .all-row .toggle-label { color: #4f46e5; font-size: 16px; }
+  .all-row .slider { background: #ddd; }
+  .all-row input:checked + .slider { background: #4f46e5; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1a2e; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .login-form input { width: 100%; padding: 10px 14px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; margin-bottom: 10px; outline: none; }
+  .login-form input:focus { border-color: #4f46e5; }
+  .login-form button { width: 100%; padding: 12px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 600; }
   .login-form button:hover { background: #4338ca; }
-  .features { background: #f8f9ff; border-radius: 10px; padding: 16px; margin-bottom: 24px; }
-  .features p { font-size: 13px; color: #555; margin-bottom: 6px; }
-  .features p:last-child { margin-bottom: 0; }
-  .features span { color: #4f46e5; font-weight: 600; }
   #main { display: none; }
-  #loginSection { display: block; }
+  #loginSection { }
+  .badge { display: inline-block; font-size: 10px; background: #fef3c7; color: #92400e; padding: 2px 7px; border-radius: 20px; margin-left: 8px; font-weight: 600; vertical-align: middle; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>Управление режимом</h1>
-  <p class="subtitle">Переключатель бесплатного режима для платформы CTM</p>
+  <h1>&#9881;&#65039; Управление ограничениями</h1>
+  <p class="subtitle">Включайте или отключайте платёжные ограничения для каждого раздела отдельно</p>
 
   <div id="loginSection">
     <div class="login-form">
       <input type="text" id="login" placeholder="Логин администратора" />
-      <input type="password" id="password" placeholder="Пароль" />
+      <input type="password" id="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')doLogin()" />
       <button onclick="doLogin()">Войти</button>
     </div>
   </div>
 
   <div id="main">
-    <div class="features">
-      <p>+ <span>Создание грузов</span> — без ограничений</p>
-      <p>+ <span>Создание складов</span> — без ограничений</p>
-      <p>+ <span>Создание перевозчиков</span> — без ограничений</p>
-      <p>+ <span>Просмотр контактов</span> — без списания токенов</p>
-    </div>
-
-    <div class="toggle-row">
+    <div class="section-title">Глобальное управление</div>
+    <div class="toggle-row all-row">
       <div>
-        <div class="toggle-label">Бесплатный режим</div>
-        <div class="toggle-desc">Отключает все платёжные ограничения</div>
+        <div class="toggle-label">Всё бесплатно <span class="badge">МАСТЕР</span></div>
+        <div class="toggle-desc">Включает/выключает все ограничения сразу</div>
       </div>
       <label class="switch">
-        <input type="checkbox" id="freeToggle" onchange="setFreeMode(this.checked)">
+        <input type="checkbox" id="toggle-all" onchange="setMode('all', this.checked)">
         <span class="slider"></span>
       </label>
     </div>
 
-    <div id="status" class="status"></div>
+    <div class="divider"></div>
+    <div class="section-title">По разделам</div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">&#128230; Грузы</div>
+        <div class="toggle-desc">Снять лимит на создание грузовых объявлений</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-cargo" onchange="setMode('cargo', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">&#127981; Склады</div>
+        <div class="toggle-desc">Снять лимит на создание складов</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-warehouse" onchange="setMode('warehouse', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">&#128065; Просмотр контактов</div>
+        <div class="toggle-desc">Без списания токенов за просмотр</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-contacts" onchange="setMode('contacts', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">&#128666; Перевозчики</div>
+        <div class="toggle-desc">Уже бесплатно — флаг для учёта</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-carriers" onchange="setMode('carriers', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 let token = '';
 const base = window.location.origin;
 
 async function doLogin() {
-  const login = document.getElementById('login').value;
+  const login = document.getElementById('login').value.trim();
   const pass = document.getElementById('password').value;
+  if (!login || !pass) { showToast('Введите логин и пароль'); return; }
   try {
     const r = await fetch(base + '/api/v1/admin/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({login, password: pass})
     });
     const d = await r.json();
@@ -532,44 +602,56 @@ async function doLogin() {
       document.getElementById('loginSection').style.display = 'none';
       document.getElementById('main').style.display = 'block';
       loadStatus();
-    } else {
-      alert('Неверный логин или пароль');
-    }
-  } catch(e) { alert('Ошибка подключения'); }
+    } else { showToast('Неверный логин или пароль'); }
+  } catch(e) { showToast('Ошибка подключения к серверу'); }
 }
 
 async function loadStatus() {
-  const r = await fetch(base + '/api/v1/admin/free-mode', {
-    headers: {'Authorization': 'Bearer ' + token}
-  });
-  const d = await r.json();
-  if (d.success) {
-    document.getElementById('freeToggle').checked = d.data.enabled;
-    showStatus(d.data.enabled);
-  }
+  try {
+    const r = await fetch(base + '/api/v1/admin/free-mode', {
+      headers: {'Authorization': 'Bearer ' + token}
+    });
+    const d = await r.json();
+    if (d.success && d.data) {
+      const f = d.data;
+      setCheck('all', f.all);
+      setCheck('cargo', f.cargo || f.all);
+      setCheck('warehouse', f.warehouse || f.all);
+      setCheck('contacts', f.contacts || f.all);
+      setCheck('carriers', f.carriers || f.all);
+    }
+  } catch(e) {}
 }
 
-async function setFreeMode(enabled) {
-  const r = await fetch(base + '/api/v1/admin/free-mode', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + token},
-    body: JSON.stringify({enabled})
-  });
-  const d = await r.json();
-  if (d.success) {
-    showStatus(enabled);
-  }
+function setCheck(key, val) {
+  const el = document.getElementById('toggle-' + key);
+  if (el) el.checked = !!val;
 }
 
-function showStatus(enabled) {
-  const el = document.getElementById('status');
-  if (enabled) {
-    el.className = 'status on';
-    el.textContent = 'Бесплатный режим ВКЛЮЧЁН — все ограничения сняты';
-  } else {
-    el.className = 'status off';
-    el.textContent = 'Бесплатный режим ВЫКЛЮЧЕН — платёжные ограничения активны';
-  }
+async function setMode(key, enabled) {
+  try {
+    const r = await fetch(base + '/api/v1/admin/free-mode', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer ' + token},
+      body: JSON.stringify({key, enabled})
+    });
+    const d = await r.json();
+    if (d.success) {
+      showToast(enabled ? '&#10003; ' + labelFor(key) + ' — включено' : '&#128274; ' + labelFor(key) + ' — выключено');
+      if (key === 'all') { loadStatus(); }
+    } else { showToast('Ошибка: ' + (d.error && d.error.message || 'неизвестная')); }
+  } catch(e) { showToast('Ошибка запроса'); }
+}
+
+function labelFor(key) {
+  return {'all':'Всё','cargo':'Грузы','warehouse':'Склады','contacts':'Контакты','carriers':'Перевозчики'}[key] || key;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
 }
 </script>
 </body>

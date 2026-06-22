@@ -399,6 +399,10 @@ func seedPricingConfig(db *gorm.DB) error {
 		{Key: "boost_3day", Label: "Буст на 3 дня", DurationDays: 3, PriceUZS: 50000, PriceUSD: 4.5},
 		{Key: "boost_7day", Label: "Буст на 7 дней", DurationDays: 7, PriceUZS: 100000, PriceUSD: 9},
 		{Key: "system:free_mode", Label: "Глобальный бесплатный режим (0=выкл, 1=вкл)", TokensAmount: 0},
+		{Key: "system:free_cargo", Label: "Бесплатное создание грузов (0=выкл, 1=вкл)", TokensAmount: 0},
+		{Key: "system:free_warehouse", Label: "Бесплатное создание складов (0=выкл, 1=вкл)", TokensAmount: 0},
+		{Key: "system:free_contacts", Label: "Бесплатный просмотр контактов (0=выкл, 1=вкл)", TokensAmount: 0},
+		{Key: "system:free_carriers", Label: "Бесплатное создание перевозчиков (0=выкл, 1=вкл)", TokensAmount: 0},
 	}
 	for _, s := range seeds {
 		var existing model.PricingConfig

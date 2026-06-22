@@ -122,7 +122,7 @@ func (s *ContactService) Open(ctx context.Context, viewerID uuid.UUID, req dto.O
 	}
 
 	// В глобальном бесплатном режиме — просмотр без списания токенов
-	if s.pricing.IsFreeMode(ctx) {
+	if s.pricing.IsFreeContacts(ctx) {
 		_ = s.contacts.RecordFree(ctx, viewerID, req.ListingType, req.ListingID)
 		info.TokensSpent = 0
 		return info, nil

@@ -4672,7 +4672,7 @@
           "response": []
         },
         {
-          "name": "GET /admin/free-mode",
+          "name": "Get Free Mode (all flags)",
           "request": {
             "method": "GET",
             "header": [
@@ -4683,56 +4683,142 @@
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "free-mode"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
             },
-            "description": "Возвращает текущее состояние глобального бесплатного режима."
+            "description": "Возвращает состояние всех флагов бесплатного режима: all, cargo, warehouse, contacts, carriers."
           },
           "response": []
         },
         {
-          "name": "POST /admin/free-mode — включить/выключить",
+          "name": "Set Free Mode — ALL (вкл/выкл всё)",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{admin_token}}"
-              }
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
             ],
             "url": {
               "raw": "{{base_url}}/api/v1/admin/free-mode",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "admin",
-                "free-mode"
-              ]
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"enabled\": true}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\"key\": \"all\", \"enabled\": true}",
+              "options": {"raw": {"language": "json"}}
             },
-            "description": "Включает (enabled: true) или выключает (enabled: false) глобальный бесплатный режим. В режиме free: создание грузов/складов без квоты, просмотр контактов без списания токенов."
+            "description": "Включает глобальный бесплатный режим (все сущности становятся бесплатными)."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — CARGO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"cargo\", \"enabled\": true}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "description": "Снять лимит квоты на создание грузовых объявлений."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — WAREHOUSE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"warehouse\", \"enabled\": true}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "description": "Снять лимит квоты на создание складов."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — CONTACTS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"contacts\", \"enabled\": true}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "description": "Отключить списание токенов за просмотр контактов."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — CARRIERS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"carriers\", \"enabled\": true}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "description": "Флаг для учёта перевозчиков (уже бесплатно по умолчанию)."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — DISABLE ALL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "free-mode"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"all\", \"enabled\": false}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "description": "Выключить глобальный бесплатный режим (вернуть все ограничения)."
           },
           "response": []
         },

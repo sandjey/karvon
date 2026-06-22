@@ -83,3 +83,18 @@ func (r *PricingRepo) TokensAmount(ctx context.Context, key string, fallback int
 func (r *PricingRepo) IsFreeMode(ctx context.Context) bool {
 	return r.TokensAmount(ctx, "system:free_mode", 0) > 0
 }
+
+// IsFreeCargo returns true if cargo creation is free (no quota limit).
+func (r *PricingRepo) IsFreeCargo(ctx context.Context) bool {
+	return r.IsFreeMode(ctx) || r.TokensAmount(ctx, "system:free_cargo", 0) > 0
+}
+
+// IsFreeWarehouse returns true if warehouse creation is free (no quota limit).
+func (r *PricingRepo) IsFreeWarehouse(ctx context.Context) bool {
+	return r.IsFreeMode(ctx) || r.TokensAmount(ctx, "system:free_warehouse", 0) > 0
+}
+
+// IsFreeContacts returns true if contact viewing is free (no token debit).
+func (r *PricingRepo) IsFreeContacts(ctx context.Context) bool {
+	return r.IsFreeMode(ctx) || r.TokensAmount(ctx, "system:free_contacts", 0) > 0
+}
