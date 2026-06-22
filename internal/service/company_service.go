@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -11,11 +12,12 @@ import (
 )
 
 type CompanyService struct {
-	repo *repository.CompanyRepo
+	repo     *repository.CompanyRepo
+	emailSvc *EmailService
 }
 
-func NewCompanyService(repo *repository.CompanyRepo) *CompanyService {
-	return &CompanyService{repo: repo}
+func NewCompanyService(repo *repository.CompanyRepo, emailSvc *EmailService) *CompanyService {
+	return &CompanyService{repo: repo, emailSvc: emailSvc}
 }
 
 func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateCompanyRequest) (*model.Company, error) {
@@ -43,6 +45,11 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 		RegDocURL:  req.RegDocURL,
 		InnDocURL:  req.InnDocURL,
 		Status:     "pending",
+	}
+	if req.Email != "" && s.emailSvc.IsVerified(ctx, req.Email) {
+		now := time.Now()
+		c.EmailVerified = true
+		c.EmailVerifiedAt = &now
 	}
 	if err := s.repo.Create(ctx, c); err != nil {
 		return nil, err
@@ -99,6 +106,11 @@ func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID
 	}
 	if req.Email != nil {
 		fields["email"] = *req.Email
+		if s.emailSvc.IsVerified(ctx, *req.Email) {
+			fields["email_verified"] = true
+			now := time.Now()
+			fields["email_verified_at"] = &now
+		}
 	}
 	if req.City != nil {
 		fields["city"] = *req.City

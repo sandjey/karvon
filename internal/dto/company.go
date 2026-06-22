@@ -44,6 +44,8 @@ type CompanyResponse struct {
 	INNVerified     bool       `json:"inn_verified"`
 	Phone           string     `json:"phone"`
 	Email           string     `json:"email"`
+	EmailVerified   bool       `json:"email_verified"`
+	EmailVerifiedAt *time.Time `json:"email_verified_at"`
 	City            string     `json:"city"`
 	Region          *string    `json:"region"`
 	Street          string     `json:"street"`

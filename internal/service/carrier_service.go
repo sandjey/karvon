@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -16,29 +17,41 @@ var ErrCarrierNotFound = errors.New("CARRIER_NOT_FOUND")
 var ErrCarrierNotOwned = errors.New("FORBIDDEN")
 var ErrCarrierCountriesLimit = errors.New("CARRIER_COUNTRIES_LIMIT")
 
-type CarrierService struct{ repo *repository.CarrierRepo }
+type CarrierService struct {
+	repo     *repository.CarrierRepo
+	emailSvc *EmailService
+}
 
-func NewCarrierService(repo *repository.CarrierRepo) *CarrierService {
-	return &CarrierService{repo: repo}
+func NewCarrierService(repo *repository.CarrierRepo, emailSvc *EmailService) *CarrierService {
+	return &CarrierService{repo: repo, emailSvc: emailSvc}
 }
 
 func (s *CarrierService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateCarrierRequest) (*model.CarrierCompany, error) {
-	if len(req.Countries) > 100 {
+	if len(req.WorkCountries) > 100 {
 		return nil, ErrCarrierCountriesLimit
 	}
 	c := &model.CarrierCompany{
 		ID:            uuid.New(),
 		UserID:        userID,
-		CompanyID:     req.CompanyID,
+		OrgType:       req.OrgType,
 		Name:          req.Name,
+		INN:           req.INN,
+		Country:       req.Country,
+		City:          req.City,
+		Region:        req.Region,
+		Phone:         req.Phone,
+		Email:         req.Email,
+		Website:       req.Website,
 		TransportType: req.TransportType,
-		Countries:     pq.StringArray(req.Countries),
+		WorkCountries: pq.StringArray(req.WorkCountries),
 		Description:   req.Description,
 		LogoURL:       req.LogoURL,
-		Website:       req.Website,
-		ContactPhone:  req.ContactPhone,
-		ContactEmail:  req.ContactEmail,
-		IsActive:      true,
+		Status:        "active",
+	}
+	if req.Email != nil && s.emailSvc.IsVerified(ctx, *req.Email) {
+		now := time.Now()
+		c.EmailVerified = true
+		c.EmailVerifiedAt = &now
 	}
 	return c, s.repo.Create(ctx, c)
 }
@@ -70,18 +83,47 @@ func (s *CarrierService) Update(ctx context.Context, userID, id uuid.UUID, req d
 	if c.UserID != userID {
 		return ErrCarrierNotOwned
 	}
-	if len(req.Countries) > 100 {
+	if len(req.WorkCountries) > 100 {
 		return ErrCarrierCountriesLimit
 	}
 	fields := map[string]interface{}{}
+	if req.OrgType != nil {
+		fields["org_type"] = *req.OrgType
+	}
 	if req.Name != nil {
 		fields["name"] = *req.Name
+	}
+	if req.INN != nil {
+		fields["inn"] = *req.INN
+	}
+	if req.Country != nil {
+		fields["country"] = *req.Country
+	}
+	if req.City != nil {
+		fields["city"] = *req.City
+	}
+	if req.Region != nil {
+		fields["region"] = *req.Region
+	}
+	if req.Phone != nil {
+		fields["phone"] = *req.Phone
+	}
+	if req.Email != nil {
+		fields["email"] = *req.Email
+		if s.emailSvc.IsVerified(ctx, *req.Email) {
+			fields["email_verified"] = true
+			now := time.Now()
+			fields["email_verified_at"] = &now
+		}
+	}
+	if req.Website != nil {
+		fields["website"] = *req.Website
 	}
 	if req.TransportType != nil {
 		fields["transport_type"] = *req.TransportType
 	}
-	if req.Countries != nil {
-		fields["countries"] = pq.StringArray(req.Countries)
+	if req.WorkCountries != nil {
+		fields["work_countries"] = pq.StringArray(req.WorkCountries)
 	}
 	if req.Description != nil {
 		fields["description"] = *req.Description
@@ -89,17 +131,8 @@ func (s *CarrierService) Update(ctx context.Context, userID, id uuid.UUID, req d
 	if req.LogoURL != nil {
 		fields["logo_url"] = *req.LogoURL
 	}
-	if req.Website != nil {
-		fields["website"] = *req.Website
-	}
-	if req.ContactPhone != nil {
-		fields["contact_phone"] = *req.ContactPhone
-	}
-	if req.ContactEmail != nil {
-		fields["contact_email"] = *req.ContactEmail
-	}
-	if req.IsActive != nil {
-		fields["is_active"] = *req.IsActive
+	if req.Status != nil {
+		fields["status"] = *req.Status
 	}
 	if len(fields) == 0 {
 		return nil

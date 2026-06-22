@@ -33,13 +33,13 @@ func (r *CarrierRepo) List(ctx context.Context, transportType, country string, o
 	var total int64
 	q := r.db.WithContext(ctx).Model(&model.CarrierCompany{})
 	if onlyActive {
-		q = q.Where("is_active = true")
+		q = q.Where("status = 'active'")
 	}
 	if transportType != "" {
 		q = q.Where("transport_type = ?", transportType)
 	}
 	if country != "" {
-		q = q.Where("? = ANY(countries)", country)
+		q = q.Where("? = ANY(work_countries)", country)
 	}
 	if err := q.Count(&total).Error; err != nil {
 		return nil, 0, err

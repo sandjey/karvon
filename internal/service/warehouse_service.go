@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -22,6 +23,7 @@ type WarehouseService struct {
 	pricingRepo *repository.PricingRepo
 	routes      *repository.RouteRepo
 	notif       *repository.NotificationRepo
+	emailSvc    *EmailService
 }
 
 func NewWarehouseService(
@@ -33,8 +35,9 @@ func NewWarehouseService(
 	pricingRepo *repository.PricingRepo,
 	routes *repository.RouteRepo,
 	notif *repository.NotificationRepo,
+	emailSvc *EmailService,
 ) *WarehouseService {
-	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites, pricingRepo: pricingRepo, routes: routes, notif: notif}
+	return &WarehouseService{repo: repo, company: company, media: media, cargoRepo: cargoRepo, favorites: favorites, pricingRepo: pricingRepo, routes: routes, notif: notif, emailSvc: emailSvc}
 }
 
 func (s *WarehouseService) resolveCompany(ctx context.Context, userID uuid.UUID, explicit *uuid.UUID) (uuid.UUID, error) {
@@ -128,6 +131,11 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 		IsPaid:    false,
 	}
 	applyWarehouse(&req, w)
+	if req.Email != nil && s.emailSvc.IsVerified(ctx, *req.Email) {
+		now := time.Now()
+		w.EmailVerified = true
+		w.EmailVerifiedAt = &now
+	}
 	city := ""
 	if req.City != nil {
 		city = *req.City
@@ -254,6 +262,11 @@ func (s *WarehouseService) Update(ctx context.Context, id, userID uuid.UUID, req
 		return nil, err
 	}
 	applyWarehouse(&req, w)
+	if req.Email != nil && s.emailSvc.IsVerified(ctx, *req.Email) {
+		now := time.Now()
+		w.EmailVerified = true
+		w.EmailVerifiedAt = &now
+	}
 	if err := s.repo.Save(ctx, w); err != nil {
 		return nil, err
 	}

@@ -53,6 +53,10 @@
     {
       "key": "order_id",
       "value": ""
+    },
+    {
+      "key": "carrier_id",
+      "value": ""
     }
   ],
   "item": [
@@ -5025,6 +5029,242 @@
               "body": "{\n  \"type\": \"FeatureCollection\",\n  \"features\": [\n    {\n      \"type\": \"Feature\",\n      \"id\": \"b12e4a...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.2401, 41.2995] },\n      \"properties\": { \"id\": \"b12e4a...\", \"kind\": \"cargo\", \"title\": \"Qand mahsulotlari\", \"city\": \"Toshkent\" }\n    },\n    {\n      \"type\": \"Feature\",\n      \"id\": \"c88f9b...\",\n      \"geometry\": { \"type\": \"Point\", \"coordinates\": [69.3500, 41.3200] },\n      \"properties\": { \"id\": \"c88f9b...\", \"kind\": \"warehouse\", \"title\": \"Chilonzor ombori\", \"address\": \"Chilonzor ko'chasi 12\" }\n    }\n  ]\n}"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Email OTP",
+      "item": [
+        {
+          "name": "Send Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/email/send-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "email",
+                "send-otp"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"user@example.com\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Verify Email OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/email/verify-otp",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "email",
+                "verify-otp"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"user@example.com\", \"code\": \"123456\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carriers",
+      "item": [
+        {
+          "name": "Create Carrier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"org_type\": \"ooo\",\n  \"name\": \"ООО АвтоТранс ЦА\",\n  \"inn\": \"123456789\",\n  \"country\": \"UZ\",\n  \"city\": \"Toshkent\",\n  \"phone\": \"+998712345678\",\n  \"email\": \"info@autotrans.uz\",\n  \"transport_type\": \"auto\",\n  \"work_countries\": [\"UZ\", \"KZ\", \"RU\", \"CN\", \"TR\"],\n  \"description\": \"Автоперевозки по ЦА\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List Carriers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers?transport_type=auto&country=UZ&page=1&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers"
+              ],
+              "query": [
+                {
+                  "key": "transport_type",
+                  "value": "auto"
+                },
+                {
+                  "key": "country",
+                  "value": "UZ"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Carrier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers/{{carrier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers",
+                "{{carrier_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Carrier",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers/{{carrier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers",
+                "{{carrier_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"transport_type\": \"railway\", \"work_countries\": [\"UZ\",\"RU\",\"BY\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Carrier",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers/{{carrier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers",
+                "{{carrier_id}}"
+              ]
+            }
+          }
         }
       ]
     }

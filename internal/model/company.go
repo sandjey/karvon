@@ -21,6 +21,9 @@ type Company struct {
 	Phone string `gorm:"type:varchar(20);not null"  json:"phone"`
 	Email string `gorm:"type:varchar(100);not null" json:"email"`
 
+	EmailVerified   bool       `gorm:"not null;default:false;column:email_verified" json:"email_verified"`
+	EmailVerifiedAt *time.Time `gorm:"column:email_verified_at" json:"email_verified_at"`
+
 	City       string  `gorm:"type:varchar(100);not null"           json:"city"`
 	Region     *string `gorm:"type:varchar(100)"                    json:"region"`
 	Street     string  `gorm:"type:varchar(200);not null"           json:"street"`

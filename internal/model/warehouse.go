@@ -28,8 +28,10 @@ type WarehouseListing struct {
 	PhoneMain     *string `gorm:"type:varchar(20)" json:"phone_main"`
 	PhoneExtra    *string `gorm:"type:varchar(20)" json:"phone_extra"`
 	ContactPerson *string `gorm:"type:varchar(100)" json:"contact_person"`
-	Email         *string `gorm:"type:varchar(100)" json:"email"`
-	Website       *string `gorm:"type:varchar(200)" json:"website"`
+	Email           *string    `gorm:"type:varchar(100)" json:"email"`
+	EmailVerified   bool       `gorm:"not null;default:false;column:email_verified" json:"email_verified"`
+	EmailVerifiedAt *time.Time `gorm:"column:email_verified_at" json:"email_verified_at"`
+	Website         *string    `gorm:"type:varchar(200)" json:"website"`
 
 	Specialization pq.StringArray `gorm:"type:text[]" json:"specialization"`
 	AreaTotalM2    *float64       `gorm:"type:decimal;column:area_total_m2" json:"area_total_m2"`

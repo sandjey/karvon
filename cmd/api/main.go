@@ -27,6 +27,7 @@ import (
 	"ctm/internal/repository"
 	"ctm/internal/service"
 	"ctm/pkg/email"
+	"ctm/pkg/emailotp"
 	jwtpkg "ctm/pkg/jwt"
 	"ctm/pkg/notifier"
 	"ctm/pkg/otpstore"
@@ -120,16 +121,19 @@ func main() {
 	paymentRepo   := repository.NewPaymentRepo(gormDB)
 	carrierRepo   := repository.NewCarrierRepo(gormDB)
 
-	carrierSvc   := service.NewCarrierService(carrierRepo)
-
 	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
+
+	emailOTPStore := emailotp.NewStore(rdb)
+	emailSvc      := service.NewEmailService(emailOTPStore, emailSender)
+
+	carrierSvc   := service.NewCarrierService(carrierRepo, emailSvc)
 
 	authSvc      := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier)
 	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
-	companySvc   := service.NewCompanyService(companyRepo)
+	companySvc   := service.NewCompanyService(companyRepo, emailSvc)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
 	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
-	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo, routeRepo, notifRepo)
+	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo, routeRepo, notifRepo, emailSvc)
 	pricingSvc   := service.NewPricingService(pricingRepo)
 	rahmatClient := rahmat.NewClient(rahmat.Config{
 		BaseURL:     cfg.MulticardBaseURL,
@@ -207,6 +211,7 @@ func main() {
 	handler.NewAdminHandler(adminSvc).RegisterRoutes(v1, authMiddleware, superAdminMiddleware)
 	handler.NewStatsHandler(statsRepo).RegisterRoutes(v1)
 	handler.NewCarrierHandler(carrierSvc).RegisterRoutes(v1, authMiddleware)
+	handler.NewEmailHandler(emailSvc).RegisterRoutes(v1, authMiddleware)
 
 	// ── Сервер ───────────────────────────────────────────────────────────────
 	srv := &http.Server{

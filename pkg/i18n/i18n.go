@@ -90,6 +90,10 @@ var messages = map[string]map[string]string{
 		"CARRIER_DELETED":         "Перевозчик удалён",
 		"CARRIER_NOT_FOUND":       "Перевозчик не найден",
 		"CARRIER_COUNTRIES_LIMIT": "Максимум 100 стран",
+		"EMAIL_OTP_SENT":          "Код подтверждения отправлен на email",
+		"EMAIL_OTP_INVALID":       "Неверный код подтверждения email",
+		"EMAIL_OTP_EXPIRED":       "Код истёк. Запросите новый",
+		"EMAIL_VERIFIED":          "Email подтверждён",
 	},
 	"uz": {
 		// errors
@@ -175,6 +179,10 @@ var messages = map[string]map[string]string{
 		"CARRIER_DELETED":         "Tashuvchi o'chirildi",
 		"CARRIER_NOT_FOUND":       "Tashuvchi topilmadi",
 		"CARRIER_COUNTRIES_LIMIT": "Maksimal 100 ta mamlakat",
+		"EMAIL_OTP_SENT":          "Tasdiqlash kodi emailga yuborildi",
+		"EMAIL_OTP_INVALID":       "Noto'g'ri email tasdiqlash kodi",
+		"EMAIL_OTP_EXPIRED":       "Kod muddati tugadi. Yangi so'rang",
+		"EMAIL_VERIFIED":          "Email tasdiqlandi",
 	},
 	"en": {
 		// errors
@@ -260,6 +268,10 @@ var messages = map[string]map[string]string{
 		"CARRIER_DELETED":         "Carrier deleted",
 		"CARRIER_NOT_FOUND":       "Carrier not found",
 		"CARRIER_COUNTRIES_LIMIT": "Maximum 100 countries allowed",
+		"EMAIL_OTP_SENT":          "Confirmation code sent to email",
+		"EMAIL_OTP_INVALID":       "Invalid email confirmation code",
+		"EMAIL_OTP_EXPIRED":       "Code expired. Request a new one",
+		"EMAIL_VERIFIED":          "Email verified",
 	},
 }
 
