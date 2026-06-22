@@ -78,3 +78,8 @@ func (r *PricingRepo) TokensAmount(ctx context.Context, key string, fallback int
 	}
 	return p.TokensAmount
 }
+
+// IsFreeMode возвращает true если глобальный бесплатный режим включён.
+func (r *PricingRepo) IsFreeMode(ctx context.Context) bool {
+	return r.TokensAmount(ctx, "system:free_mode", 0) > 0
+}

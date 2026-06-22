@@ -20,6 +20,7 @@ type ContactService struct {
 	contacts  *repository.ContactRepo
 	users     *repository.UserRepo
 	notif     *repository.NotificationRepo
+	pricing   *repository.PricingRepo
 }
 
 func NewContactService(
@@ -28,8 +29,9 @@ func NewContactService(
 	contacts *repository.ContactRepo,
 	users *repository.UserRepo,
 	notif *repository.NotificationRepo,
+	pricing *repository.PricingRepo,
 ) *ContactService {
-	return &ContactService{cargo: cargo, warehouse: warehouse, contacts: contacts, users: users, notif: notif}
+	return &ContactService{cargo: cargo, warehouse: warehouse, contacts: contacts, users: users, notif: notif, pricing: pricing}
 }
 
 // resolveContact достаёт владельца и контактные данные объявления.
@@ -114,6 +116,13 @@ func (s *ContactService) Open(ctx context.Context, viewerID uuid.UUID, req dto.O
 
 	// активная подписка — без списания, но фиксируем
 	if active, _ := s.contacts.HasActiveSubscription(ctx, viewerID); active {
+		_ = s.contacts.RecordFree(ctx, viewerID, req.ListingType, req.ListingID)
+		info.TokensSpent = 0
+		return info, nil
+	}
+
+	// В глобальном бесплатном режиме — просмотр без списания токенов
+	if s.pricing.IsFreeMode(ctx) {
 		_ = s.contacts.RecordFree(ctx, viewerID, req.ListingType, req.ListingID)
 		info.TokensSpent = 0
 		return info, nil

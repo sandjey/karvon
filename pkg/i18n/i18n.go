@@ -94,6 +94,8 @@ var messages = map[string]map[string]string{
 		"EMAIL_OTP_INVALID":       "Неверный код подтверждения email",
 		"EMAIL_OTP_EXPIRED":       "Код истёк. Запросите новый",
 		"EMAIL_VERIFIED":          "Email подтверждён",
+		"FREE_MODE_ENABLED":       "Бесплатный режим включён",
+		"FREE_MODE_DISABLED":      "Бесплатный режим отключён",
 	},
 	"uz": {
 		// errors
@@ -183,6 +185,8 @@ var messages = map[string]map[string]string{
 		"EMAIL_OTP_INVALID":       "Noto'g'ri email tasdiqlash kodi",
 		"EMAIL_OTP_EXPIRED":       "Kod muddati tugadi. Yangi so'rang",
 		"EMAIL_VERIFIED":          "Email tasdiqlandi",
+		"FREE_MODE_ENABLED":       "Bepul rejim yoqildi",
+		"FREE_MODE_DISABLED":      "Bepul rejim o'chirildi",
 	},
 	"en": {
 		// errors
@@ -272,6 +276,8 @@ var messages = map[string]map[string]string{
 		"EMAIL_OTP_INVALID":       "Invalid email confirmation code",
 		"EMAIL_OTP_EXPIRED":       "Code expired. Request a new one",
 		"EMAIL_VERIFIED":          "Email verified",
+		"FREE_MODE_ENABLED":       "Free mode enabled",
+		"FREE_MODE_DISABLED":      "Free mode disabled",
 	},
 }
 

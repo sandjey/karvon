@@ -4672,6 +4672,91 @@
           "response": []
         },
         {
+          "name": "GET /admin/free-mode",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
+            },
+            "description": "Возвращает текущее состояние глобального бесплатного режима."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /admin/free-mode — включить/выключить",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"enabled\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Включает (enabled: true) или выключает (enabled: false) глобальный бесплатный режим. В режиме free: создание грузов/складов без квоты, просмотр контактов без списания токенов."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /admin-free-mode — UI переключатель (публичный)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin-free-mode",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin-free-mode"
+              ]
+            },
+            "description": "HTML-страница с визуальным переключателем бесплатного режима. Авторизация через форму логина внутри страницы."
+          },
+          "response": []
+        },
+        {
           "name": "GET /admin/categories — список категорий груза",
           "request": {
             "method": "GET",

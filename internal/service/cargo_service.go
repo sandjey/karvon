@@ -97,7 +97,7 @@ func (s *CargoService) Create(ctx context.Context, userID uuid.UUID, req dto.Car
 	}
 	freeQuota := s.pricingRepo.TokensAmount(ctx, "free_listing_quota", 1)
 	initialStatus := "active"
-	if int(freeCargo+freeWarehouse) >= freeQuota {
+	if !s.pricingRepo.IsFreeMode(ctx) && int(freeCargo+freeWarehouse) >= freeQuota {
 		initialStatus = "archived"
 	}
 

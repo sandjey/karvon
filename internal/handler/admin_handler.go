@@ -23,8 +23,11 @@ func NewAdminHandler(svc *service.AdminService) *AdminHandler {
 // RegisterRoutes: login публичен, остальное — только super_admin.
 func (h *AdminHandler) RegisterRoutes(rg *gin.RouterGroup, auth, superAdmin gin.HandlerFunc) {
 	rg.POST("/admin/login", h.Login)
+	rg.GET("/admin-free-mode", h.FreeModeUI)
 
 	g := rg.Group("/admin", auth, superAdmin)
+	g.GET("/free-mode", h.GetFreeMode)
+	g.POST("/free-mode", h.SetFreeMode)
 	g.GET("/dashboard", h.Dashboard)
 	g.GET("/users", h.Users)
 	g.GET("/users/:id", h.User)
@@ -394,4 +397,181 @@ func (h *AdminHandler) DeleteCategory(c *gin.Context) {
 		return
 	}
 	OKMsg(c, nil, "CATEGORY_DELETED")
+}
+
+func (h *AdminHandler) GetFreeMode(c *gin.Context) {
+	list, err := h.svc.Pricing(c.Request.Context())
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	enabled := false
+	for _, p := range list {
+		if p.Key == "system:free_mode" {
+			enabled = p.TokensAmount > 0
+			break
+		}
+	}
+	OK(c, gin.H{"enabled": enabled})
+}
+
+func (h *AdminHandler) SetFreeMode(c *gin.Context) {
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
+		return
+	}
+	adminID := c.MustGet("user_id").(uuid.UUID)
+	val := 0
+	if req.Enabled {
+		val = 1
+	}
+	if err := h.svc.UpdatePricing(c.Request.Context(), "system:free_mode", map[string]interface{}{"tokens_amount": val}, adminID); err != nil {
+		InternalError(c)
+		return
+	}
+	key := "FREE_MODE_DISABLED"
+	if req.Enabled {
+		key = "FREE_MODE_ENABLED"
+	}
+	OKMsg(c, gin.H{"enabled": req.Enabled}, key)
+}
+
+func (h *AdminHandler) FreeModeUI(c *gin.Context) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(200, `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бесплатный режим — CTM Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: white; border-radius: 16px; padding: 40px; width: 420px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+  h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 8px; }
+  .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; line-height: 1.5; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-top: 1px solid #f0f0f0; }
+  .toggle-label { font-size: 16px; font-weight: 600; color: #333; }
+  .toggle-desc { font-size: 13px; color: #999; margin-top: 4px; }
+  .switch { position: relative; display: inline-block; width: 56px; height: 30px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .3s; border-radius: 30px; }
+  .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background: white; transition: .3s; border-radius: 50%; }
+  input:checked + .slider { background: #4f46e5; }
+  input:checked + .slider:before { transform: translateX(26px); }
+  .status { margin-top: 24px; padding: 14px 18px; border-radius: 10px; font-size: 14px; font-weight: 500; display: none; }
+  .status.on { background: #ecfdf5; color: #065f46; display: block; }
+  .status.off { background: #fef2f2; color: #991b1b; display: block; }
+  .login-form { margin-bottom: 24px; }
+  .login-form input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+  .login-form button { width: 100%; padding: 11px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 600; }
+  .login-form button:hover { background: #4338ca; }
+  .features { background: #f8f9ff; border-radius: 10px; padding: 16px; margin-bottom: 24px; }
+  .features p { font-size: 13px; color: #555; margin-bottom: 6px; }
+  .features p:last-child { margin-bottom: 0; }
+  .features span { color: #4f46e5; font-weight: 600; }
+  #main { display: none; }
+  #loginSection { display: block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Управление режимом</h1>
+  <p class="subtitle">Переключатель бесплатного режима для платформы CTM</p>
+
+  <div id="loginSection">
+    <div class="login-form">
+      <input type="text" id="login" placeholder="Логин администратора" />
+      <input type="password" id="password" placeholder="Пароль" />
+      <button onclick="doLogin()">Войти</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="features">
+      <p>+ <span>Создание грузов</span> — без ограничений</p>
+      <p>+ <span>Создание складов</span> — без ограничений</p>
+      <p>+ <span>Создание перевозчиков</span> — без ограничений</p>
+      <p>+ <span>Просмотр контактов</span> — без списания токенов</p>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Бесплатный режим</div>
+        <div class="toggle-desc">Отключает все платёжные ограничения</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="freeToggle" onchange="setFreeMode(this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+let token = '';
+const base = window.location.origin;
+
+async function doLogin() {
+  const login = document.getElementById('login').value;
+  const pass = document.getElementById('password').value;
+  try {
+    const r = await fetch(base + '/api/v1/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({login, password: pass})
+    });
+    const d = await r.json();
+    if (d.success && d.data && d.data.access_token) {
+      token = d.data.access_token;
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+      loadStatus();
+    } else {
+      alert('Неверный логин или пароль');
+    }
+  } catch(e) { alert('Ошибка подключения'); }
+}
+
+async function loadStatus() {
+  const r = await fetch(base + '/api/v1/admin/free-mode', {
+    headers: {'Authorization': 'Bearer ' + token}
+  });
+  const d = await r.json();
+  if (d.success) {
+    document.getElementById('freeToggle').checked = d.data.enabled;
+    showStatus(d.data.enabled);
+  }
+}
+
+async function setFreeMode(enabled) {
+  const r = await fetch(base + '/api/v1/admin/free-mode', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + token},
+    body: JSON.stringify({enabled})
+  });
+  const d = await r.json();
+  if (d.success) {
+    showStatus(enabled);
+  }
+}
+
+function showStatus(enabled) {
+  const el = document.getElementById('status');
+  if (enabled) {
+    el.className = 'status on';
+    el.textContent = 'Бесплатный режим ВКЛЮЧЁН — все ограничения сняты';
+  } else {
+    el.className = 'status off';
+    el.textContent = 'Бесплатный режим ВЫКЛЮЧЕН — платёжные ограничения активны';
+  }
+}
+</script>
+</body>
+</html>`)
 }

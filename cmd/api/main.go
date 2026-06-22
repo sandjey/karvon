@@ -146,7 +146,7 @@ func main() {
 		ReturnURL:   cfg.MulticardReturnURL,
 	})
 	paymentSvc   := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
-	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo)
+	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo, pricingRepo)
 	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, mediaRepo)
 	routeSvc     := service.NewRouteService(routeRepo)
 	notifSvc     := service.NewNotificationService(notifRepo)
@@ -398,6 +398,7 @@ func seedPricingConfig(db *gorm.DB) error {
 		{Key: "boost_1day", Label: "Буст на 1 день", DurationDays: 1, PriceUZS: 20000, PriceUSD: 2},
 		{Key: "boost_3day", Label: "Буст на 3 дня", DurationDays: 3, PriceUZS: 50000, PriceUSD: 4.5},
 		{Key: "boost_7day", Label: "Буст на 7 дней", DurationDays: 7, PriceUZS: 100000, PriceUSD: 9},
+		{Key: "system:free_mode", Label: "Глобальный бесплатный режим (0=выкл, 1=вкл)", TokensAmount: 0},
 	}
 	for _, s := range seeds {
 		var existing model.PricingConfig
