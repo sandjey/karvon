@@ -518,6 +518,27 @@ var specializationByLang = map[string][]dictItem{
 	},
 }
 
+var transportTypesByLang = map[string][]dictItem{
+	"ru": {
+		{Key: "auto", Label: "Автомобильный транспорт"},
+		{Key: "railway", Label: "Железнодорожный транспорт"},
+		{Key: "aviation", Label: "Авиационный транспорт"},
+		{Key: "sea", Label: "Морской транспорт"},
+	},
+	"uz": {
+		{Key: "auto", Label: "Avtomobil tashish"},
+		{Key: "railway", Label: "Temir yo'l tashish"},
+		{Key: "aviation", Label: "Aviatsiya tashish"},
+		{Key: "sea", Label: "Dengiz tashish"},
+	},
+	"en": {
+		{Key: "auto", Label: "Road transport"},
+		{Key: "railway", Label: "Railway transport"},
+		{Key: "aviation", Label: "Air transport"},
+		{Key: "sea", Label: "Sea transport"},
+	},
+}
+
 var regionsByLang = map[string][]dictItem{
 	"ru": {
 		{Key: "tashkent_city", Label: "Ташкент (город)"},
@@ -621,5 +642,7 @@ func (h *ConfigHandler) Config(c *gin.Context) {
 		"infrastructure":    dictFor(infrastructureByLang, lang),
 		"specialization":    dictFor(specializationByLang, lang),
 		"regions":           dictFor(regionsByLang, lang),
+		// carriers
+		"transport_types": dictFor(transportTypesByLang, lang),
 	})
 }
