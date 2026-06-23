@@ -29,7 +29,7 @@ func (h *EmailHandler) SendOTP(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	if err := h.svc.SendOTP(c.Request.Context(), req.Email); err != nil {
+	if err := h.svc.SendOTP(c.Request.Context(), req.Email, i18n.Lang(c)); err != nil {
 		InternalError(c)
 		return
 	}

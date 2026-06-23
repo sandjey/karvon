@@ -26,8 +26,18 @@ func (s *Sender) Enabled() bool {
 	return s.host != "" && s.user != ""
 }
 
-// Send отправляет письмо на указанный адрес. Если Sender не настроен — no-op.
+// Send отправляет plain-text письмо на указанный адрес. Если Sender не настроен — no-op.
 func (s *Sender) Send(to, subject, body string) error {
+	return s.send(to, subject, body, "text/plain; charset=UTF-8")
+}
+
+// SendHTML отправляет HTML-письмо на указанный адрес. Если Sender не настроен — no-op.
+func (s *Sender) SendHTML(to, subject, htmlBody string) error {
+	return s.send(to, subject, htmlBody, "text/html; charset=UTF-8")
+}
+
+// send — общая логика отправки письма с заданным Content-Type.
+func (s *Sender) send(to, subject, body, contentType string) error {
 	if !s.Enabled() || to == "" {
 		return nil
 	}
@@ -36,8 +46,8 @@ func (s *Sender) Send(to, subject, body string) error {
 	auth := smtp.PlainAuth("", s.user, s.password, s.host)
 
 	msg := fmt.Sprintf(
-		"From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		s.from, to, subject, body,
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: %s\r\n\r\n%s",
+		s.from, to, subject, contentType, body,
 	)
 
 	// Пробуем STARTTLS, при ошибке — plain TLS (порт 465).
