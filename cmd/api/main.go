@@ -291,7 +291,7 @@ func runMigrations(db *gorm.DB) error {
 		return fmt.Errorf("migrate category column: %w", err)
 	}
 
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&model.User{},
 		&model.OTPCode{},
 		&model.RefreshToken{},
@@ -312,7 +312,34 @@ func runMigrations(db *gorm.DB) error {
 		&model.Notification{},
 		&model.WarehouseView{},
 		&model.CarrierCompany{},
-	)
+	); err != nil {
+		return err
+	}
+
+	// Удаляем устаревшие колонки carrier_companies (остались от старой схемы).
+	if err := db.Exec(`
+		DO $$ BEGIN
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='carrier_companies' AND column_name='countries') THEN
+				ALTER TABLE carrier_companies DROP COLUMN countries;
+			END IF;
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='carrier_companies' AND column_name='company_id') THEN
+				ALTER TABLE carrier_companies DROP COLUMN company_id;
+			END IF;
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='carrier_companies' AND column_name='is_active') THEN
+				ALTER TABLE carrier_companies DROP COLUMN is_active;
+			END IF;
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='carrier_companies' AND column_name='contact_phone') THEN
+				ALTER TABLE carrier_companies DROP COLUMN contact_phone;
+			END IF;
+			IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='carrier_companies' AND column_name='contact_email') THEN
+				ALTER TABLE carrier_companies DROP COLUMN contact_email;
+			END IF;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("cleanup carrier_companies legacy columns: %w", err)
+	}
+
+	return nil
 }
 
 func createEnumTypes(db *gorm.DB) error {
