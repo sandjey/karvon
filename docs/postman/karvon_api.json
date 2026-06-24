@@ -4749,7 +4749,7 @@
                 "free-mode"
               ]
             },
-            "description": "Возвращает состояние всех флагов бесплатного режима: all, cargo, warehouse, contacts, carriers."
+            "description": "Возвращает состояние всех флагов бесплатного режима: all, cargo, warehouse, contacts, carriers, companies. Флаг companies=true означает, что модерация создания компаний отключена (компании создаются сразу approved)."
           },
           "response": []
         },
@@ -4945,6 +4945,45 @@
               }
             },
             "description": "Флаг для учёта перевозчиков (уже бесплатно по умолчанию)."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Free Mode — COMPANIES (откл. модерацию)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/free-mode",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "free-mode"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"key\": \"companies\", \"enabled\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Отключить модерацию создания компаний: при enabled=true новые компании создаются сразу со статусом approved (без модерации). enabled=false — снова pending (на модерацию)."
           },
           "response": []
         },

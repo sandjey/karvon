@@ -130,7 +130,7 @@ func main() {
 
 	authSvc      := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier)
 	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
-	companySvc   := service.NewCompanyService(companyRepo, emailSvc)
+	companySvc   := service.NewCompanyService(companyRepo, emailSvc, pricingRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
 	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo, routeRepo, notifRepo, emailSvc)
@@ -430,6 +430,7 @@ func seedPricingConfig(db *gorm.DB) error {
 		{Key: "system:free_warehouse", Label: "Бесплатное создание складов (0=выкл, 1=вкл)", TokensAmount: 0},
 		{Key: "system:free_contacts", Label: "Бесплатный просмотр контактов (0=выкл, 1=вкл)", TokensAmount: 0},
 		{Key: "system:free_carriers", Label: "Бесплатное создание перевозчиков (0=выкл, 1=вкл)", TokensAmount: 0},
+		{Key: "system:free_companies", Label: "Создание компаний без модерации (0=модерация вкл, 1=выкл)", TokensAmount: 0},
 	}
 	for _, s := range seeds {
 		var existing model.PricingConfig

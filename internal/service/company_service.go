@@ -14,10 +14,11 @@ import (
 type CompanyService struct {
 	repo     *repository.CompanyRepo
 	emailSvc *EmailService
+	pricing  *repository.PricingRepo
 }
 
-func NewCompanyService(repo *repository.CompanyRepo, emailSvc *EmailService) *CompanyService {
-	return &CompanyService{repo: repo, emailSvc: emailSvc}
+func NewCompanyService(repo *repository.CompanyRepo, emailSvc *EmailService, pricing *repository.PricingRepo) *CompanyService {
+	return &CompanyService{repo: repo, emailSvc: emailSvc, pricing: pricing}
 }
 
 func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateCompanyRequest) (*model.Company, error) {
@@ -27,6 +28,11 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 	}
 	if exists {
 		return nil, ErrAlreadyExists
+	}
+
+	status := "pending"
+	if s.pricing.IsCompanyModerationOff(ctx) {
+		status = "approved"
 	}
 
 	c := &model.Company{
@@ -44,7 +50,7 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 		PostalCode: req.PostalCode,
 		RegDocURL:  req.RegDocURL,
 		InnDocURL:  req.InnDocURL,
-		Status:     "pending",
+		Status:     status,
 	}
 	if req.Email != "" && s.emailSvc.IsVerified(ctx, req.Email) {
 		now := time.Now()

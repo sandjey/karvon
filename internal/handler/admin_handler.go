@@ -411,6 +411,7 @@ func (h *AdminHandler) GetFreeMode(c *gin.Context) {
 		"warehouse": false,
 		"contacts":  false,
 		"carriers":  false,
+		"companies": false,
 	}
 	for _, p := range list {
 		switch p.Key {
@@ -424,6 +425,8 @@ func (h *AdminHandler) GetFreeMode(c *gin.Context) {
 			flags["contacts"] = p.TokensAmount > 0
 		case "system:free_carriers":
 			flags["carriers"] = p.TokensAmount > 0
+		case "system:free_companies":
+			flags["companies"] = p.TokensAmount > 0
 		}
 	}
 	OK(c, flags)
@@ -431,7 +434,7 @@ func (h *AdminHandler) GetFreeMode(c *gin.Context) {
 
 func (h *AdminHandler) SetFreeMode(c *gin.Context) {
 	var req struct {
-		Key     string `json:"key"     binding:"required,oneof=all cargo warehouse contacts carriers"`
+		Key     string `json:"key"     binding:"required,oneof=all cargo warehouse contacts carriers companies"`
 		Enabled bool   `json:"enabled"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -450,6 +453,7 @@ func (h *AdminHandler) SetFreeMode(c *gin.Context) {
 		"warehouse": "system:free_warehouse",
 		"contacts":  "system:free_contacts",
 		"carriers":  "system:free_carriers",
+		"companies": "system:free_companies",
 	}
 
 	pricingKey := keyMap[req.Key]
@@ -578,6 +582,17 @@ func (h *AdminHandler) FreeModeUI(c *gin.Context) {
         <span class="slider"></span>
       </label>
     </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">&#127970; Компании</div>
+        <div class="toggle-desc">Создание компаний без модерации (сразу одобрено)</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="toggle-companies" onchange="setMode('companies', this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
 </div>
 
@@ -619,6 +634,7 @@ async function loadStatus() {
       setCheck('warehouse', f.warehouse || f.all);
       setCheck('contacts', f.contacts || f.all);
       setCheck('carriers', f.carriers || f.all);
+      setCheck('companies', f.companies || false);
     }
   } catch(e) {}
 }
@@ -644,7 +660,7 @@ async function setMode(key, enabled) {
 }
 
 function labelFor(key) {
-  return {'all':'Всё','cargo':'Грузы','warehouse':'Склады','contacts':'Контакты','carriers':'Перевозчики'}[key] || key;
+  return {'all':'Всё','cargo':'Грузы','warehouse':'Склады','contacts':'Контакты','carriers':'Перевозчики','companies':'Компании'}[key] || key;
 }
 
 function showToast(msg) {

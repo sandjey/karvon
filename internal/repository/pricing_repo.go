@@ -98,3 +98,8 @@ func (r *PricingRepo) IsFreeWarehouse(ctx context.Context) bool {
 func (r *PricingRepo) IsFreeContacts(ctx context.Context) bool {
 	return r.IsFreeMode(ctx) || r.TokensAmount(ctx, "system:free_contacts", 0) > 0
 }
+
+// IsCompanyModerationOff returns true if company creation skips moderation (auto-approve).
+func (r *PricingRepo) IsCompanyModerationOff(ctx context.Context) bool {
+	return r.TokensAmount(ctx, "system:free_companies", 0) > 0
+}
