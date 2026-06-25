@@ -36,7 +36,7 @@ func (h *AuthHandler) SendOTP(c *gin.Context) {
 		BadRequest(c, "VALIDATION_ERROR", i18n.T(c, "VALIDATION_ERROR"))
 		return
 	}
-	resp, err := h.svc.SendOTP(c.Request.Context(), req)
+	resp, err := h.svc.SendOTP(c.Request.Context(), req, i18n.Lang(c))
 	if err != nil {
 		h.handleErr(c, err)
 		return
@@ -105,8 +105,8 @@ func (h *AuthHandler) handleErr(c *gin.Context, err error) {
 		c.JSON(http.StatusTooManyRequests, gin.H{
 			"success": false,
 			"error": gin.H{
-				"code":              "OTP_COOLDOWN",
-				"message":           i18n.T(c, "OTP_COOLDOWN"),
+				"code":                "OTP_COOLDOWN",
+				"message":             i18n.T(c, "OTP_COOLDOWN"),
 				"retry_after_seconds": int(cooldownErr.RetryAfter.Seconds()),
 			},
 		})
@@ -114,8 +114,8 @@ func (h *AuthHandler) handleErr(c *gin.Context, err error) {
 		c.JSON(http.StatusTooManyRequests, gin.H{
 			"success": false,
 			"error": gin.H{
-				"code":              "OTP_MAX_ATTEMPTS",
-				"message":           i18n.T(c, "OTP_MAX_ATTEMPTS"),
+				"code":                "OTP_MAX_ATTEMPTS",
+				"message":             i18n.T(c, "OTP_MAX_ATTEMPTS"),
 				"retry_after_seconds": int(rateLimitErr.RetryAfter.Seconds()),
 			},
 		})
@@ -143,6 +143,14 @@ func (h *AuthHandler) handleErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusUnprocessableEntity, "PHONE_NOT_ON_TELEGRAM")
 	case errors.Is(err, service.ErrPhoneNotOnWhatsApp):
 		FailCode(c, http.StatusUnprocessableEntity, "PHONE_NOT_ON_WHATSAPP")
+	case errors.Is(err, service.ErrEmailRequired):
+		FailCode(c, http.StatusBadRequest, "EMAIL_REQUIRED")
+	case errors.Is(err, service.ErrPhoneRequired):
+		FailCode(c, http.StatusBadRequest, "PHONE_REQUIRED")
+	case errors.Is(err, service.ErrInvalidChannel):
+		FailCode(c, http.StatusBadRequest, "INVALID_CHANNEL")
+	case errors.Is(err, service.ErrValidation):
+		FailCode(c, http.StatusBadRequest, "VALIDATION_ERROR")
 	default:
 		InternalError(c)
 	}

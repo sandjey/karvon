@@ -133,7 +133,7 @@ func toQueueItem(c *model.Company) dto.QueueItemResponse {
 	var userPhone string
 	if c.User != nil {
 		userName = c.User.Name
-		userPhone = c.User.Phone
+		userPhone = derefStr(c.User.Phone)
 	}
 	return dto.QueueItemResponse{
 		ID:              c.ID,

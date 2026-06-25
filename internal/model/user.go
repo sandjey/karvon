@@ -8,9 +8,9 @@ import (
 
 type User struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Phone        string    `gorm:"type:varchar(30);uniqueIndex;not null"          json:"phone"`
+	Phone        *string   `gorm:"type:varchar(30);uniqueIndex"                   json:"phone"`
 	Name         *string   `gorm:"type:varchar(100)"                              json:"name"`
-	Email        *string   `gorm:"type:varchar(100)"                              json:"email"`
+	Email        *string   `gorm:"type:varchar(100);uniqueIndex"                  json:"email"`
 	ExtraPhone   *string   `gorm:"type:varchar(30);column:extra_phone"            json:"extra_phone"`
 	WhatsApp     *string   `gorm:"type:varchar(20);column:whatsapp"               json:"whatsapp"`
 	Telegram     *string   `gorm:"type:varchar(50)"                               json:"telegram"`

@@ -150,7 +150,7 @@ func (s *CargoService) GetByID(ctx context.Context, id, viewerID uuid.UUID) (*mo
 		}
 		if contact.IsUnlocked {
 			if c.User != nil {
-				contact.Phone = &c.User.Phone
+				contact.Phone = c.User.Phone
 				contact.WhatsApp = c.User.WhatsApp
 				contact.Telegram = c.User.Telegram
 				contact.Email = c.User.Email

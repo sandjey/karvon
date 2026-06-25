@@ -112,10 +112,17 @@ func (h *UserHandler) MyWarehouses(c *gin.Context) {
 	Paginated(c, list, int(total), page, perPage)
 }
 
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
 func toProfileResponse(u *model.User) dto.ProfileResponse {
 	return dto.ProfileResponse{
 		ID:           u.ID,
-		Phone:        u.Phone,
+		Phone:        derefStr(u.Phone),
 		Name:         u.Name,
 		Email:        u.Email,
 		ExtraPhone:   u.ExtraPhone,

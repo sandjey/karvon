@@ -102,39 +102,36 @@ func main() {
 		log.Info().Bool("bypass", cfg.TelegramGatewayBypass).Msg("telegram gateway notifier initialized")
 	}
 
-	waNotifier := notifier.NewWhatsApp(cfg.WhatsAppOTPBaseURL, cfg.WhatsAppOTPToken, cfg.WhatsAppOTPBypass)
-	log.Info().Str("url", cfg.WhatsAppOTPBaseURL).Bool("bypass", cfg.WhatsAppOTPBypass).Msg("whatsapp notifier initialized")
-
-	userRepo      := repository.NewUserRepo(gormDB)
-	tokenRepo     := repository.NewTokenRepo(gormDB)
-	companyRepo   := repository.NewCompanyRepo(gormDB)
-	notifRepo     := repository.NewNotificationRepo(gormDB)
-	cargoRepo     := repository.NewCargoRepo(gormDB)
+	userRepo := repository.NewUserRepo(gormDB)
+	tokenRepo := repository.NewTokenRepo(gormDB)
+	companyRepo := repository.NewCompanyRepo(gormDB)
+	notifRepo := repository.NewNotificationRepo(gormDB)
+	cargoRepo := repository.NewCargoRepo(gormDB)
 	warehouseRepo := repository.NewWarehouseRepo(gormDB)
-	contactRepo   := repository.NewContactRepo(gormDB)
-	favoriteRepo  := repository.NewFavoriteRepo(gormDB)
-	routeRepo     := repository.NewRouteRepo(gormDB)
-	pricingRepo   := repository.NewPricingRepo(gormDB)
-	categoryRepo  := repository.NewCategoryRepo(gormDB)
-	adminRepo     := repository.NewAdminRepo(gormDB)
-	mediaRepo     := repository.NewMediaRepo(gormDB)
-	paymentRepo   := repository.NewPaymentRepo(gormDB)
-	carrierRepo   := repository.NewCarrierRepo(gormDB)
+	contactRepo := repository.NewContactRepo(gormDB)
+	favoriteRepo := repository.NewFavoriteRepo(gormDB)
+	routeRepo := repository.NewRouteRepo(gormDB)
+	pricingRepo := repository.NewPricingRepo(gormDB)
+	categoryRepo := repository.NewCategoryRepo(gormDB)
+	adminRepo := repository.NewAdminRepo(gormDB)
+	mediaRepo := repository.NewMediaRepo(gormDB)
+	paymentRepo := repository.NewPaymentRepo(gormDB)
+	carrierRepo := repository.NewCarrierRepo(gormDB)
 
-	emailSender  := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
+	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
 
 	emailOTPStore := emailotp.NewStore(rdb)
-	emailSvc      := service.NewEmailService(emailOTPStore, emailSender)
+	emailSvc := service.NewEmailService(emailOTPStore, emailSender)
 
-	carrierSvc   := service.NewCarrierService(carrierRepo, emailSvc)
+	carrierSvc := service.NewCarrierService(carrierRepo, emailSvc)
 
-	authSvc      := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, waNotifier, tgNotifier)
-	userSvc      := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
-	companySvc   := service.NewCompanyService(companyRepo, emailSvc, pricingRepo)
+	authSvc := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, tgNotifier, emailSvc)
+	userSvc := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
+	companySvc := service.NewCompanyService(companyRepo, emailSvc, pricingRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
-	cargoSvc     := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
+	cargoSvc := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo, routeRepo, notifRepo, emailSvc)
-	pricingSvc   := service.NewPricingService(pricingRepo)
+	pricingSvc := service.NewPricingService(pricingRepo)
 	rahmatClient := rahmat.NewClient(rahmat.Config{
 		BaseURL:     cfg.MulticardBaseURL,
 		AppID:       cfg.MulticardAppID,
@@ -145,13 +142,13 @@ func main() {
 		CallbackURL: cfg.MulticardCallbackURL,
 		ReturnURL:   cfg.MulticardReturnURL,
 	})
-	paymentSvc   := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
-	contactSvc   := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo, pricingRepo)
-	favoriteSvc  := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, mediaRepo)
-	routeSvc     := service.NewRouteService(routeRepo)
-	notifSvc     := service.NewNotificationService(notifRepo)
-	statsRepo    := repository.NewStatsRepo(gormDB)
-	adminSvc     := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, companyRepo, paymentRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
+	paymentSvc := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
+	contactSvc := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo, pricingRepo)
+	favoriteSvc := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, mediaRepo)
+	routeSvc := service.NewRouteService(routeRepo)
+	notifSvc := service.NewNotificationService(notifRepo)
+	statsRepo := repository.NewStatsRepo(gormDB)
+	adminSvc := service.NewAdminService(adminRepo, userRepo, tokenRepo, cargoRepo, warehouseRepo, companyRepo, paymentRepo, pricingSvc, categoryRepo, jwtMgr, cfg.AdminLogin, cfg.AdminPassword)
 
 	// Сид скрытого статик-админа
 	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
@@ -162,11 +159,11 @@ func main() {
 
 	store := storage.NewLocal(cfg.StoragePath)
 
-	authMiddleware          := middleware.Auth(jwtMgr, userRepo)
-	optionalAuthMiddleware  := middleware.OptionalAuth(jwtMgr, userRepo)
-	verifiedMiddleware      := middleware.CompanyVerified(companyRepo)
+	authMiddleware := middleware.Auth(jwtMgr, userRepo)
+	optionalAuthMiddleware := middleware.OptionalAuth(jwtMgr, userRepo)
+	verifiedMiddleware := middleware.CompanyVerified(companyRepo)
 	moderatorRoleMiddleware := middleware.Role("moderator", "super_admin")
-	superAdminMiddleware    := middleware.Role("super_admin")
+	superAdminMiddleware := middleware.Role("super_admin")
 
 	// Фоновые задачи
 	startBackgroundWorkers(cargoRepo, warehouseRepo, paymentRepo, notifRepo)
@@ -289,6 +286,11 @@ func runMigrations(db *gorm.DB) error {
 		END $$;
 	`).Error; err != nil {
 		return fmt.Errorf("migrate category column: %w", err)
+	}
+
+	// Снять NOT NULL с users.phone — email-only пользователи не имеют телефона.
+	if err := db.Exec(`ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;`).Error; err != nil {
+		return fmt.Errorf("drop not null on users.phone: %w", err)
 	}
 
 	if err := db.AutoMigrate(

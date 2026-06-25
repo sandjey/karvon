@@ -38,6 +38,15 @@ func (r *UserRepo) FindByPhone(ctx context.Context, phone string) (*model.User, 
 	return &u, err
 }
 
+func (r *UserRepo) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	var u model.User
+	err := r.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &u, err
+}
+
 func (r *UserRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var u model.User
 	err := r.db.WithContext(ctx).First(&u, "id = ?", id).Error

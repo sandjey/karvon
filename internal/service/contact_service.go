@@ -47,7 +47,7 @@ func (s *ContactService) resolveContact(ctx context.Context, listingType string,
 		}
 		info = &dto.ContactInfo{}
 		if c.User != nil {
-			info.Phone = &c.User.Phone
+			info.Phone = c.User.Phone
 			info.WhatsApp = c.User.WhatsApp
 			info.Telegram = c.User.Telegram
 			info.Email = c.User.Email
@@ -234,7 +234,7 @@ func (s *ContactService) History(ctx context.Context, userID uuid.UUID, offset, 
 				}
 				if c.User != nil {
 					item.Contact = dto.ContactHistoryContact{
-						Phone:    &c.User.Phone,
+						Phone:    c.User.Phone,
 						WhatsApp: c.User.WhatsApp,
 						Telegram: c.User.Telegram,
 					}

@@ -30,8 +30,8 @@ type AuthService struct {
 	tokenRepo   *repository.TokenRepo
 	pricingRepo *repository.PricingRepo
 	jwtMgr      *jwtpkg.Manager
-	whatsapp    notifier.Notifier
 	telegram    notifier.Notifier
+	emailSvc    *EmailService
 }
 
 func NewAuthService(
@@ -40,8 +40,8 @@ func NewAuthService(
 	tokenRepo *repository.TokenRepo,
 	pricingRepo *repository.PricingRepo,
 	jwtMgr *jwtpkg.Manager,
-	whatsapp notifier.Notifier,
 	telegram notifier.Notifier,
+	emailSvc *EmailService,
 ) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
@@ -49,92 +49,101 @@ func NewAuthService(
 		tokenRepo:   tokenRepo,
 		pricingRepo: pricingRepo,
 		jwtMgr:      jwtMgr,
-		whatsapp:    whatsapp,
 		telegram:    telegram,
+		emailSvc:    emailSvc,
 	}
 }
 
-// SendOTP генерирует и отправляет OTP-код.
-func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest) (*dto.SendOTPResponse, error) {
-	phone := normalizePhone(req.Phone)
-
-	// Pre-flight: cooldown + rate limit check (без изменения счётчиков).
-	if err := s.otpStore.CheckSendAllowed(ctx, phone); err != nil {
-		return nil, err
-	}
-
+// SendOTP генерирует и отправляет OTP-код через Telegram или Email.
+func (s *AuthService) SendOTP(ctx context.Context, req dto.SendOTPRequest, lang string) (*dto.SendOTPResponse, error) {
 	channel := notifier.Channel(req.Channel)
 	if channel == "" {
-		channel = notifier.ChannelWhatsApp
+		channel = notifier.ChannelTelegram
 	}
 
 	switch channel {
+	case "email":
+		if strings.TrimSpace(req.Email) == "" {
+			return nil, ErrEmailRequired
+		}
+		if s.emailSvc == nil {
+			return nil, ErrInvalidChannel
+		}
+		if err := s.emailSvc.SendOTP(ctx, req.Email, lang); err != nil {
+			return nil, err
+		}
+		return &dto.SendOTPResponse{
+			ExpiresIn:       600,
+			CooldownSeconds: 0,
+		}, nil
+
 	case notifier.ChannelTelegram:
+		if strings.TrimSpace(req.Phone) == "" {
+			return nil, ErrPhoneRequired
+		}
 		if s.telegram == nil {
 			return nil, ErrTelegramNotConfigured
 		}
-	default:
-		if s.whatsapp == nil {
-			return nil, ErrWhatsAppNotConfigured
+		phone := normalizePhone(req.Phone)
+
+		// Pre-flight: cooldown + rate limit check (без изменения счётчиков).
+		if err := s.otpStore.CheckSendAllowed(ctx, phone); err != nil {
+			return nil, err
 		}
-	}
 
-	code, err := generateOTP()
-	if err != nil {
-		return nil, err
-	}
+		code, err := generateOTP()
+		if err != nil {
+			return nil, err
+		}
 
-	message := fmt.Sprintf("🔐 Ваш код подтверждения Central Trade Market: *%s*\nКод действует 5 минут.", code)
+		message := fmt.Sprintf("🔐 Ваш код подтверждения Central Trade Market: *%s*\nКод действует 5 минут.", code)
 
-	var requestID string
-
-	switch channel {
-	case notifier.ChannelTelegram:
 		if err := s.telegram.Send(ctx, phone, message); err != nil {
 			if errors.Is(err, notifier.ErrRateLimit) {
 				return nil, ErrOTPRateLimit
 			}
 			if errors.Is(err, notifier.ErrNumberNotRegistered) {
-				if s.whatsapp != nil {
-					if err2 := s.whatsapp.Send(ctx, phone, message); err2 != nil {
-						if errors.Is(err2, notifier.ErrRateLimit) {
-							return nil, ErrOTPRateLimit
-						}
-						return nil, ErrPhoneNotOnTelegram
-					}
-					break
-				}
 				return nil, ErrPhoneNotOnTelegram
 			}
 			return nil, err
 		}
-	default:
-		if err := s.whatsapp.Send(ctx, phone, message); err != nil {
-			if errors.Is(err, notifier.ErrRateLimit) {
-				return nil, ErrOTPRateLimit
-			}
+
+		// Сохранить в Redis (хэшированно), запустить cooldown.
+		cooldown, err := s.otpStore.SaveOTP(ctx, phone, code, "")
+		if err != nil {
 			return nil, err
 		}
-	}
 
-	// Сохранить в Redis (хэшированно), запустить cooldown.
-	cooldown, err := s.otpStore.SaveOTP(ctx, phone, code, requestID)
-	if err != nil {
-		return nil, err
-	}
+		return &dto.SendOTPResponse{
+			ExpiresIn:       int(otpTTL.Seconds()),
+			CooldownSeconds: int(cooldown.Seconds()),
+		}, nil
 
-	cd := int(cooldown.Seconds())
-	return &dto.SendOTPResponse{
-		ExpiresIn:       int(otpTTL.Seconds()),
-		CooldownSeconds: cd,
-	}, nil
+	default:
+		return nil, ErrInvalidChannel
+	}
 }
 
-// VerifyOTP проверяет OTP и возвращает токены.
+// VerifyOTP проверяет OTP (по email или phone) и возвращает токены.
 func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (*dto.TokenPair, error) {
-	phone := normalizePhone(req.Phone)
+	hasEmail := req.Email != nil && strings.TrimSpace(*req.Email) != ""
+	hasPhone := strings.TrimSpace(req.Phone) != ""
 
-	_, err := s.otpStore.Verify(ctx, phone, req.Code)
+	if hasEmail == hasPhone {
+		// должен быть задан ровно один идентификатор
+		return nil, ErrValidation
+	}
+
+	if hasEmail {
+		return s.verifyOTPEmail(ctx, strings.TrimSpace(*req.Email), req.Code)
+	}
+	return s.verifyOTPPhone(ctx, req.Phone, req.Code)
+}
+
+func (s *AuthService) verifyOTPPhone(ctx context.Context, rawPhone, code string) (*dto.TokenPair, error) {
+	phone := normalizePhone(rawPhone)
+
+	_, err := s.otpStore.Verify(ctx, phone, code)
 	if err != nil {
 		switch {
 		case errors.Is(err, otpstore.ErrOTPExpired):
@@ -156,22 +165,16 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (
 	isNew := user == nil || user.Name == nil
 	if user == nil {
 		isNew = true
+		p := phone
 		newUser := &model.User{
 			ID:    uuid.New(),
-			Phone: phone,
+			Phone: &p,
 			Role:  "user",
 		}
-		if err := s.userRepo.Create(ctx, newUser); err != nil {
+		if err := s.createWithBonus(ctx, newUser); err != nil {
 			return nil, err
 		}
 		user = newUser
-
-		bonus := s.pricingRepo.TokensAmount(ctx, "tokens_registration", 5)
-		if bonus > 0 {
-			if err := s.userRepo.CreditTokens(ctx, user.ID, bonus, "registration"); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	if user.IsBlocked {
@@ -179,6 +182,63 @@ func (s *AuthService) VerifyOTP(ctx context.Context, req dto.VerifyOTPRequest) (
 	}
 
 	return s.issueTokens(ctx, user, isNew)
+}
+
+func (s *AuthService) verifyOTPEmail(ctx context.Context, emailAddr, code string) (*dto.TokenPair, error) {
+	if s.emailSvc == nil {
+		return nil, ErrInvalidChannel
+	}
+
+	if err := s.emailSvc.VerifyOTP(ctx, emailAddr, code); err != nil {
+		switch {
+		case errors.Is(err, ErrEmailOTPExpired):
+			return nil, ErrOTPExpired
+		case errors.Is(err, ErrEmailOTPInvalid):
+			return nil, ErrOTPInvalid
+		default:
+			return nil, err
+		}
+	}
+
+	user, err := s.userRepo.FindByEmail(ctx, emailAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	isNew := user == nil || user.Name == nil
+	if user == nil {
+		isNew = true
+		e := emailAddr
+		newUser := &model.User{
+			ID:    uuid.New(),
+			Email: &e,
+			Role:  "user",
+		}
+		if err := s.createWithBonus(ctx, newUser); err != nil {
+			return nil, err
+		}
+		user = newUser
+	}
+
+	if user.IsBlocked {
+		return nil, ErrUserBlocked
+	}
+
+	return s.issueTokens(ctx, user, isNew)
+}
+
+// createWithBonus создаёт пользователя и начисляет регистрационный бонус.
+func (s *AuthService) createWithBonus(ctx context.Context, newUser *model.User) error {
+	if err := s.userRepo.Create(ctx, newUser); err != nil {
+		return err
+	}
+	bonus := s.pricingRepo.TokensAmount(ctx, "tokens_registration", 5)
+	if bonus > 0 {
+		if err := s.userRepo.CreditTokens(ctx, newUser.ID, bonus, "registration"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Refresh выдаёт новую пару токенов.
@@ -232,9 +292,6 @@ func (s *AuthService) CompleteRegistration(ctx context.Context, userID uuid.UUID
 		return ErrNameAlreadySet
 	}
 	fields := map[string]interface{}{"name": req.Name}
-	if req.Email != nil {
-		fields["email"] = req.Email
-	}
 	if req.ExtraPhone != nil {
 		fields["extra_phone"] = req.ExtraPhone
 	}
@@ -272,6 +329,13 @@ func (s *AuthService) issueTokens(ctx context.Context, user *model.User, isNew b
 		RefreshToken: refresh,
 		IsNewUser:    isNew,
 	}, nil
+}
+
+func derefStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func normalizePhone(phone string) string {

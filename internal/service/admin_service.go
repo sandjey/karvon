@@ -72,7 +72,7 @@ func (s *AdminService) SeedSuperAdmin(ctx context.Context) error {
 	name := "Super Admin"
 	return s.users.Create(ctx, &model.User{
 		ID:    uuid.New(),
-		Phone: phone,
+		Phone: &phone,
 		Name:  &name,
 		Role:  "super_admin",
 	})
@@ -161,7 +161,7 @@ func (s *AdminService) CreateModerator(ctx context.Context, phone string, name *
 	}
 	u := &model.User{
 		ID:                uuid.New(),
-		Phone:             phone,
+		Phone:             &phone,
 		Name:              name,
 		Role:              "moderator",
 		AdminLogin:        &adminLogin,
@@ -217,7 +217,7 @@ func (s *AdminService) User(ctx context.Context, id uuid.UUID) (*dto.AdminUserDe
 
 	resp := &dto.AdminUserDetailResponse{
 		ID:                 u.ID,
-		Phone:              u.Phone,
+		Phone:              derefStr(u.Phone),
 		Name:               u.Name,
 		Email:              u.Email,
 		ExtraPhone:         u.ExtraPhone,
