@@ -288,9 +288,9 @@ func runMigrations(db *gorm.DB) error {
 		return fmt.Errorf("migrate category column: %w", err)
 	}
 
-	// Снять NOT NULL с users.phone — email-only пользователи не имеют телефона.
+	// Снять NOT NULL с users.phone — email-only пользователи не имеют телефона. Не фатально.
 	if err := db.Exec(`ALTER TABLE users ALTER COLUMN phone DROP NOT NULL;`).Error; err != nil {
-		return fmt.Errorf("drop not null on users.phone: %w", err)
+		log.Warn().Err(err).Msg("could not drop NOT NULL on users.phone — skipping")
 	}
 
 	if err := db.AutoMigrate(
@@ -316,6 +316,11 @@ func runMigrations(db *gorm.DB) error {
 		&model.CarrierCompany{},
 	); err != nil {
 		return err
+	}
+
+	// Уникальность email только для непустых значений; не фатально (в проде возможны дубли — почистим отдельно).
+	if err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uniq_users_email ON users (email) WHERE email IS NOT NULL;`).Error; err != nil {
+		log.Warn().Err(err).Msg("could not create unique email index (likely duplicate emails) — skipping, fix data later")
 	}
 
 	// Удаляем устаревшие колонки carrier_companies (остались от старой схемы).
