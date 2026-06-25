@@ -30,6 +30,10 @@ func (h *CarrierHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFun
 }
 
 func toCarrierResponse(c *model.CarrierCompany) dto.CarrierResponse {
+	media := make([]dto.MediaItem, len(c.Media))
+	for i, m := range c.Media {
+		media[i] = dto.MediaItem{FileURL: m.FileURL, FileType: m.FileType, OriginalName: m.OriginalName, SortOrder: m.SortOrder}
+	}
 	return dto.CarrierResponse{
 		ID:              c.ID,
 		UserID:          c.UserID,
@@ -48,6 +52,7 @@ func toCarrierResponse(c *model.CarrierCompany) dto.CarrierResponse {
 		WorkCountries:   []string(c.WorkCountries),
 		Description:     c.Description,
 		LogoURL:         c.LogoURL,
+		Media:           media,
 		Status:          c.Status,
 		CreatedAt:       c.CreatedAt,
 		UpdatedAt:       c.UpdatedAt,
@@ -62,6 +67,8 @@ func handleCarrierErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusForbidden, "FORBIDDEN")
 	case isErr(err, service.ErrCarrierCountriesLimit):
 		FailCode(c, http.StatusBadRequest, "CARRIER_COUNTRIES_LIMIT")
+	case isErr(err, service.ErrTooManyPhotos):
+		FailCode(c, http.StatusBadRequest, "TOO_MANY_PHOTOS")
 	default:
 		InternalError(c)
 	}

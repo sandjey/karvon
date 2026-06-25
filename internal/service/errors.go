@@ -31,4 +31,5 @@ var (
 	ErrFreeListingUsed    = errors.New("FREE_LISTING_USED")
 	ErrCategoryNotFound   = errors.New("NOT_FOUND")
 	ErrPhotoLimitExceeded = errors.New("PHOTO_LIMIT_EXCEEDED")
+	ErrTooManyPhotos      = errors.New("TOO_MANY_PHOTOS")
 )

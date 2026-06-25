@@ -15,13 +15,35 @@ type CompanyService struct {
 	repo     *repository.CompanyRepo
 	emailSvc *EmailService
 	pricing  *repository.PricingRepo
+	media    *repository.MediaRepo
 }
 
-func NewCompanyService(repo *repository.CompanyRepo, emailSvc *EmailService, pricing *repository.PricingRepo) *CompanyService {
-	return &CompanyService{repo: repo, emailSvc: emailSvc, pricing: pricing}
+func NewCompanyService(repo *repository.CompanyRepo, emailSvc *EmailService, pricing *repository.PricingRepo, media *repository.MediaRepo) *CompanyService {
+	return &CompanyService{repo: repo, emailSvc: emailSvc, pricing: pricing, media: media}
+}
+
+func (s *CompanyService) saveMedia(ctx context.Context, id uuid.UUID, items []dto.MediaItem) {
+	if items == nil {
+		return
+	}
+	media := make([]model.ListingMedia, len(items))
+	for i, it := range items {
+		media[i] = model.ListingMedia{FileURL: it.FileURL, FileType: it.FileType, OriginalName: it.OriginalName, SortOrder: it.SortOrder}
+	}
+	_ = s.media.Replace(ctx, "company", id, media)
+}
+
+func (s *CompanyService) loadMedia(ctx context.Context, c *model.Company) {
+	if c == nil {
+		return
+	}
+	c.Media, _ = s.media.ListByEntity(ctx, "company", c.ID)
 }
 
 func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.CreateCompanyRequest) (*model.Company, error) {
+	if countPhotos(req.Media) > 5 {
+		return nil, ErrTooManyPhotos
+	}
 	exists, err := s.repo.INNExistsApproved(ctx, req.INN, nil)
 	if err != nil {
 		return nil, err
@@ -48,6 +70,7 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 		Region:     req.Region,
 		Street:     req.Street,
 		PostalCode: req.PostalCode,
+		LogoURL:    req.LogoURL,
 		RegDocURL:  req.RegDocURL,
 		InnDocURL:  req.InnDocURL,
 		Status:     status,
@@ -60,11 +83,20 @@ func (s *CompanyService) Create(ctx context.Context, userID uuid.UUID, req dto.C
 	if err := s.repo.Create(ctx, c); err != nil {
 		return nil, err
 	}
+	s.saveMedia(ctx, c.ID, req.Media)
+	s.loadMedia(ctx, c)
 	return c, nil
 }
 
 func (s *CompanyService) GetAll(ctx context.Context, userID uuid.UUID) ([]model.Company, error) {
-	return s.repo.FindByUserID(ctx, userID)
+	list, err := s.repo.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		s.loadMedia(ctx, &list[i])
+	}
+	return list, nil
 }
 
 func (s *CompanyService) GetByID(ctx context.Context, userID, companyID uuid.UUID) (*model.Company, error) {
@@ -78,10 +110,14 @@ func (s *CompanyService) GetByID(ctx context.Context, userID, companyID uuid.UUI
 	if c.UserID != userID {
 		return nil, ErrCompanyNotOwned
 	}
+	s.loadMedia(ctx, c)
 	return c, nil
 }
 
 func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID, req dto.UpdateCompanyRequest) error {
+	if countPhotos(req.Media) > 5 {
+		return ErrTooManyPhotos
+	}
 	c, err := s.repo.FindByID(ctx, companyID)
 	if err != nil {
 		return err
@@ -130,6 +166,9 @@ func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID
 	if req.PostalCode != nil {
 		fields["postal_code"] = *req.PostalCode
 	}
+	if req.LogoURL != nil {
+		fields["logo_url"] = *req.LogoURL
+	}
 	// документы можно обновить только при docs_requested
 	if c.Status == "docs_requested" {
 		if req.RegDocURL != nil {
@@ -142,6 +181,9 @@ func (s *CompanyService) Update(ctx context.Context, userID, companyID uuid.UUID
 		if len(fields) > 0 {
 			fields["status"] = "pending"
 		}
+	}
+	if req.Media != nil {
+		s.saveMedia(ctx, companyID, req.Media)
 	}
 	if len(fields) == 0 {
 		return nil

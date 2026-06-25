@@ -100,8 +100,8 @@ func (s *WarehouseService) Create(ctx context.Context, userID uuid.UUID, req dto
 	if err := validateCreate(&req); err != nil {
 		return nil, err
 	}
-	if countPhotos(req.Media) > 10 {
-		return nil, ErrPhotoLimitExceeded
+	if countPhotos(req.Media) > 5 {
+		return nil, ErrTooManyPhotos
 	}
 	companyID, err := s.resolveCompany(ctx, userID, req.CompanyID)
 	if err != nil {
@@ -254,8 +254,8 @@ func (s *WarehouseService) owned(ctx context.Context, id, userID uuid.UUID) (*mo
 }
 
 func (s *WarehouseService) Update(ctx context.Context, id, userID uuid.UUID, req dto.WarehouseUpsertRequest) (*model.WarehouseListing, error) {
-	if countPhotos(req.Media) > 10 {
-		return nil, ErrPhotoLimitExceeded
+	if countPhotos(req.Media) > 5 {
+		return nil, ErrTooManyPhotos
 	}
 	w, err := s.owned(ctx, id, userID)
 	if err != nil {

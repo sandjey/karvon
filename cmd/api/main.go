@@ -123,11 +123,11 @@ func main() {
 	emailOTPStore := emailotp.NewStore(rdb)
 	emailSvc := service.NewEmailService(emailOTPStore, emailSender)
 
-	carrierSvc := service.NewCarrierService(carrierRepo, emailSvc)
+	carrierSvc := service.NewCarrierService(carrierRepo, emailSvc, mediaRepo)
 
 	authSvc := service.NewAuthService(userRepo, otpStore, tokenRepo, pricingRepo, jwtMgr, tgNotifier, emailSvc)
 	userSvc := service.NewUserService(userRepo, companyRepo, cargoRepo, warehouseRepo, pricingRepo)
-	companySvc := service.NewCompanyService(companyRepo, emailSvc, pricingRepo)
+	companySvc := service.NewCompanyService(companyRepo, emailSvc, pricingRepo, mediaRepo)
 	moderatorSvc := service.NewModeratorService(companyRepo, notifRepo, emailSender)
 	cargoSvc := service.NewCargoService(cargoRepo, companyRepo, routeRepo, notifRepo, favoriteRepo, mediaRepo, warehouseRepo, pricingRepo, contactRepo)
 	warehouseSvc := service.NewWarehouseService(warehouseRepo, companyRepo, mediaRepo, cargoRepo, favoriteRepo, pricingRepo, routeRepo, notifRepo, emailSvc)
@@ -400,6 +400,9 @@ func createEnumTypes(db *gorm.DB) error {
 		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'oaj'",
 		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'yat'",
 		"ALTER TYPE company_org_type ADD VALUE IF NOT EXISTS 'qmj'",
+		// Media entity types for company logo/photos and carrier photos
+		"ALTER TYPE media_entity_type_enum ADD VALUE IF NOT EXISTS 'company'",
+		"ALTER TYPE media_entity_type_enum ADD VALUE IF NOT EXISTS 'carrier'",
 	}
 	for _, a := range alters {
 		if err := db.Exec(a).Error; err != nil {

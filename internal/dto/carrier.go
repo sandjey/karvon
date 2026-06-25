@@ -20,6 +20,8 @@ type CreateCarrierRequest struct {
 	WorkCountries []string `json:"work_countries"  binding:"required,min=1,max=100"`
 	Description   *string  `json:"description"     binding:"omitempty,max=2000"`
 	LogoURL       *string  `json:"logo_url"        binding:"omitempty,max=500"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type UpdateCarrierRequest struct {
@@ -37,6 +39,8 @@ type UpdateCarrierRequest struct {
 	Description   *string  `json:"description"     binding:"omitempty,max=2000"`
 	LogoURL       *string  `json:"logo_url"        binding:"omitempty,max=500"`
 	Status        *string  `json:"status"          binding:"omitempty,oneof=active archived"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type CarrierResponse struct {
@@ -57,6 +61,7 @@ type CarrierResponse struct {
 	WorkCountries   []string   `json:"work_countries"`
 	Description     *string    `json:"description"`
 	LogoURL         *string    `json:"logo_url"`
+	Media           []MediaItem `json:"media"`
 	Status          string     `json:"status"`
 	CreatedAt       time.Time  `json:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at"`

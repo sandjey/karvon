@@ -29,6 +29,8 @@ type Company struct {
 	Street     string  `gorm:"type:varchar(200);not null"           json:"street"`
 	PostalCode *string `gorm:"type:varchar(20);column:postal_code"  json:"postal_code"`
 
+	LogoURL *string `gorm:"type:varchar(500);column:logo_url" json:"logo_url"`
+
 	RegDocURL string  `gorm:"type:text;not null;column:reg_doc_url" json:"reg_doc_url"`
 	InnDocURL *string `gorm:"type:text;column:inn_doc_url"          json:"inn_doc_url"`
 
@@ -40,4 +42,7 @@ type Company struct {
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	// Media — фото-галерея компании (не хранится в таблице companies; listing_media).
+	Media []ListingMedia `gorm:"-" json:"media,omitempty"`
 }

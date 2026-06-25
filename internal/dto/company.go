@@ -19,6 +19,9 @@ type CreateCompanyRequest struct {
 	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
 	RegDocURL  string  `json:"reg_doc_url" binding:"required"`
 	InnDocURL  *string `json:"inn_doc_url" binding:"omitempty"`
+	LogoURL    *string `json:"logo_url"    binding:"omitempty,max=500"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type UpdateCompanyRequest struct {
@@ -33,6 +36,9 @@ type UpdateCompanyRequest struct {
 	PostalCode *string `json:"postal_code" binding:"omitempty,max=20"`
 	RegDocURL  *string `json:"reg_doc_url"`
 	InnDocURL  *string `json:"inn_doc_url"`
+	LogoURL    *string `json:"logo_url"    binding:"omitempty,max=500"`
+
+	Media []MediaItem `json:"media"`
 }
 
 type CompanyResponse struct {
@@ -52,6 +58,8 @@ type CompanyResponse struct {
 	PostalCode      *string    `json:"postal_code"`
 	RegDocURL       string     `json:"reg_doc_url"`
 	InnDocURL       *string    `json:"inn_doc_url"`
+	LogoURL         *string    `json:"logo_url"`
+	Media           []MediaItem `json:"media"`
 	Status          string     `json:"status"`
 	RejectionReason *string    `json:"rejection_reason"`
 	DocsRequestNote *string    `json:"docs_request_note"`

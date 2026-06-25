@@ -94,6 +94,10 @@ func (h *CompanyHandler) Update(c *gin.Context) {
 }
 
 func toCompanyResponse(c *model.Company) dto.CompanyResponse {
+	media := make([]dto.MediaItem, len(c.Media))
+	for i, m := range c.Media {
+		media[i] = dto.MediaItem{FileURL: m.FileURL, FileType: m.FileType, OriginalName: m.OriginalName, SortOrder: m.SortOrder}
+	}
 	return dto.CompanyResponse{
 		ID:              c.ID,
 		Country:         c.Country,
@@ -111,6 +115,8 @@ func toCompanyResponse(c *model.Company) dto.CompanyResponse {
 		PostalCode:      c.PostalCode,
 		RegDocURL:       c.RegDocURL,
 		InnDocURL:       c.InnDocURL,
+		LogoURL:         c.LogoURL,
+		Media:           media,
 		Status:          c.Status,
 		RejectionReason: c.RejectionReason,
 		DocsRequestNote: c.DocsRequestNote,
@@ -130,6 +136,8 @@ func handleCompanyErr(c *gin.Context, err error) {
 		FailCode(c, http.StatusConflict, "COMPANY_NOT_EDITABLE")
 	case isErr(err, service.ErrAlreadyExists):
 		FailCode(c, http.StatusConflict, "ALREADY_EXISTS")
+	case isErr(err, service.ErrTooManyPhotos):
+		FailCode(c, http.StatusBadRequest, "TOO_MANY_PHOTOS")
 	default:
 		log.Printf("[company] unhandled error: %v", err)
 		InternalError(c)

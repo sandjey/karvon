@@ -963,14 +963,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"country\": \"Узбекистан\",\n  \"org_type\": \"mchj\",\n  \"name\": \"ООО Karvon Logistics\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 1\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/reg_doc.pdf\"\n}",
+              "raw": "{\n  \"country\": \"Узбекистан\",\n  \"org_type\": \"mchj\",\n  \"name\": \"ООО Karvon Logistics\",\n  \"inn\": \"123456789\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"info@karvon.uz\",\n  \"city\": \"Ташкент\",\n  \"region\": \"Ташкентская область\",\n  \"street\": \"ул. Амира Темура, 1\",\n  \"postal_code\": \"100000\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/reg_doc.pdf\",\n  \"logo_url\": \"{{base_url}}/uploads/companies/logo.png\",\n  \"media\": [\n    { \"file_url\": \"{{base_url}}/uploads/companies/photo1.jpg\", \"file_type\": \"photo\", \"sort_order\": 0 },\n    { \"file_url\": \"{{base_url}}/uploads/companies/photo2.jpg\", \"file_type\": \"photo\", \"sort_order\": 1 }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `country` | string | Страна регистрации |\n| `org_type` | string | Тип организации — из GET /config → org_types |\n| `name` | string | Название компании (2–200 символов) |\n| `inn` | string | ИНН / регномер (3–30 символов) |\n| `phone` | string | Телефон компании |\n| `city` | string | Город |\n| `street` | string | Адрес (улица, дом) |\n| `reg_doc_url` | string | URL документа регистрации из POST /upload |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `email` | string (email) | Email компании |\n| `region` | string | Регион / область |\n| `postal_code` | string | Почтовый индекс |\n| `inn_doc_url` | string | URL скана ИНН из POST /upload (необязательно) |"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `country` | string | Страна регистрации |\n| `org_type` | string | Тип организации — из GET /config → org_types |\n| `name` | string | Название компании (2–200 символов) |\n| `inn` | string | ИНН / регномер (3–30 символов) |\n| `phone` | string | Телефон компании |\n| `city` | string | Город |\n| `street` | string | Адрес (улица, дом) |\n| `reg_doc_url` | string | URL документа регистрации из POST /upload |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `email` | string (email) | Email компании |\n| `region` | string | Регион / область |\n| `postal_code` | string | Почтовый индекс |\n| `inn_doc_url` | string | URL скана ИНН из POST /upload (необязательно) |\n| `logo_url` | string | URL логотипа (1 изображение, до 500 символов) |\n| `media` | array | Галерея фото компании — до **5** фото, каждый объект `{ file_url, file_type: \"photo\", sort_order }`. Логотип в этот лимит не входит. Больше 5 → 400 `TOO_MANY_PHOTOS` |"
           },
           "response": [
             {
@@ -1168,14 +1168,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Новое название ООО\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"new@company.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 10\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/new_doc.pdf\"\n}",
+              "raw": "{\n  \"name\": \"Новое название ООО\",\n  \"phone\": \"+998901234567\",\n  \"email\": \"new@company.uz\",\n  \"city\": \"Самарканд\",\n  \"region\": \"Самаркандская область\",\n  \"street\": \"ул. Регистан, 10\",\n  \"postal_code\": \"140100\",\n  \"reg_doc_url\": \"{{base_url}}/uploads/new_doc.pdf\",\n  \"logo_url\": \"{{base_url}}/uploads/companies/logo_v2.png\",\n  \"media\": [\n    { \"file_url\": \"{{base_url}}/uploads/companies/photo1.jpg\", \"file_type\": \"photo\", \"sort_order\": 0 }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "## PATCH /companies/:id — Обновить компанию\n\nВсе поля необязательны — передавайте только те, что нужно изменить.\n\n### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `name` | string | Название (2–200 символов) |\n| `phone` | string | Телефон |\n| `email` | string (email) | Email |\n| `city` | string | Город |\n| `region` | string | Регион |\n| `street` | string | Адрес |\n| `postal_code` | string | Индекс |\n| `reg_doc_url` | string | URL нового свидетельства о регистрации |\n| `inn_doc_url` | string | URL нового скана ИНН |"
+            "description": "## PATCH /companies/:id — Обновить компанию\n\nВсе поля необязательны — передавайте только те, что нужно изменить.\n\n### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `name` | string | Название (2–200 символов) |\n| `phone` | string | Телефон |\n| `email` | string (email) | Email |\n| `city` | string | Город |\n| `region` | string | Регион |\n| `street` | string | Адрес |\n| `postal_code` | string | Индекс |\n| `reg_doc_url` | string | URL нового свидетельства о регистрации |\n| `inn_doc_url` | string | URL нового скана ИНН |\n| `logo_url` | string | URL логотипа |\n| `media` | array | Галерея фото — до **5** фото (заменяет текущую галерею). Больше 5 → 400 `TOO_MANY_PHOTOS` |"
           },
           "response": [
             {
@@ -2628,7 +2628,7 @@
                 }
               }
             },
-            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `company_id` | uuid | ID одобренной компании |\n| `warehouse_type` | string | `regular` / `cold` / `customs` |\n| `name` | string | Название склада (2–200 символов) |\n| `contact_person` | string | Контактное лицо |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `region` | string | Регион — из GET /config → regions |\n| `address` | string | Адрес |\n| `lat` | float | Широта |\n| `lng` | float | Долгота |\n| `phone_main` | string | Основной телефон |\n| `phone_extra` | string | Доп. телефон |\n| `email` | string (email) | Email |\n| `website` | string | Сайт |\n| `specialization` | array | Из GET /config → specialization |\n| `area_total_m2` | float | Общая площадь (м²) |\n| `area_free_m2` | float | Свободная площадь (м²) |\n| `ceiling_height_m` | float | Высота потолков (м) |\n| `heating_type` | string | `heated` / `unheated` / `open` / `closed` |\n| `storage_type` | array | Из GET /config → storage_types |\n| `temp_min / temp_max` | float | Температура °C (только для cold) |\n| `cold_chamber_types` | array | Из GET /config → cold_chamber_types (только для cold) |\n| `customs_license_number` | string | Номер лицензии (только для customs) |\n| `customs_license_issued` | date | Дата выдачи (только для customs) |\n| `customs_license_expires` | date | Дата истечения (только для customs) |\n| `customs_special_services` | array | Спецуслуги таможни |\n| `infrastructure` | array | Из GET /config → infrastructure |\n| `services` | array | Из GET /config → warehouse_services |\n| `working_hours` | JSON | Часы работы (объект) |\n| `description` | string | Описание склада |\n| `country` | string | Страна |\n| `city` | string | Город |\n| `price_per_m2` | float | Цена за м²/месяц |\n| `price_currency` | string | Валюта: UZS / USD / EUR |\n| `min_rent_period_days` | int | Минимальный срок аренды (дней) |\n| `media` | array | Фото/видео, макс. 10. file_url + file_type обязательны |"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `company_id` | uuid | ID одобренной компании |\n| `warehouse_type` | string | `regular` / `cold` / `customs` |\n| `name` | string | Название склада (2–200 символов) |\n| `contact_person` | string | Контактное лицо |\n\n### Необязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `region` | string | Регион — из GET /config → regions |\n| `address` | string | Адрес |\n| `lat` | float | Широта |\n| `lng` | float | Долгота |\n| `phone_main` | string | Основной телефон |\n| `phone_extra` | string | Доп. телефон |\n| `email` | string (email) | Email |\n| `website` | string | Сайт |\n| `specialization` | array | Из GET /config → specialization |\n| `area_total_m2` | float | Общая площадь (м²) |\n| `area_free_m2` | float | Свободная площадь (м²) |\n| `ceiling_height_m` | float | Высота потолков (м) |\n| `heating_type` | string | `heated` / `unheated` / `open` / `closed` |\n| `storage_type` | array | Из GET /config → storage_types |\n| `temp_min / temp_max` | float | Температура °C (только для cold) |\n| `cold_chamber_types` | array | Из GET /config → cold_chamber_types (только для cold) |\n| `customs_license_number` | string | Номер лицензии (только для customs) |\n| `customs_license_issued` | date | Дата выдачи (только для customs) |\n| `customs_license_expires` | date | Дата истечения (только для customs) |\n| `customs_special_services` | array | Спецуслуги таможни |\n| `infrastructure` | array | Из GET /config → infrastructure |\n| `services` | array | Из GET /config → warehouse_services |\n| `working_hours` | JSON | Часы работы (объект) |\n| `description` | string | Описание склада |\n| `country` | string | Страна |\n| `city` | string | Город |\n| `price_per_m2` | float | Цена за м²/месяц |\n| `price_currency` | string | Валюта: UZS / USD / EUR |\n| `min_rent_period_days` | int | Минимальный срок аренды (дней) |\n| `media` | array | Галерея фото — до **5** фото (без логотипа), объект `{ file_url, file_type: \"photo\", sort_order }`. Больше 5 → 400 `TOO_MANY_PHOTOS` |"
           },
           "response": []
         },
@@ -5779,13 +5779,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"org_type\": \"ooo\",\n  \"name\": \"ООО АвтоТранс ЦА\",\n  \"inn\": \"123456789\",\n  \"country\": \"UZ\",\n  \"city\": \"Toshkent\",\n  \"phone\": \"+998712345678\",\n  \"email\": \"info@autotrans.uz\",\n  \"transport_type\": \"auto\",\n  \"work_countries\": [\"UZ\", \"KZ\", \"RU\", \"CN\", \"TR\"],\n  \"description\": \"Автоперевозки по ЦА\"\n}",
+              "raw": "{\n  \"org_type\": \"ooo\",\n  \"name\": \"ООО АвтоТранс ЦА\",\n  \"inn\": \"123456789\",\n  \"country\": \"UZ\",\n  \"city\": \"Toshkent\",\n  \"phone\": \"+998712345678\",\n  \"email\": \"info@autotrans.uz\",\n  \"transport_type\": \"auto\",\n  \"work_countries\": [\"UZ\", \"KZ\", \"RU\", \"CN\", \"TR\"],\n  \"description\": \"Автоперевозки по ЦА\",\n  \"logo_url\": \"{{base_url}}/uploads/carriers/logo.png\",\n  \"media\": [\n    { \"file_url\": \"{{base_url}}/uploads/carriers/photo1.jpg\", \"file_type\": \"photo\", \"sort_order\": 0 },\n    { \"file_url\": \"{{base_url}}/uploads/carriers/photo2.jpg\", \"file_type\": \"photo\", \"sort_order\": 1 }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Логотип и фото\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `logo_url` | string | URL логотипа (1 изображение, до 500 символов) |\n| `media` | array | Галерея фото перевозчика — до **5** фото, объект `{ file_url, file_type: \"photo\", sort_order }`. Логотип в лимит не входит. Больше 5 → 400 `TOO_MANY_PHOTOS` |"
           }
         },
         {
@@ -5871,13 +5872,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"transport_type\": \"railway\", \"work_countries\": [\"UZ\",\"RU\",\"BY\"]}",
+              "raw": "{\n  \"transport_type\": \"railway\",\n  \"work_countries\": [\"UZ\",\"RU\",\"BY\"],\n  \"logo_url\": \"{{base_url}}/uploads/carriers/logo_v2.png\",\n  \"media\": [\n    { \"file_url\": \"{{base_url}}/uploads/carriers/photo1.jpg\", \"file_type\": \"photo\", \"sort_order\": 0 }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "### Логотип и фото\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `logo_url` | string | URL логотипа |\n| `media` | array | Галерея фото — до **5** фото (заменяет текущую). Больше 5 → 400 `TOO_MANY_PHOTOS` |"
           }
         },
         {

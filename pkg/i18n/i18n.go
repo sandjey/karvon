@@ -36,6 +36,7 @@ var messages = map[string]map[string]string{
 		"PHONE_REQUIRED":           "Укажите номер телефона",
 		"INVALID_CHANNEL":          "Недопустимый канал. Доступно: telegram, email",
 		"PHOTO_LIMIT_EXCEEDED":     "Максимум 10 фотографий на объявление",
+		"TOO_MANY_PHOTOS":          "Можно загрузить не более 5 фото",
 		"FILE_TOO_LARGE":          "Файл слишком большой. Максимум 10 МБ",
 		"FILE_TYPE_NOT_ALLOWED":   "Тип файла не разрешён. Допустимы: изображения и PDF",
 		// success
@@ -130,6 +131,7 @@ var messages = map[string]map[string]string{
 		"PHONE_REQUIRED":           "Telefon raqamini kiriting",
 		"INVALID_CHANNEL":          "Yaroqsiz kanal. Mavjud: telegram, email",
 		"PHOTO_LIMIT_EXCEEDED":     "E'lon uchun maksimal 10 ta rasm",
+		"TOO_MANY_PHOTOS":          "Ko'pi bilan 5 ta rasm yuklash mumkin",
 		"FILE_TOO_LARGE":          "Fayl juda katta. Maksimal hajm 10 MB",
 		"FILE_TYPE_NOT_ALLOWED":   "Fayl turi ruxsat etilmagan. Rasm va PDF fayllar ruxsat etiladi",
 		// success
@@ -224,6 +226,7 @@ var messages = map[string]map[string]string{
 		"PHONE_REQUIRED":           "Phone number is required",
 		"INVALID_CHANNEL":          "Invalid channel. Available: telegram, email",
 		"PHOTO_LIMIT_EXCEEDED":     "Maximum 10 photos per listing",
+		"TOO_MANY_PHOTOS":          "You can upload no more than 5 photos",
 		"FILE_TOO_LARGE":          "File is too large. Maximum 10 MB",
 		"FILE_TYPE_NOT_ALLOWED":   "File type not allowed. Images and PDF are accepted",
 		// success

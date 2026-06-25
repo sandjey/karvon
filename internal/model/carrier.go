@@ -37,4 +37,7 @@ type CarrierCompany struct {
 	Status    string    `gorm:"type:varchar(20);not null;default:'active';index" json:"status"` // active|archived
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	// Media — фото-галерея перевозчика (не хранится в таблице; listing_media).
+	Media []ListingMedia `gorm:"-" json:"media,omitempty"`
 }
