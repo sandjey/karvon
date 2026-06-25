@@ -60,6 +60,16 @@ func (r *CarrierRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, 
 	return list, total, err
 }
 
+// FindByIDs — батч-загрузка перевозчиков по списку ID.
+func (r *CarrierRepo) FindByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.CarrierCompany, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var list []*model.CarrierCompany
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&list).Error
+	return list, err
+}
+
 func (r *CarrierRepo) Update(ctx context.Context, id uuid.UUID, fields map[string]interface{}) error {
 	return r.db.WithContext(ctx).Model(&model.CarrierCompany{}).Where("id = ?", id).Updates(fields).Error
 }

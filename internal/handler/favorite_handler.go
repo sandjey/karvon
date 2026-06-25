@@ -55,7 +55,7 @@ func (h *FavoriteHandler) Remove(c *gin.Context) {
 func (h *FavoriteHandler) List(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 	page, perPage := parsePagination(c)
-	listingType := c.Query("listing_type") // "cargo" | "warehouse" | ""
+	listingType := c.Query("listing_type") // "cargo" | "warehouse" | "carrier" | ""
 	list, total, err := h.svc.List(c.Request.Context(), userID, listingType, (page-1)*perPage, perPage)
 	if err != nil {
 		InternalError(c)

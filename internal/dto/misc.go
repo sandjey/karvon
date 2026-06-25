@@ -9,7 +9,7 @@ import (
 )
 
 type FavoriteRequest struct {
-	ListingType string    `json:"listing_type" binding:"required,oneof=cargo warehouse"`
+	ListingType string    `json:"listing_type" binding:"required,oneof=cargo warehouse carrier"`
 	ListingID   uuid.UUID `json:"listing_id" binding:"required"`
 }
 

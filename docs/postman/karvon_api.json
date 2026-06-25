@@ -3289,7 +3289,7 @@
                 }
               }
             },
-            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` |\n| `listing_id` | uuid | ID объявления |"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` / `carrier` |\n| `listing_id` | uuid | ID объявления / компании-перевозчика |\n\n**Пример (перевозчик):**\n```json\n{\"listing_type\":\"carrier\",\"listing_id\":\"<carrier_uuid>\"}\n```"
           },
           "response": []
         },
@@ -3304,7 +3304,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/favorites",
+              "raw": "{{base_url}}/api/v1/favorites?listing_type=carrier",
               "host": [
                 "{{base_url}}"
               ],
@@ -3312,8 +3312,16 @@
                 "api",
                 "v1",
                 "favorites"
+              ],
+              "query": [
+                {
+                  "key": "listing_type",
+                  "value": "carrier",
+                  "description": "Фильтр: cargo | warehouse | carrier | пусто (все)"
+                }
               ]
-            }
+            },
+            "description": "Список избранного. Фильтр query `listing_type`: `cargo` | `warehouse` | `carrier` | пусто (все типы)."
           },
           "response": []
         },
@@ -3351,7 +3359,7 @@
                 }
               }
             },
-            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` |\n| `listing_id` | uuid | ID объявления |"
+            "description": "### Обязательные поля\n| Поле | Тип | Описание |\n|------|-----|----------|\n| `listing_type` | string | `cargo` / `warehouse` / `carrier` |\n| `listing_id` | uuid | ID объявления / компании-перевозчика |\n\n**Пример (перевозчик):**\n```json\n{\"listing_type\":\"carrier\",\"listing_id\":\"<carrier_uuid>\"}\n```"
           },
           "response": []
         }

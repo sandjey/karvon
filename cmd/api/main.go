@@ -144,7 +144,7 @@ func main() {
 	})
 	paymentSvc := service.NewPaymentService(paymentRepo, pricingRepo, userRepo, cargoRepo, warehouseRepo, rahmatClient)
 	contactSvc := service.NewContactService(cargoRepo, warehouseRepo, contactRepo, userRepo, notifRepo, pricingRepo)
-	favoriteSvc := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, mediaRepo)
+	favoriteSvc := service.NewFavoriteService(favoriteRepo, cargoRepo, warehouseRepo, carrierRepo, mediaRepo)
 	routeSvc := service.NewRouteService(routeRepo)
 	notifSvc := service.NewNotificationService(notifRepo)
 	statsRepo := repository.NewStatsRepo(gormDB)
@@ -403,6 +403,8 @@ func createEnumTypes(db *gorm.DB) error {
 		// Media entity types for company logo/photos and carrier photos
 		"ALTER TYPE media_entity_type_enum ADD VALUE IF NOT EXISTS 'company'",
 		"ALTER TYPE media_entity_type_enum ADD VALUE IF NOT EXISTS 'carrier'",
+		// Favorite carrier companies
+		"ALTER TYPE favorite_listing_type_enum ADD VALUE IF NOT EXISTS 'carrier'",
 	}
 	for _, a := range alters {
 		if err := db.Exec(a).Error; err != nil {
