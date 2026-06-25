@@ -118,7 +118,7 @@ func main() {
 	paymentRepo := repository.NewPaymentRepo(gormDB)
 	carrierRepo := repository.NewCarrierRepo(gormDB)
 
-	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom)
+	emailSender := email.NewSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPassword, cfg.SMTPFrom, cfg.SMTPFromName)
 
 	emailOTPStore := emailotp.NewStore(rdb)
 	emailSvc := service.NewEmailService(emailOTPStore, emailSender)

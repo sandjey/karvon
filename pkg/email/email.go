@@ -3,6 +3,7 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
+	"mime"
 	"net"
 	"net/smtp"
 )
@@ -14,11 +15,12 @@ type Sender struct {
 	user     string
 	password string
 	from     string
+	fromName string
 }
 
 // NewSender создаёт отправителя. Если host пустой — отправка отключена (no-op).
-func NewSender(host, port, user, password, from string) *Sender {
-	return &Sender{host: host, port: port, user: user, password: password, from: from}
+func NewSender(host, port, user, password, from, fromName string) *Sender {
+	return &Sender{host: host, port: port, user: user, password: password, from: from, fromName: fromName}
 }
 
 // Enabled возвращает true, если SMTP настроен.
@@ -45,9 +47,17 @@ func (s *Sender) send(to, subject, body, contentType string) error {
 	addr := net.JoinHostPort(s.host, s.port)
 	auth := smtp.PlainAuth("", s.user, s.password, s.host)
 
+	// Заголовок From: с отображаемым именем, если задано. Имя кодируется
+	// для поддержки не-ASCII (для ASCII возвращается само имя).
+	// В SMTP-конверт (client.Mail) ниже всегда идёт голый адрес s.from.
+	fromHeader := s.from
+	if s.fromName != "" {
+		fromHeader = fmt.Sprintf("%s <%s>", mime.QEncoding.Encode("utf-8", s.fromName), s.from)
+	}
+
 	msg := fmt.Sprintf(
 		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: %s\r\n\r\n%s",
-		s.from, to, subject, contentType, body,
+		fromHeader, to, subject, contentType, body,
 	)
 
 	// Пробуем STARTTLS, при ошибке — plain TLS (порт 465).

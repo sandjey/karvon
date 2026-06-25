@@ -56,6 +56,7 @@ type Config struct {
 	SMTPUser     string
 	SMTPPassword string
 	SMTPFrom     string
+	SMTPFromName string
 }
 
 func Load() (*Config, error) {
@@ -98,6 +99,7 @@ func Load() (*Config, error) {
 		SMTPUser:     os.Getenv("SMTP_USER"),
 		SMTPPassword: os.Getenv("SMTP_PASSWORD"),
 		SMTPFrom:     getEnv("SMTP_FROM", os.Getenv("SMTP_USER")),
+		SMTPFromName: getEnv("SMTP_FROM_NAME", "CentralTradeMarket"),
 	}
 
 	var err error
