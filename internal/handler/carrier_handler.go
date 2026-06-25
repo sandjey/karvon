@@ -23,6 +23,7 @@ func NewCarrierHandler(svc *service.CarrierService) *CarrierHandler {
 func (h *CarrierHandler) RegisterRoutes(rg *gin.RouterGroup, auth gin.HandlerFunc) {
 	g := rg.Group("/carriers")
 	g.GET("", h.List)
+	g.GET("/my", auth, h.ListMine)
 	g.GET("/:id", h.GetOne)
 	g.POST("", auth, h.Create)
 	g.PATCH("/:id", auth, h.Update)
@@ -94,6 +95,21 @@ func (h *CarrierHandler) List(c *gin.Context) {
 	transportType := c.Query("transport_type")
 	country := c.Query("country")
 	list, total, err := h.svc.List(c.Request.Context(), transportType, country, page, perPage)
+	if err != nil {
+		InternalError(c)
+		return
+	}
+	out := make([]dto.CarrierResponse, len(list))
+	for i := range list {
+		out[i] = toCarrierResponse(&list[i])
+	}
+	Paginated(c, out, int(total), page, perPage)
+}
+
+func (h *CarrierHandler) ListMine(c *gin.Context) {
+	userID := c.MustGet("user_id").(uuid.UUID)
+	page, perPage := parsePagination(c)
+	list, total, err := h.svc.ListMine(c.Request.Context(), userID, page, perPage)
 	if err != nil {
 		InternalError(c)
 		return

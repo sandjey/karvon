@@ -94,6 +94,17 @@ func (s *CarrierService) List(ctx context.Context, transportType, country string
 	return list, total, err
 }
 
+func (s *CarrierService) ListMine(ctx context.Context, userID uuid.UUID, page, perPage int) ([]model.CarrierCompany, int64, error) {
+	offset := (page - 1) * perPage
+	list, total, err := s.repo.ListByUser(ctx, userID, offset, perPage)
+	if err == nil {
+		for i := range list {
+			s.loadMedia(ctx, &list[i])
+		}
+	}
+	return list, total, err
+}
+
 func (s *CarrierService) GetByID(ctx context.Context, id uuid.UUID) (*model.CarrierCompany, error) {
 	c, err := s.repo.FindByID(ctx, id)
 	if err != nil {

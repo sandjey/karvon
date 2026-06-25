@@ -48,6 +48,18 @@ func (r *CarrierRepo) List(ctx context.Context, transportType, country string, o
 	return list, total, err
 }
 
+// ListByUser возвращает компании-перевозчики пользователя (все статусы) с пагинацией.
+func (r *CarrierRepo) ListByUser(ctx context.Context, userID uuid.UUID, offset, limit int) ([]model.CarrierCompany, int64, error) {
+	q := r.db.WithContext(ctx).Model(&model.CarrierCompany{}).Where("user_id = ?", userID)
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var list []model.CarrierCompany
+	err := q.Order("created_at DESC").Offset(offset).Limit(limit).Find(&list).Error
+	return list, total, err
+}
+
 func (r *CarrierRepo) Update(ctx context.Context, id uuid.UUID, fields map[string]interface{}) error {
 	return r.db.WithContext(ctx).Model(&model.CarrierCompany{}).Where("id = ?", id).Updates(fields).Error
 }

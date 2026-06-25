@@ -5826,6 +5826,41 @@
           }
         },
         {
+          "name": "My Carriers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/carriers/my?page=1&per_page=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "carriers",
+                "my"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Список компаний-перевозчиков текущего пользователя (все статусы: active и archived). Требует Authorization. Пагинация: page, per_page."
+          }
+        },
+        {
           "name": "Get Carrier",
           "request": {
             "method": "GET",
